@@ -32,7 +32,6 @@ const requiredFiles = [
 const requiredRootFiles = [
   "LICENSE",
   "README.zh-CN.md",
-  "assets/demo/ad-video-3.mp4",
   "package.json",
   "scripts/classify-ad-source.mjs",
   "scripts/create-open-source-snapshot.mjs",
@@ -46,8 +45,6 @@ const fail = (message) => {
   console.error(`FAIL ${message}`);
   process.exitCode = 1;
 };
-
-const maxReadmeDemoVideoBytes = 10_000_000;
 
 const read = (relativePath) =>
   readFileSync(join(skillDir, relativePath), "utf8");
@@ -73,15 +70,6 @@ for (const file of requiredRootFiles) {
   } catch {
     fail(`missing file: ${file}`);
   }
-}
-
-try {
-  const demoVideoBytes = statSync(join(root, "assets/demo/ad-video-3.mp4")).size;
-  if (demoVideoBytes > maxReadmeDemoVideoBytes) {
-    fail(`README demo video must be <= ${maxReadmeDemoVideoBytes} bytes, got ${demoVideoBytes}`);
-  }
-} catch {
-  fail("missing file: assets/demo/ad-video-3.mp4");
 }
 
 if (process.exitCode) {
@@ -160,7 +148,8 @@ for (const phrase of [
   "remotion-ad-video-skill",
   "README.zh-CN.md",
   "https://github.com/remotion-dev/remotion",
-  "assets/demo/ad-video-3.mp4",
+  "https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2",
+  "https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8",
   "No video-generation AI required",
   "agent-agnostic",
   "Agent Compatibility",
@@ -181,7 +170,8 @@ const chineseReadme = readRoot("README.zh-CN.md");
 for (const phrase of [
   "remotion-ad-video-skill",
   "https://github.com/remotion-dev/remotion",
-  "assets/demo/ad-video-3.mp4",
+  "https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2",
+  "https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8",
   "不需要接入视频生成 AI",
   "通用的 agent skill",
   "URL -> 来源分类 -> ad-brief.json",

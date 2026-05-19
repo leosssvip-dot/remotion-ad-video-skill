@@ -12,9 +12,13 @@ React 以代码方式创建视频的框架。
 
 ## 演示视频
 
-<video src="assets/demo/ad-video-3.mp4" controls muted playsinline width="100%" title="Remotion 广告视频 skill 演示"></video>
+<video src="https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2" controls muted playsinline width="100%" title="Remotion 广告视频 skill 演示 1"></video>
 
-[查看演示视频](assets/demo/ad-video-3.mp4)
+[查看演示视频 1](https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2)
+
+<video src="https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8" controls muted playsinline width="100%" title="Remotion 广告视频 skill 演示 2"></video>
+
+[查看演示视频 2](https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8)
 
 ## 为什么做这个
 

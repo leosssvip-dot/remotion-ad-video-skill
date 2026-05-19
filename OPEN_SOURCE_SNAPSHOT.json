@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-19T12:25:14.312Z",
+  "generatedAt": "2026-05-19T12:48:04.242Z",
   "sourceRoot": ".",
   "outputDir": "dist/open-source-snapshot",
   "included": [
@@ -7,7 +7,6 @@
     "LICENSE",
     "README.md",
     "README.zh-CN.md",
-    "assets/demo/ad-video-3.mp4",
     "docs/DEVELOPMENT_PLAN.md",
     "examples/synthetic-url-ad",
     "package.json",
@@ -27,6 +26,6 @@
     "out/",
     "public harvested/generated media",
     "env files",
-    "audio/video/image render outputs except reviewed README demo video"
+    "audio/video/image render outputs"
   ]
 }

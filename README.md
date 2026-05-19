@@ -16,9 +16,13 @@ any other generated-video API.
 
 ## Demo Video
 
-<video src="assets/demo/ad-video-3.mp4" controls muted playsinline width="100%" title="Remotion ad video skill demo"></video>
+<video src="https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2" controls muted playsinline width="100%" title="Remotion ad video skill demo 1"></video>
 
-[Watch the demo video](assets/demo/ad-video-3.mp4)
+[Watch demo video 1](https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2)
+
+<video src="https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8" controls muted playsinline width="100%" title="Remotion ad video skill demo 2"></video>
+
+[Watch demo video 2](https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8)
 
 ## Why This Exists
 

@@ -14,6 +14,7 @@
     "smoke:classifier": "node scripts/classify-ad-source.mjs \"https://example.com/products/focus-lamp\" --title \"Focus Lamp\" --brief-out /tmp/remotion-ad-video-skill-brief.json"
   },
   "keywords": [
+    "agent-skill",
     "codex-skill",
     "remotion",
     "advertising",

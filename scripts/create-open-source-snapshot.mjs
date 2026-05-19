@@ -12,6 +12,7 @@ const allowlist = [
   ".gitignore",
   "LICENSE",
   "README.md",
+  "README.zh-CN.md",
   "docs/DEVELOPMENT_PLAN.md",
   "examples/synthetic-url-ad",
   "package.json",

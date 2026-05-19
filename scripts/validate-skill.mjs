@@ -31,6 +31,7 @@ const requiredFiles = [
 ];
 const requiredRootFiles = [
   "LICENSE",
+  "README.zh-CN.md",
   "package.json",
   "scripts/classify-ad-source.mjs",
   "scripts/create-open-source-snapshot.mjs",
@@ -145,14 +146,38 @@ for (const scriptName of ["check", "validate", "snapshot", "smoke:classifier"]) 
 const rootReadme = readRoot("README.md");
 for (const phrase of [
   "remotion-ad-video-skill",
+  "README.zh-CN.md",
   "No video-generation AI required",
+  "agent-agnostic",
+  "Agent Compatibility",
   "URL to Remotion ad video",
+  "Use the remotion-ad-video skill",
   "Synthetic URL Demo",
+  "Maintainer Checks",
+  "Maintainer Release Checklist",
   "npm run validate",
   "npm run snapshot"
 ]) {
   if (!rootReadme.includes(phrase)) {
     fail(`README.md missing phrase: ${phrase}`);
+  }
+}
+
+const chineseReadme = readRoot("README.zh-CN.md");
+for (const phrase of [
+  "remotion-ad-video-skill",
+  "不需要接入视频生成 AI",
+  "通用的 agent skill",
+  "URL -> 来源分类 -> ad-brief.json",
+  "调用 remotion-ad-video skill",
+  "合成 URL Demo",
+  "维护者校验和发布",
+  "维护者发布清单",
+  "npm run validate",
+  "npm run snapshot"
+]) {
+  if (!chineseReadme.includes(phrase)) {
+    fail(`README.zh-CN.md missing phrase: ${phrase}`);
   }
 }
 

@@ -1,13 +1,15 @@
 # remotion-ad-video-skill
 
+[中文说明](README.zh-CN.md)
+
 Create advertising videos from a URL with an AI coding agent and Remotion.
 No video-generation AI required.
 
-This project is a Codex skill and toolkit for turning product links, app-store
-listings, landing pages, or product briefs into performance-oriented Remotion
-ad video projects. The agent plans the ad; Remotion renders deterministic
-React-based video. You do not need Sora, Runway, Pika, Kling, or any other
-generated-video API.
+This project is an agent-agnostic skill and toolkit for turning product links,
+app-store listings, landing pages, or product briefs into performance-oriented
+Remotion ad video projects. The agent plans the ad; Remotion renders
+deterministic React-based video. You do not need Sora, Runway, Pika, Kling, or
+any other generated-video API.
 
 ## Why This Exists
 
@@ -44,8 +46,8 @@ matter.
 
 ```text
 skills/remotion-ad-video/
-  SKILL.md                         Main Codex skill entrypoint
-  agents/openai.yaml               Skill listing metadata
+  SKILL.md                         Main agent skill entrypoint
+  agents/openai.yaml               Optional OpenAI/Codex listing metadata
   references/                      Workflow contracts and category playbooks
   assets/remotion-template/        Reusable Remotion starter project
   scripts/build_asset_manifest.mjs Skill-local asset manifest helper
@@ -73,65 +75,66 @@ examples/synthetic-url-ad/
 - Rights-cleared product images, logos, music, SFX, voiceover, and claims for
   production ads
 
-## Install The Skill Locally
+## Agent Compatibility
 
-Clone the repository, then copy or symlink the skill folder into your Codex
-skills directory.
+The workflow is generic and can be used by any coding agent that can read local
+files and run Node scripts.
 
-```bash
-git clone <your-fork-url> remotion-ad-video-skill
-cd remotion-ad-video-skill
+- Codex / OpenAI-compatible skill loaders can install `skills/remotion-ad-video/`
+  directly.
+- Claude Code, Cursor, Windsurf, or other agents can load
+  `skills/remotion-ad-video/SKILL.md` as the playbook and use the scripts in
+  `scripts/`.
+- The deterministic parts are plain Node scripts and a Remotion template; they
+  are not tied to one agent runtime.
 
-mkdir -p "$HOME/.codex/skills"
-ln -s "$(pwd)/skills/remotion-ad-video" "$HOME/.codex/skills/remotion-ad-video"
+## Install With Your AI Agent
+
+You do not need to install this manually. Open your coding agent and ask it to
+install the skill for you.
+
+Copy this prompt:
+
+```text
+Install the remotion-ad-video skill from this repository into my available
+skills directory. Use a symlink if my agent supports it; otherwise copy
+skills/remotion-ad-video. After installing, tell me how to reload or restart the
+agent so the skill becomes available.
 ```
 
-If you prefer copying:
-
-```bash
-mkdir -p "$HOME/.codex/skills"
-cp -R skills/remotion-ad-video "$HOME/.codex/skills/remotion-ad-video"
-```
-
-Restart or reload Codex so the skill list is refreshed.
+For Codex/OpenAI-compatible agents, the agent should install
+`skills/remotion-ad-video/` into the local skills directory, then ask you to
+reload the skill list.
 
 ## Quick Start
 
-Validate the skill package:
+Use it from your AI agent. Give the agent a URL and ask it to create an ad
+video project:
 
-```bash
-npm run validate
+```text
+Use the remotion-ad-video skill to create a 15s ad video for this product:
+https://example.com/products/focus-lamp
 ```
 
-Create a draft brief from a URL:
+Or with the OpenAI/Codex skill trigger:
 
-```bash
-node scripts/classify-ad-source.mjs "https://example.com/product" \
-  --title "Example Product" \
-  --brief-out examples/example-ad/ad-brief.json
+```text
+Use $remotion-ad-video to create a 15s vertical ad video for:
+https://example.com/products/focus-lamp
 ```
 
-For ecommerce product links, harvest candidate product assets before writing the
-storyboard:
+The agent should:
 
-```bash
-node scripts/harvest-ecommerce-assets.mjs "https://example.com/product" \
-  --out-dir examples/example-ad/public/product \
-  --brand "Example" \
-  --expected-title "Example Product"
-```
+1. Classify the URL and create `ad-brief.json`.
+2. Ask only blocking preflight questions.
+3. Harvest or request usable assets.
+4. Propose ad concepts and pick the strongest route.
+5. Create or update a Remotion project.
+6. Render low-resolution stills before any MP4.
+7. Report rights, asset, and claim gaps.
 
-Create a Remotion project from the bundled template:
-
-```bash
-mkdir -p examples/example-ad
-cp -R skills/remotion-ad-video/assets/remotion-template/. examples/example-ad/
-cd examples/example-ad
-npm install
-```
-
-Edit `src/default-props.json` and the React composition to match the selected
-concept, storyboard, harvested assets, and approved claims.
+For normal use, you should let the agent run the scripts, create the Remotion
+project, and render the draft. You do not need to run validation commands.
 
 ## Synthetic URL Demo
 
@@ -151,58 +154,30 @@ The demo includes:
 - No third-party brand assets.
 - No generated-video AI output.
 
-Run it:
+Ask your agent to run it:
 
-```bash
-cd examples/synthetic-url-ad
-npm install
-npm run still
-npm run render
+```text
+Use the remotion-ad-video skill to run the synthetic URL demo. Install any local
+dependencies needed for examples/synthetic-url-ad, render one still frame first,
+then render the demo video if the still looks correct.
 ```
 
 ## Fast Render Workflow
 
-The shared lab avoids repeated project setup while testing variants.
+When you want faster iteration, ask the agent to use the fast render workflow.
+The important rule is simple:
 
-Prepare the lab once:
+1. Render low-resolution still frames first.
+2. Render a low-resolution preview only if motion timing needs review.
+3. Render a half-size draft MP4 for normal review.
+4. Render full-size output only after you approve the draft.
 
-```bash
-node scripts/fast-ad-lab.mjs prepare
-cd examples/ad-lab
-npm install
-cd ../..
-```
+Copy this prompt:
 
-Stage an example:
-
-```bash
-node scripts/fast-ad-lab.mjs stage examples/example-ad
-```
-
-Render low-resolution still frames first:
-
-```bash
-node scripts/fast-ad-lab.mjs stills examples/example-ad \
-  --frames 30,150,285,390 \
-  --scale 0.5
-```
-
-Render a low-resolution motion preview only when timing needs review:
-
-```bash
-node scripts/fast-ad-lab.mjs preview examples/example-ad --scale 0.35 --crf 30
-```
-
-Render the default half-size draft MP4:
-
-```bash
-node scripts/fast-ad-lab.mjs render examples/example-ad --scale 0.5 --crf 24
-```
-
-Render full-size output only after the draft is approved:
-
-```bash
-node scripts/fast-ad-lab.mjs final examples/example-ad --scale 1 --crf 18
+```text
+Use the fast Remotion ad workflow: render low-resolution stills first, then a
+half-size draft MP4 only if the stills are correct. Do not render full-size video
+until I approve the draft.
 ```
 
 ## Recommended Agent Prompt
@@ -241,7 +216,9 @@ A normal ad build should produce:
   result as a silent draft.
 - Confirm Remotion licensing separately for commercial rendering and deployment.
 
-## Validation
+## Maintainer Checks
+
+These commands are for maintainers and contributors, not normal skill users.
 
 Run before publishing or opening a pull request:
 
@@ -266,7 +243,10 @@ node scripts/classify-ad-source.mjs \
 node scripts/fast-ad-lab.mjs stills examples/example-ad --frames 30,150 --scale 0.25
 ```
 
-## Open-Source Release Checklist
+## Maintainer Release Checklist
+
+This checklist is for maintainers preparing a public release. Normal users do
+not need it.
 
 - Create a sanitized snapshot instead of uploading the working directory:
 
@@ -310,6 +290,6 @@ Keep changes scoped and verifiable:
 
 - Update or add reference files when the workflow changes.
 - Prefer deterministic scripts for repeated or fragile steps.
-- Run `node scripts/validate-skill.mjs` before submitting changes.
+- Run `npm run validate` before submitting changes.
 - Do not commit generated render output, dependencies, secrets, or unlicensed
   third-party media.

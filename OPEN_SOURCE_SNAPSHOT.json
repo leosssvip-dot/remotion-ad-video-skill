@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-05-19T11:57:04.055Z",
+  "sourceRoot": ".",
+  "outputDir": "dist/open-source-snapshot",
+  "included": [
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "docs/DEVELOPMENT_PLAN.md",
+    "examples/synthetic-url-ad",
+    "package.json",
+    "scripts/classify-ad-source.mjs",
+    "scripts/create-open-source-snapshot.mjs",
+    "scripts/fast-ad-lab.mjs",
+    "scripts/harvest-ecommerce-assets.mjs",
+    "scripts/validate-skill.mjs",
+    "skills/remotion-ad-video"
+  ],
+  "excludedByPolicy": [
+    ".remotion/",
+    "docs/PROGRESS.md",
+    "docs/tasks/",
+    "examples except reviewed synthetic fixtures",
+    "node_modules/",
+    "out/",
+    "public harvested/generated media",
+    "env files",
+    "audio/video/image render outputs"
+  ]
+}

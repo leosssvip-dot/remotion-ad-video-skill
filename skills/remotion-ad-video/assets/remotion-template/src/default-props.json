@@ -1,0 +1,65 @@
+{
+  "brandName": "Acme",
+  "productName": "Acme Focus Lamp",
+  "tagline": "Better light for focused work",
+  "platform": "instagram-reel",
+  "durationSeconds": 15,
+  "primaryColor": "#7CFF6B",
+  "backgroundColor": "#151515",
+  "cta": "Shop now",
+  "offer": "Launch offer available today.",
+  "disclaimer": "Replace all placeholder claims and visuals before commercial use.",
+  "audio": {
+    "enabled": false,
+    "mode": "silent-safe",
+    "tracks": []
+  },
+  "scenes": [
+    {
+      "id": "hook",
+      "startSecond": 0,
+      "durationSecond": 2,
+      "eyebrow": "New setup",
+      "headline": "Desk lighting that works harder",
+      "body": "Show the product in the first frame.",
+      "visual": "Product hero"
+    },
+    {
+      "id": "pain",
+      "startSecond": 2,
+      "durationSecond": 4,
+      "eyebrow": "Problem",
+      "headline": "Stop fighting screen glare",
+      "body": "Turn the customer pain into one clear visual.",
+      "visual": "Before"
+    },
+    {
+      "id": "demo",
+      "startSecond": 6,
+      "durationSecond": 5,
+      "eyebrow": "Demo",
+      "headline": "Angle, dim, and focus in seconds",
+      "body": "Use product screenshots, clips, or approved generated visuals.",
+      "visual": "Feature demo"
+    },
+    {
+      "id": "proof",
+      "startSecond": 11,
+      "durationSecond": 2,
+      "eyebrow": "Why it wins",
+      "headline": "Built for long work sessions",
+      "body": "Only render proof the user supplied or the source confirmed.",
+      "proof": "User-supplied claim required",
+      "visual": "Proof"
+    },
+    {
+      "id": "cta",
+      "startSecond": 13,
+      "durationSecond": 2,
+      "eyebrow": "Today",
+      "headline": "Upgrade your desk",
+      "body": "Close with one direct action.",
+      "visual": "CTA"
+    }
+  ]
+}

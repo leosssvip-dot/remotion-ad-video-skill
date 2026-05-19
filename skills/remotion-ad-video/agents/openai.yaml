@@ -1,0 +1,5 @@
+interface:
+  display_name: "Remotion Ad Video"
+  short_description: "Create ad videos with Remotion"
+  brand_color: "#151515"
+  default_prompt: "Use $remotion-ad-video to turn this product or app link into a storyboard, Remotion props, and render QA plan."

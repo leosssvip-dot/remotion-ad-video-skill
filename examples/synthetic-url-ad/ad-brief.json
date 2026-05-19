@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "sourceUrl": "https://example.com/products/focus-lamp",
+  "generatedAt": "2026-05-19T00:00:00.000Z",
+  "mode": "defaults",
+  "status": "draft",
+  "sourceType": "ecommerce_product",
+  "classificationConfidence": 0.85,
+  "classificationReasons": [
+    "ecommerce_product: shopping/product URL signals"
+  ],
+  "productName": "Focus Lamp",
+  "goal": "purchase",
+  "cta": "Shop the demo",
+  "audience": "desk workers, creators, and students who want calmer focus lighting",
+  "hookFocus": "pain",
+  "creativeRoute": "product close-up",
+  "proofPlan": {
+    "allowed": [
+      "synthetic demo claim: glare-reducing desk light"
+    ],
+    "blocked": [
+      "real customer reviews",
+      "real sales numbers",
+      "medical or productivity guarantees"
+    ],
+    "notes": "All claims are synthetic placeholders for demonstrating the workflow."
+  },
+  "assetPlan": {
+    "status": "confirmed",
+    "rightsStatus": "synthetic_demo",
+    "required": [
+      "CSS-only lamp illustration",
+      "synthetic brand mark"
+    ],
+    "notes": "No third-party media is used."
+  },
+  "format": {
+    "preset": "vertical-9x16",
+    "width": 1080,
+    "height": 1920,
+    "renderScale": 0.5,
+    "draftWidth": 540,
+    "draftHeight": 960
+  },
+  "durationSeconds": 15,
+  "audioMode": "silent-safe",
+  "unansweredQuestions": [
+    "Replace synthetic claims with approved product claims before commercial use.",
+    "Replace synthetic visuals with approved product photos or video before commercial use."
+  ],
+  "assumptions": [
+    "Demo intentionally uses a fake URL and synthetic product."
+  ],
+  "blockers": []
+}

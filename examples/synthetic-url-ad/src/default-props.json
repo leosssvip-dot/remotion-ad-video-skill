@@ -1,0 +1,60 @@
+{
+  "brandName": "LumaDesk",
+  "productName": "Focus Lamp",
+  "tagline": "A calmer desk in one click",
+  "platform": "vertical-9x16",
+  "durationSeconds": 15,
+  "primaryColor": "#7CFF6B",
+  "backgroundColor": "#0F172A",
+  "cta": "Shop the demo",
+  "offer": "Synthetic demo only.",
+  "disclaimer": "Open-source demo. Replace claims and visuals before commercial use.",
+  "scenes": [
+    {
+      "id": "hook",
+      "startSecond": 0,
+      "durationSecond": 2,
+      "eyebrow": "From URL",
+      "headline": "Turn a product page into a video ad",
+      "body": "No video-generation model required.",
+      "visual": "Programmatic Remotion ad"
+    },
+    {
+      "id": "mess",
+      "startSecond": 2,
+      "durationSecond": 4,
+      "eyebrow": "Hook",
+      "headline": "Kill the glare. Keep the focus.",
+      "body": "The brief chooses the pain, route, format, and CTA before code starts.",
+      "visual": "Pain-point motion"
+    },
+    {
+      "id": "demo",
+      "startSecond": 6,
+      "durationSecond": 4,
+      "eyebrow": "Demo",
+      "headline": "Assets, scenes, and CTA become React video",
+      "body": "Remotion renders deterministic motion from structured props.",
+      "visual": "URL to storyboard"
+    },
+    {
+      "id": "proof",
+      "startSecond": 10,
+      "durationSecond": 3,
+      "eyebrow": "Safe",
+      "headline": "If assets fail, the skill stops",
+      "body": "No fake product ad when crawling cannot confirm the main image.",
+      "proof": "Synthetic demo claim only",
+      "visual": "Fail-closed asset rule"
+    },
+    {
+      "id": "cta",
+      "startSecond": 13,
+      "durationSecond": 2,
+      "eyebrow": "Render",
+      "headline": "Ship a draft in Remotion",
+      "body": "Stills first, draft MP4 second, final render last.",
+      "visual": "Fast QA loop"
+    }
+  ]
+}

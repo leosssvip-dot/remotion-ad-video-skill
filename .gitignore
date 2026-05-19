@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Remotion and build output
+.remotion/
+out/
+**/out/
+.cache/
+**/.cache/
+dist/
+build/
+coverage/
+
+# Examples: publish only reviewed synthetic fixtures.
+examples/*
+!examples/synthetic-url-ad/
+!examples/synthetic-url-ad/**
+examples/*/node_modules/
+examples/*/out/
+examples/*/public/
+
+# Local agent workflow records
+docs/PROGRESS.md
+docs/tasks/
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

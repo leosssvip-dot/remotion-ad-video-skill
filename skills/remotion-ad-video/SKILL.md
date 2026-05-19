@@ -1,0 +1,158 @@
+---
+name: remotion-ad-video
+description: Use when turning product links, app store listings, landing pages, or product briefs into advertising videos with Remotion scripts, storyboards, template props, render QA, and handoff assets.
+---
+
+# Remotion Ad Video
+
+## Overview
+
+Use this skill to make performance-oriented ad videos with an AI agent plus Remotion. The agent owns the creative and production workflow; Remotion owns deterministic, reusable, parameterized rendering.
+
+## When To Use
+
+Use for:
+
+- Product link to 15s ad video by default, or 30s/45s only when the user asks for a longer format.
+- Google Play, App Store, SaaS, or landing page to product explainer ad.
+- Batch variants for TikTok, Reels, Shorts, Meta square, or YouTube landscape.
+- Turning a product brief into a script, storyboard, Remotion props, and render QA checklist.
+
+Do not use for:
+
+- Unlicensed reuse of third-party images, reviews, logos, music, voices, or screenshots.
+- Long-form editorial videos where ad conversion is not the goal.
+- Claims that need legal, medical, financial, or regulated proof unless the user supplies approved copy.
+
+## Core Workflow
+
+### 1. Intake
+
+Collect only the source material needed for the ad. For URLs, inspect the live page when tools are available; otherwise ask for product name, target customer, core offer, screenshots, logo, and brand constraints.
+
+Load `references/ad-intake.md` when source quality, claim safety, or asset rights are unclear.
+Load `references/ad-brief-contract.md` for every URL job before storyboard or code. Create or update `ad-brief.json` after source classification and keep preflight answers/defaults there.
+Load `references/asset-harvest.md` for URL-based jobs before writing the storyboard.
+Load `references/fast-test-workflow.md` for skill tests, first-pass iterations, or when the user cares about speed.
+Load `references/preflight-questionnaire.md` for URL-only jobs before storyboard or code. Production ads should ask 4-6 link-adapted creative questions; explicit quick tests may proceed with stated preflight defaults.
+Load `references/platform-presets.md` when the user needs to choose vertical, square, or landscape output.
+Load `references/industry-angle-library.md` when the product category is not obviously covered by games or social-feed patterns.
+Load `references/game-ad-patterns.md` for casual games, mobile games, app-store game listings, puzzle games, hypercasual games, or simple gameplay loops.
+Load `references/social-feed-ad-patterns.md` for short-video, social, creator, UGC, live shopping, community, or content-feed apps.
+Load `references/variant-system.md` when the user wants options, batch ads, or a commercial-quality ad rather than a single sample.
+
+Required decisions:
+
+- Product or app name.
+- Target customer and pain point.
+- Size preset and exact dimensions: vertical, square, or landscape unless a platform-specific format is supplied.
+- Duration: default 15s for short-form ads; use 30s or 45s only when the brief needs explanation depth or the user requests it.
+- One primary conversion goal.
+- Usable assets and rights status.
+- Audio mode: silent-safe, SFX only, music plus SFX, or voiceover.
+- Remotion license suitability for the intended commercial use.
+
+Minimum URL jobs must attempt to harvest favicon, touch icon, Open Graph image, visible logo or screenshots, and brand colors. Ecommerce product URLs must also attempt a product main image with `scripts/harvest-ecommerce-assets.mjs` before creative work starts; the linked item is the ad subject, and platform/store context stays secondary. Store usable public assets locally in the generated project `public/<brand>/` folder, create or update an asset manifest when practical, and reference assets with `staticFile()`.
+
+Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset.
+
+### 2. Strategy
+
+Pick one primary ad angle before writing scenes. Load `references/creative-direction.md` before implementation to avoid static slide-deck output.
+
+- Pain-point hook: problem first, product solves it.
+- Demo proof: show the product or app doing the work.
+- Offer conversion: discount, trial, bundle, or deadline.
+- Social proof: rating, review, result, or usage proof.
+- Comparison: before vs after or old way vs new way.
+- Gameplay spectacle: imitate the high-energy core loop for simple games instead of explaining features.
+- Feed-native spectacle: imitate fast swipe, creator clips, live/shop overlays, comment/like rails, and sound-reactive cuts for social or short-video apps.
+
+Every claim must be tagged as `observed`, `user_supplied`, `inferred`, or `blocked`. Do not render `blocked` claims.
+
+Every real commercial sample needs a thumb-stopping visual idea, not just copy. Examples: chat bubbles becoming completed tasks, before/after workflow collapse, a product screenshot exploding into features, or a terminal command triggering visible automation.
+
+For simple games, especially app-store listings, the visual idea should usually be a gameplay-style simulation: falling pieces, swaps, merges, collisions, score pops, explosions, level-up moments, near-fail rescues, or reward cascades. Static screenshots alone are proof assets, not the ad.
+
+For short-video, creator, or social-feed apps, the visual idea should usually be a feed-native simulation: a phone frame that scrolls or swaps content, creator imagery, UI rails, sound/effect stickers, LIVE or Shop chips when source-supported, and quick cuts that feel like the platform itself rather than a product explainer.
+
+For commercial-quality requests, generate at least three distinct concepts before implementation unless the user asked for one exact direction. Score them with `references/variant-system.md` and implement the strongest concept or the user-selected concept.
+
+### 3. Storyboard
+
+Create a timed storyboard before code. Load `references/storyboard-contract.md` for the scene contract.
+
+Default 15s structure:
+
+- 0-2s: Thumb-stopping hook with product visible.
+- 2-6s: Demo, payoff, or proof without stopping motion.
+- 6-11s: Main benefit, differentiator, or second payoff.
+- 11-15s: CTA, offer, and disclaimer.
+
+Keep each beat to one visual idea. Avoid paragraphs in video text; prefer short lines that fit mobile. For games, use fast kinetic shots; cuts are fine, but each shot should contain gameplay, product motion, character/world action, or a visual payoff rather than a static information card.
+For social or short-video apps, cuts are expected. Each shot should feel like a feed moment, creator clip, notification, sound cue, live/shop moment, or action prompt instead of a static feature card.
+Load `references/audio-caption-system.md` when adding music, sound effects, voiceover, captions, or silent-autoplay readability.
+
+### 4. Template
+
+If no project exists, copy `assets/remotion-template/` into the target workspace. If a Remotion project exists, adapt its existing package manager, entrypoint, and component style.
+
+Template rules:
+
+- Use a Zod schema for input props.
+- Keep scenes data-driven rather than hard-coded.
+- Use Remotion `Composition`, `Sequence`, and `AbsoluteFill`.
+- Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
+- Prefer real product/app visuals. Use generated placeholders only when clearly marked.
+- Use harvested logo/icon/OG/screenshot assets when a URL was supplied and rights status is not blocked.
+- If music, SFX, or voiceover is promised, add actual Remotion audio tracks through props and rights-cleared files or URLs. If no audible track is available, label the output as a silent draft instead of implying sound.
+- Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis.
+- For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.
+- Keep typography readable at mobile sizes; do not rely on dense body text.
+
+For Remotion implementation details, use the Remotion best-practices skill when available, especially composition, parameter, assets, timing, transitions, audio, and subtitle rules.
+
+### 5. Render QA
+
+Load `references/render-qa-checklist.md` before handoff.
+
+Minimum checks:
+
+- Typecheck or build passes.
+- Still frame renders for hook, middle, and CTA sections. For tests and iteration, use the fast lab low-resolution stills before full MP4.
+- Text does not overflow or overlap.
+- Visuals are present, not blank.
+- Hook, middle, and CTA stills show different visual states.
+- If audio is promised, the rendered MP4 is not full-duration silence.
+- Advertising-aesthetic QA passes using `references/ad-aesthetic-qa.md` for commercial-quality requests.
+- CTA, offer, and disclaimer match approved copy.
+- Any unsupported claims are removed or rewritten.
+- Output files and commands are reported.
+
+For skill tests, default to half-size draft video output and do not rerender full-size MP4 for non-blocking polish. Use the blocking/non-blocking split in `references/fast-test-workflow.md`.
+
+## Output Contract
+
+Return:
+
+- Source summary with claim confidence.
+- `ad-brief.json` path or inline summary, including source type, preflight answers/defaults, blockers, format, and audio mode.
+- Preflight assumptions or user answers, including size preset and audio mode.
+- Chosen ad angle and target platform.
+- Script and storyboard.
+- Remotion props JSON.
+- Files changed or template path.
+- Verification evidence.
+- Known rights, license, or asset gaps.
+
+## Common Mistakes
+
+- Making a generic product video instead of an ad with a conversion goal.
+- Starting Remotion code before deciding hook, proof, and CTA.
+- Shipping a PPT-like sequence of text cards with fades.
+- Ignoring available logo, favicon, OG image, screenshots, or brand colors from the source URL.
+- Treating a game listing like a SaaS explainer instead of showing high-energy play.
+- Rendering product claims inferred from marketing copy as facts.
+- Using remote assets without confirming commercial rights.
+- Overloading the screen with text that works in chat but not in video.
+- Ignoring Remotion commercial license requirements.

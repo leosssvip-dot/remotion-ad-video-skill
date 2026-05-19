@@ -32,6 +32,7 @@ const requiredFiles = [
 const requiredRootFiles = [
   "LICENSE",
   "README.zh-CN.md",
+  "assets/demo/ad-video-3.mp4",
   "package.json",
   "scripts/classify-ad-source.mjs",
   "scripts/create-open-source-snapshot.mjs",
@@ -147,6 +148,8 @@ const rootReadme = readRoot("README.md");
 for (const phrase of [
   "remotion-ad-video-skill",
   "README.zh-CN.md",
+  "https://github.com/remotion-dev/remotion",
+  "assets/demo/ad-video-3.mp4",
   "No video-generation AI required",
   "agent-agnostic",
   "Agent Compatibility",
@@ -166,6 +169,8 @@ for (const phrase of [
 const chineseReadme = readRoot("README.zh-CN.md");
 for (const phrase of [
   "remotion-ad-video-skill",
+  "https://github.com/remotion-dev/remotion",
+  "assets/demo/ad-video-3.mp4",
   "不需要接入视频生成 AI",
   "通用的 agent skill",
   "URL -> 来源分类 -> ad-brief.json",

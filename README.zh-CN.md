@@ -5,7 +5,16 @@
 给一个 URL，用 AI coding agent + Remotion 生成可编辑、可复现的广告视频工程。
 不需要接入视频生成 AI。
 
+本项目基于 [Remotion](https://github.com/remotion-dev/remotion)，也就是用
+React 以代码方式创建视频的框架。
+
 这个项目是一个通用的 agent skill 和工具包，适用于商品链接、应用商店链接、落地页或产品 brief。Agent 负责理解链接、规划广告创意、整理素材和生成 Remotion 工程；Remotion 负责用 React 代码稳定渲染视频。你不需要 Sora、Runway、Pika、Kling 或其他视频生成模型。
+
+## 演示视频
+
+<video src="assets/demo/ad-video-3.mp4" controls muted playsinline width="100%" title="Remotion 广告视频 skill 演示"></video>
+
+[查看演示视频](assets/demo/ad-video-3.mp4)
 
 ## 为什么做这个
 

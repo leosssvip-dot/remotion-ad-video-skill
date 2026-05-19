@@ -13,6 +13,7 @@ const allowlist = [
   "LICENSE",
   "README.md",
   "README.zh-CN.md",
+  "assets/demo/ad-video-3.mp4",
   "docs/DEVELOPMENT_PLAN.md",
   "examples/synthetic-url-ad",
   "package.json",
@@ -36,6 +37,10 @@ const deniedFiles = new Set([
   ".DS_Store",
 ]);
 
+const allowedMediaFiles = new Set([
+  "assets/demo/ad-video-3.mp4",
+]);
+
 const denyPatterns = [
   /\.env($|\.)/,
   /\.(mp4|mov|webm|png|jpe?g|webp|gif|wav|mp3|m4a)$/i,
@@ -49,6 +54,9 @@ const shouldCopy = (source) => {
   }
   if (deniedFiles.has(parts.at(-1))) {
     return false;
+  }
+  if (allowedMediaFiles.has(rel)) {
+    return true;
   }
   return !denyPatterns.some((pattern) => pattern.test(rel));
 };
@@ -104,7 +112,7 @@ const manifest = {
     "out/",
     "public harvested/generated media",
     "env files",
-    "audio/video/image render outputs",
+    "audio/video/image render outputs except reviewed README demo video",
   ],
 };
 

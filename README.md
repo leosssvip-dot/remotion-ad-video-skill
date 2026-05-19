@@ -5,11 +5,20 @@
 Create advertising videos from a URL with an AI coding agent and Remotion.
 No video-generation AI required.
 
+Built on [Remotion](https://github.com/remotion-dev/remotion), the React
+framework for creating videos programmatically.
+
 This project is an agent-agnostic skill and toolkit for turning product links,
 app-store listings, landing pages, or product briefs into performance-oriented
 Remotion ad video projects. The agent plans the ad; Remotion renders
 deterministic React-based video. You do not need Sora, Runway, Pika, Kling, or
 any other generated-video API.
+
+## Demo Video
+
+<video src="assets/demo/ad-video-3.mp4" controls muted playsinline width="100%" title="Remotion ad video skill demo"></video>
+
+[Watch the demo video](assets/demo/ad-video-3.mp4)
 
 ## Why This Exists
 

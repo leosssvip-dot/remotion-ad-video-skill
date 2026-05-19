@@ -47,6 +47,8 @@ const fail = (message) => {
   process.exitCode = 1;
 };
 
+const maxReadmeDemoVideoBytes = 10_000_000;
+
 const read = (relativePath) =>
   readFileSync(join(skillDir, relativePath), "utf8");
 const readRoot = (relativePath) =>
@@ -71,6 +73,15 @@ for (const file of requiredRootFiles) {
   } catch {
     fail(`missing file: ${file}`);
   }
+}
+
+try {
+  const demoVideoBytes = statSync(join(root, "assets/demo/ad-video-3.mp4")).size;
+  if (demoVideoBytes > maxReadmeDemoVideoBytes) {
+    fail(`README demo video must be <= ${maxReadmeDemoVideoBytes} bytes, got ${demoVideoBytes}`);
+  }
+} catch {
+  fail("missing file: assets/demo/ad-video-3.mp4");
 }
 
 if (process.exitCode) {

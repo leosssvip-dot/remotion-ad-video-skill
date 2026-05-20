@@ -15,6 +15,12 @@ deterministic React-based video. You do not need Sora, Runway, Pika, Kling, or
 any other generated-video API.
 
 ## Demo Video
+
+
+https://github.com/user-attachments/assets/d93f65f0-cb47-47b5-a8d6-a20be31c0553
+
+
+
 https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2
 
 https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8

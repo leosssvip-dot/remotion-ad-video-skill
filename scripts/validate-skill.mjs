@@ -248,6 +248,8 @@ for (const phrase of [
   "Preflight defaults",
   "4-6 questions",
   "Creative route",
+  "structured choice",
+  "text fallback",
   "If harvesting is blocked",
   "vertical, square, or landscape",
   "synced SFX"
@@ -265,6 +267,8 @@ for (const phrase of [
   "ecommerce_product",
   "mobile_game",
   "assetPlan.status",
+  "interactionPlan",
+  "choiceQuestions",
   "user_required",
   "blockers",
   "Storyboard Traceability"
@@ -339,6 +343,8 @@ for (const phrase of [
   "saas_api",
   "brief-out",
   "preflightQuestions",
+  "interactionPlan",
+  "choiceQuestions",
   "assetPlan",
 ]) {
   if (!classifierScript.includes(phrase)) {

@@ -135,6 +135,9 @@ The agent should:
 
 1. Classify the URL and create `ad-brief.json`.
 2. Ask link-adapted creative preflight questions by default.
+   If the agent supports selectable UI, it should use choices for size,
+   creative route, and audio mode; otherwise it should ask the same options in
+   text.
 3. Harvest or request usable assets.
 4. Propose ad concepts and pick the strongest route.
 5. Create or update a Remotion project.

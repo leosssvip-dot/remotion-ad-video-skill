@@ -184,6 +184,46 @@ const questionsFor = (type, goal, routes) => [
   "Format and sound: choose vertical, square, or landscape; and silent-safe, synced SFX, music plus SFX, or voiceover.",
 ];
 
+const choiceQuestionsFor = (type, goal, cta, routes) => {
+  const routeOptions = routes.slice(0, 3).map((route, index) => ({
+    label: route,
+    value: route,
+    description: index === 0 ? "Recommended default for this link type." : "Alternative creative direction.",
+  }));
+
+  return [
+    {
+      id: "format",
+      question: "Choose the output size.",
+      options: [
+        { label: "Vertical 9:16", value: "vertical-9x16", description: "Recommended for TikTok, Reels, Shorts, and mobile ads." },
+        { label: "Square 1:1", value: "square-1x1", description: "Use for feed placements where square assets are preferred." },
+        { label: "Landscape 16:9", value: "landscape-16x9", description: "Use for YouTube, website, and widescreen placements." },
+      ],
+    },
+    {
+      id: "creativeRoute",
+      question: `Choose the main creative route for this ${type} ad.`,
+      options: routeOptions,
+    },
+    {
+      id: "audioMode",
+      question: "Choose the audio mode.",
+      options: [
+        { label: "Synced SFX", value: "sfx-only", description: "Recommended: interaction sounds matched to visible events." },
+        { label: "Silent safe", value: "silent-safe", description: "No required audio; captions and visuals carry the ad." },
+        { label: "Music + SFX", value: "music-sfx", description: "Use when a rights-cleared track is available." },
+      ],
+    },
+  ];
+};
+
+const openQuestionsFor = (goal, cta) => [
+  `Audience and hook: who should this target, and should the first 2 seconds hit desire, pain, curiosity, offer, status, FOMO, or challenge?`,
+  `Goal and CTA: I infer goal=${goal} and CTA="${cta}". Confirm or provide the preferred conversion action.`,
+  "Proof/assets: what proof may be shown, and can page-harvested assets be used as references?",
+];
+
 const classify = ({ sourceUrl, title, description, input = {} }) => {
   let parsed;
   try {
@@ -275,6 +315,12 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
     cta,
     creativeRoutes,
     preflightQuestions: questionsFor(sourceType, goal, creativeRoutes),
+    interactionPlan: {
+      preferredMode: "structured_choices",
+      fallbackMode: "text",
+      choiceQuestions: choiceQuestionsFor(sourceType, goal, cta, creativeRoutes),
+      openQuestions: openQuestionsFor(goal, cta),
+    },
   };
 };
 
@@ -325,6 +371,13 @@ const makeBrief = ({ classification, options }) => {
     format,
     durationSeconds: 15,
     audioMode,
+    interactionPlan: {
+      preferredMode: "structured_choices",
+      fallbackMode: "text",
+      instructions: "If the agent supports selectable UI, ask choiceQuestions first. If not, render the same choices as text fallback. Ask openQuestions only when needed after the choices.",
+      choiceQuestions: classification.interactionPlan.choiceQuestions,
+      openQuestions: classification.interactionPlan.openQuestions,
+    },
     unansweredQuestions: classification.preflightQuestions,
     assumptions: [
       `Category inferred as ${classification.sourceType} with confidence ${classification.confidence}.`,

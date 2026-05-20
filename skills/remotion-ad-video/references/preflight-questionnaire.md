@@ -19,6 +19,16 @@ brief.
 - Keep it to 4-6 questions. The user can answer in shorthand.
 - If product/app visuals cannot be harvested after crawler and browser-backed attempts, stop and ask the user to provide images or screenshots before making the ad.
 
+## Interaction Adapter
+
+Prefer agent-native structured choice UI when available. Use it for the first
+three choices in `interactionPlan.choiceQuestions`: output size, creative route,
+and audio mode. If structured choice UI is not available, use a text fallback
+with the same options.
+
+Do not block a generic agent on UI support. The skill is universal: selectable
+chips/forms/dropdowns are preferred, but plain chat questions are valid fallback.
+
 ## Link-Adapted Question Set
 
 First infer the link type: ecommerce product, mobile game, social/content app,

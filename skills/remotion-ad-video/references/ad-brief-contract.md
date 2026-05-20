@@ -58,6 +58,23 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   },
   "durationSeconds": 15,
   "audioMode": "sfx-only",
+  "interactionPlan": {
+    "preferredMode": "structured_choices",
+    "fallbackMode": "text",
+    "instructions": "If the agent supports selectable UI, ask choiceQuestions first. If not, render the same choices as text fallback.",
+    "choiceQuestions": [
+      {
+        "id": "format",
+        "question": "Choose the output size.",
+        "options": [
+          {"label": "Vertical 9:16", "value": "vertical-9x16"},
+          {"label": "Square 1:1", "value": "square-1x1"},
+          {"label": "Landscape 16:9", "value": "landscape-16x9"}
+        ]
+      }
+    ],
+    "openQuestions": []
+  },
   "unansweredQuestions": [],
   "assumptions": [],
   "blockers": []
@@ -95,6 +112,9 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
 
 - If `blockers` is non-empty, do not storyboard or render. Resolve blockers
   first.
+- If `blockers` includes `preflight_answers_required`, ask
+  `interactionPlan.choiceQuestions` first using structured choices when
+  supported, or text fallback when not supported.
 - If `assetPlan.status` is `blocked` or `user_required`, stop and ask the user
   for assets. Do not make a fake product ad.
 - For ecommerce product links, do not proceed without a credible product main
@@ -113,3 +133,5 @@ The storyboard and `default-props.json` should cite these brief values:
 - `proofPlan.allowed` is the only source for rendered proof claims.
 - `assetPlan.required` drives harvesting and visual QA.
 - `format` and `durationSeconds` drive Remotion composition settings.
+- `interactionPlan.choiceQuestions` drives agent-native selectable preflight UI
+  when supported.

@@ -1,4 +1,6 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { readFileSync, readdirSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -246,10 +248,11 @@ const preflight = read("references/preflight-questionnaire.md");
 for (const phrase of [
   "link-adapted questions",
   "Preflight defaults",
-  "4-6 questions",
-  "Creative route",
+  "exactly three required choices",
+  "creative route",
   "structured choice",
   "text fallback",
+  "Do not ask the old 1-6 questionnaire",
   "If harvesting is blocked",
   "vertical, square, or landscape",
   "synced SFX"
@@ -361,11 +364,44 @@ for (const phrase of [
   "preflightQuestions",
   "interactionPlan",
   "choiceQuestions",
+  "requiredChoiceQuestionIds",
+  "textFallbackQuestionsFor",
   "assetPlan",
 ]) {
   if (!classifierScript.includes(phrase)) {
     fail(`classify-ad-source.mjs missing phrase: ${phrase}`);
   }
+}
+
+const classifierBriefPath = join(tmpdir(), `remotion-ad-validate-${Date.now()}.json`);
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://play.google.com/store/apps/details?id=com.zhiliaoapp.musically",
+    "--brief-out",
+    classifierBriefPath,
+  ], { stdio: "pipe" });
+  const classifierBrief = JSON.parse(readFileSync(classifierBriefPath, "utf8"));
+  const unanswered = classifierBrief.unansweredQuestions ?? [];
+  if (classifierBrief.blockers?.[0] !== "preflight_answers_required") {
+    fail("classifier brief must block on preflight_answers_required by default");
+  }
+  if (unanswered.length !== 3) {
+    fail(`classifier brief unansweredQuestions length ${unanswered.length} must be 3`);
+  }
+  for (const id of ["format", "creativeRoute", "audioMode"]) {
+    if (!unanswered.some((question) => question.startsWith(`${id}:`))) {
+      fail(`classifier brief unansweredQuestions missing ${id}`);
+    }
+  }
+  if (unanswered.join("\n").includes("Proof and claims")) {
+    fail("classifier brief must not put legacy proof question in unansweredQuestions");
+  }
+  if ((classifierBrief.interactionPlan?.choiceQuestions ?? []).length !== 3) {
+    fail("classifier brief interactionPlan.choiceQuestions must contain 3 questions");
+  }
+} finally {
+  rmSync(classifierBriefPath, { force: true });
 }
 
 const ecommerceHarvestScript = readRoot("scripts/harvest-ecommerce-assets.mjs");

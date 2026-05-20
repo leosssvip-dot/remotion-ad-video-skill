@@ -175,15 +175,6 @@ const routesFor = (type) => {
   return routes[type] ?? routes.unknown;
 };
 
-const questionsFor = (type, goal, routes) => [
-  `Goal and CTA: I infer goal=${goal}. Confirm this or provide the preferred conversion action.`,
-  "Audience and hook: who should this target, and should the first 2 seconds hit desire, pain, curiosity, offer, status, FOMO, or gameplay challenge?",
-  `Creative route: choose one: ${routes.join(", ")}.`,
-  "Proof and claims: what proof may be shown: price, discount, rating, review count, speed/result claim, testimonial, or none?",
-  "Assets and rights: may page-harvested assets be used as references, or will approved images/video/logo be provided?",
-  "Format and sound: choose vertical, square, or landscape; and silent-safe, synced SFX, music plus SFX, or voiceover.",
-];
-
 const choiceQuestionsFor = (type, goal, cta, routes) => {
   const routeOptions = routes.slice(0, 3).map((route, index) => ({
     label: route,
@@ -217,6 +208,14 @@ const choiceQuestionsFor = (type, goal, cta, routes) => {
     },
   ];
 };
+
+const formatChoiceQuestion = (question) =>
+  `${question.id}: ${question.question} Options: ${question.options
+    .map((option) => `${option.label}=${option.value}`)
+    .join(", ")}.`;
+
+const textFallbackQuestionsFor = (choiceQuestions) =>
+  choiceQuestions.map(formatChoiceQuestion);
 
 const openQuestionsFor = (goal, cta) => [
   `Audience and hook: who should this target, and should the first 2 seconds hit desire, pain, curiosity, offer, status, FOMO, or challenge?`,
@@ -258,7 +257,7 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
 
   const ecommerceDomains = ["shein.", "amazon.", "etsy.", "shopify.", "temu.", "aliexpress.", "walmart.", "target.", "bestbuy.", "ebay."];
   const ecommercePathWords = ["/product", "/products", "/dp/", "/item", "/p-", "-p-", "sku", "mallcode", "product_items_component"];
-  const gameWords = ["game", "games", "gameplay", "roblox", "candy", "crush", "saga", "puzzle", "match", "level", "quest", "arcade", "battle"];
+  const gameWords = ["game", "games", "gameplay", "roblox", "candy", "crush", "saga", "puzzle", "match", "level", "quest", "arcade", "battle", "tycoon", "idle", "simulator"];
   const socialWords = ["tiktok", "musically", "instagram", "creator", "reels", "shorts", "feed", "followers", "live", "ugc", "community"];
   const saasWords = ["api", "sdk", "developer", "workflow", "automation", "dashboard", "integration", "endpoint", "no-code", "webhook"];
   const serviceWords = ["restaurant", "salon", "clinic", "booking", "appointment", "lawyer", "dentist", "repair", "cleaning", "local"];
@@ -303,6 +302,8 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
   const confidence = sourceType === "unknown" ? 0.25 : Math.min(0.95, 0.35 + topScore * 0.1);
   const { goal, cta } = goalFor(sourceType);
   const creativeRoutes = routesFor(sourceType);
+  const choiceQuestions = choiceQuestionsFor(sourceType, goal, cta, creativeRoutes);
+  const openQuestions = openQuestionsFor(goal, cta);
 
   return {
     schemaVersion: "1.0",
@@ -314,12 +315,13 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
     goal,
     cta,
     creativeRoutes,
-    preflightQuestions: questionsFor(sourceType, goal, creativeRoutes),
+    preflightQuestions: textFallbackQuestionsFor(choiceQuestions),
     interactionPlan: {
       preferredMode: "structured_choices",
       fallbackMode: "text",
-      choiceQuestions: choiceQuestionsFor(sourceType, goal, cta, creativeRoutes),
-      openQuestions: openQuestionsFor(goal, cta),
+      requiredChoiceQuestionIds: choiceQuestions.map((question) => question.id),
+      choiceQuestions,
+      openQuestions,
     },
   };
 };
@@ -374,11 +376,12 @@ const makeBrief = ({ classification, options }) => {
     interactionPlan: {
       preferredMode: "structured_choices",
       fallbackMode: "text",
-      instructions: "If the agent supports selectable UI, ask choiceQuestions first. If not, render the same choices as text fallback. Ask openQuestions only when needed after the choices.",
+      instructions: "Ask only choiceQuestions first. If the agent supports selectable UI, use it; if not, render those same choices as text fallback. Do not ask openQuestions until after these choices unless the user asks for deeper brief work.",
+      requiredChoiceQuestionIds: classification.interactionPlan.requiredChoiceQuestionIds,
       choiceQuestions: classification.interactionPlan.choiceQuestions,
       openQuestions: classification.interactionPlan.openQuestions,
     },
-    unansweredQuestions: classification.preflightQuestions,
+    unansweredQuestions: requiresPreflight ? classification.preflightQuestions : [],
     assumptions: [
       `Category inferred as ${classification.sourceType} with confidence ${classification.confidence}.`,
       `Default creative route is ${primaryRoute}.`,

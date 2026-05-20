@@ -61,7 +61,8 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   "interactionPlan": {
     "preferredMode": "structured_choices",
     "fallbackMode": "text",
-    "instructions": "If the agent supports selectable UI, ask choiceQuestions first. If not, render the same choices as text fallback.",
+    "instructions": "Ask only choiceQuestions first. If the agent supports selectable UI, use it; if not, render the same choices as text fallback.",
+    "requiredChoiceQuestionIds": ["format", "creativeRoute", "audioMode"],
     "choiceQuestions": [
       {
         "id": "format",
@@ -75,7 +76,9 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
     ],
     "openQuestions": []
   },
-  "unansweredQuestions": [],
+  "unansweredQuestions": [
+    "format: Choose the output size. Options: Vertical 9:16=vertical-9x16, Square 1:1=square-1x1, Landscape 16:9=landscape-16x9."
+  ],
   "assumptions": [],
   "blockers": []
 }
@@ -114,7 +117,8 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   first.
 - If `blockers` includes `preflight_answers_required`, ask
   `interactionPlan.choiceQuestions` first using structured choices when
-  supported, or text fallback when not supported.
+  supported, or text fallback when not supported. Do not ask the longer
+  optional follow-up questions as the initial required prompt.
 - If `assetPlan.status` is `blocked` or `user_required`, stop and ask the user
   for assets. Do not make a fake product ad.
 - For ecommerce product links, do not proceed without a credible product main

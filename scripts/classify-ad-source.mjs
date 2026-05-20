@@ -23,6 +23,7 @@ Options:
   --description <text>   Optional description/body text from the source.
   --format <preset>      vertical, square, or landscape. Defaults to vertical.
   --audio <mode>         silent-safe, sfx-only, music-sfx, or voiceover. Defaults to sfx-only.
+  --preflight-mode <mode> required, defaults, or answered. Defaults to required.
   --brief-out <path>     Write a draft ad-brief.json artifact.
   --json <path>          Write classifier output JSON.`);
   process.exit(1);
@@ -94,6 +95,14 @@ const formatPreset = (raw) => {
     return { preset: "landscape-16x9", width: 1920, height: 1080, renderScale: 0.5, draftWidth: 960, draftHeight: 540 };
   }
   return { preset: "vertical-9x16", width: 1080, height: 1920, renderScale: 0.5, draftWidth: 540, draftHeight: 960 };
+};
+
+const preflightModeFor = (raw) => {
+  const value = cleanText(raw || "required").toLowerCase();
+  if (["required", "defaults", "answered"].includes(value)) {
+    return value;
+  }
+  throw new Error(`Unsupported --preflight-mode: ${raw}`);
 };
 
 const goalFor = (type) => {
@@ -272,6 +281,8 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
 const makeBrief = ({ classification, options }) => {
   const format = formatPreset(options.format);
   const audioMode = cleanText(options.audio || "sfx-only");
+  const preflightMode = preflightModeFor(options["preflight-mode"]);
+  const requiresPreflight = preflightMode === "required";
   const primaryRoute = classification.creativeRoutes[0] ?? "product demo";
   const assetNotes = {
     ecommerce_product: "Run ecommerce harvesting for product main image before storyboard. If blocked, stop and request user images.",
@@ -287,8 +298,8 @@ const makeBrief = ({ classification, options }) => {
     schemaVersion: "1.0",
     sourceUrl: classification.sourceUrl,
     generatedAt: new Date().toISOString(),
-    mode: "defaults",
-    status: "draft",
+    mode: requiresPreflight ? "requires_input" : preflightMode,
+    status: requiresPreflight ? "blocked" : preflightMode === "answered" ? "answered" : "draft",
     sourceType: classification.sourceType,
     classificationConfidence: classification.confidence,
     classificationReasons: classification.reasons,
@@ -319,8 +330,9 @@ const makeBrief = ({ classification, options }) => {
       `Category inferred as ${classification.sourceType} with confidence ${classification.confidence}.`,
       `Default creative route is ${primaryRoute}.`,
       `Default format is ${format.preset} with draft scale ${format.renderScale}.`,
+      requiresPreflight ? "Preflight answers are required before storyboard or render." : `Preflight mode is ${preflightMode}.`,
     ],
-    blockers: [],
+    blockers: requiresPreflight ? ["preflight_answers_required"] : [],
   };
 };
 

@@ -34,7 +34,7 @@ Load `references/ad-intake.md` when source quality, claim safety, or asset right
 Load `references/ad-brief-contract.md` for every URL job before storyboard or code. Create or update `ad-brief.json` after source classification and keep preflight answers/defaults there.
 Load `references/asset-harvest.md` for URL-based jobs before writing the storyboard.
 Load `references/fast-test-workflow.md` for skill tests, first-pass iterations, or when the user cares about speed.
-Load `references/preflight-questionnaire.md` for URL-only jobs before storyboard or code. Production ads should ask 4-6 link-adapted creative questions; explicit quick tests may proceed with stated preflight defaults.
+Load `references/preflight-questionnaire.md` for URL-only jobs before storyboard or code. Ask 4-6 link-adapted creative questions by default, even for "test the skill" prompts. Only skip questions when the user explicitly asks for no questions, fastest possible defaults, or a benchmark run with inferred defaults.
 Load `references/platform-presets.md` when the user needs to choose vertical, square, or landscape output.
 Load `references/industry-angle-library.md` when the product category is not obviously covered by games or social-feed patterns.
 Load `references/game-ad-patterns.md` for casual games, mobile games, app-store game listings, puzzle games, hypercasual games, or simple gameplay loops.
@@ -54,7 +54,7 @@ Required decisions:
 
 Minimum URL jobs must attempt to harvest favicon, touch icon, Open Graph image, visible logo or screenshots, and brand colors. Ecommerce product URLs must also attempt a product main image with `scripts/harvest-ecommerce-assets.mjs` before creative work starts; the linked item is the ad subject, and platform/store context stays secondary. Store usable public assets locally in the generated project `public/<brand>/` folder, create or update an asset manifest when practical, and reference assets with `staticFile()`.
 
-Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset.
+Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers, includes `preflight_answers_required`, or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset. Use `--preflight-mode defaults` only when the user explicitly approved skipping questions.
 
 ### 2. Strategy
 

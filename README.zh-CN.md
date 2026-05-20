@@ -107,7 +107,7 @@ https://example.com/products/focus-lamp
 Agent 应该完成：
 
 1. 识别 URL 类型并创建 `ad-brief.json`。
-2. 只询问阻塞性的预调研问题。
+2. 默认先询问和链接匹配的创意预调研问题。
 3. 抓取可用素材，或者在素材失败时让用户提供。
 4. 提出广告创意方向，并选择最强的一版。
 5. 创建或更新 Remotion 工程。
@@ -163,12 +163,13 @@ stills 没问题后再渲染半尺寸 draft MP4。
 
 ```text
 Use $remotion-ad-video to turn this product or app link into a 15s ad.
-Create ad-brief.json first, ask any blocking preflight questions, harvest usable
-assets, propose three concepts, implement the strongest one in Remotion, render
-low-resolution stills before any MP4, and report rights or asset gaps.
+Create ad-brief.json first, ask link-adapted creative preflight questions,
+harvest usable assets, propose three concepts, implement the strongest one in
+Remotion, render low-resolution stills before any MP4, and report rights or
+asset gaps.
 ```
 
-快速测试可以使用推断默认值，但必须把默认值写进 `ad-brief.json`。
+如果你想跳过问答跑最快默认流程，需要明确告诉 agent。此时可以使用推断默认值，但必须把默认值写进 `ad-brief.json`。
 
 ## 输出产物
 

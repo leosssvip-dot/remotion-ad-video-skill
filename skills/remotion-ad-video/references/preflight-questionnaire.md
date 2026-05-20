@@ -10,8 +10,9 @@ brief.
 
 ## Trigger Rules
 
-- For production ads or ambiguous URL-only requests, ask link-adapted questions before creative work.
-- For explicit skill tests, quick demos, or benchmark runs, defaults are allowed, but the answer must include a short `Preflight defaults` block before work continues.
+- For URL-only requests, ask link-adapted questions before creative work by default.
+- Do not treat "test this skill" as permission to skip questions. A test should still ask unless the user explicitly says to skip questions, use fastest possible defaults, or run a benchmark with inferred defaults.
+- When proceeding without answers by explicit user request, the answer must include a short `Preflight defaults` block before work continues.
 - For all URL jobs, create or update `ad-brief.json` with source type, goal,
   CTA, creative route, format, audio mode, unresolved questions, and blockers.
 - Ask only unresolved questions; do not ask what the link already proves.

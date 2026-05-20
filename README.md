@@ -134,7 +134,7 @@ https://example.com/products/focus-lamp
 The agent should:
 
 1. Classify the URL and create `ad-brief.json`.
-2. Ask only blocking preflight questions.
+2. Ask link-adapted creative preflight questions by default.
 3. Harvest or request usable assets.
 4. Propose ad concepts and pick the strongest route.
 5. Create or update a Remotion project.
@@ -192,13 +192,14 @@ until I approve the draft.
 
 ```text
 Use $remotion-ad-video to turn this product or app link into a 15s ad.
-Create ad-brief.json first, ask any blocking preflight questions, harvest usable
-assets, propose three concepts, implement the strongest one in Remotion, render
-low-resolution stills before any MP4, and report rights or asset gaps.
+Create ad-brief.json first, ask link-adapted creative preflight questions,
+harvest usable assets, propose three concepts, implement the strongest one in
+Remotion, render low-resolution stills before any MP4, and report rights or
+asset gaps.
 ```
 
-For quick tests, allow inferred defaults but still write them into
-`ad-brief.json`.
+If you want a no-question speed run, say so explicitly. The agent can then use
+inferred defaults, but it must still write them into `ad-brief.json`.
 
 ## Output Artifacts
 

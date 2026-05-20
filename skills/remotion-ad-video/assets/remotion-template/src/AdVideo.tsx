@@ -22,7 +22,7 @@ type AudioSpec = NonNullable<AdVideoProps["audio"]>;
 type AudioTrack = AudioSpec["tracks"][number];
 
 const audioSrc = (src: string) =>
-  /^https?:\/\//i.test(src) ? src : staticFile(src);
+  /^(https?:|data:audio\/)/i.test(src) ? src : staticFile(src);
 
 const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
   const { fps } = useVideoConfig();

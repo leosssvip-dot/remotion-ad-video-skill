@@ -32,7 +32,7 @@ ffprobe -v error -show_streams -select_streams a out/ad-video.mp4
 ffmpeg -hide_banner -nostats -i out/ad-video.mp4 -af volumedetect -f null -
 ```
 
-If `volumedetect` reports only near-silent levels for the full duration, the render is a silent draft even if an audio stream exists.
+If `volumedetect` reports only near-silent levels for the full duration, the render is a silent draft even if an audio stream exists. When `audioMode` is `sfx-only`, `music-sfx`, or `voiceover`, that is blocking and must be fixed before handoff unless the user explicitly accepts a silent-safe draft.
 
 For fast skill tests, prefer the shared lab:
 

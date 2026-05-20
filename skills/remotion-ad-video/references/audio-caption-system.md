@@ -11,19 +11,20 @@ Prefer three separate layers:
 - `voiceover`: optional short narration for clarity or offer.
 
 Do not use copyrighted music, voices, or celebrity likenesses unless the user supplies rights-cleared assets.
-If no rights-cleared or generated audio is available, call the output a silent-safe draft. Do not say the video has SFX, music, or voiceover unless the Remotion composition includes audible audio tracks.
+Default URL ads should use `sfx-only` with short generated interaction sounds unless the user selects `silent-safe`. If no rights-cleared or generated audio is available, call the output a silent-safe draft. Do not say the video has SFX, music, or voiceover unless the Remotion composition includes audible audio tracks.
 
 ## Sync Discipline
 
 - Every SFX track must map to a visible event: tap, click, swipe, card pop, score burst, block placement, CTA button press, transition, or reward.
 - Write a cue sheet with `time -> visual event -> sound` before final render when SFX are included.
 - Prefer short interactive sounds over a generic music bed for test drafts.
+- For `sfx-only`, generate or include small click/pop/whoosh/impact sounds before rendering; do not downgrade to `silent-safe` just because the user did not provide audio.
 - If a sound does not have a clear on-screen trigger, remove it. A silent-safe ad is better than mismatched audio.
 - Place cues within roughly 2-4 frames of the visual event unless intentionally leading a transition.
 
 ## Implementation Contract
 
-- Store local audio under `public/<brand>/audio/` and reference it with `staticFile()`.
+- Store local audio under `public/<brand>/audio/` and reference it with `staticFile()`, or use generated data-URI WAV clips for small template/test SFX.
 - Set `audio.enabled` to `true` only when at least one track is present.
 - Use one track per music bed, SFX hit, or voiceover clip so cuts can be timed precisely.
 - Each audio track must include `rightsStatus`: `user_supplied`, `licensed`, `generated`, `public_reference`, or `needs_verification`.
@@ -54,6 +55,7 @@ If no rights-cleared or generated audio is available, call the output a silent-s
 
 - Mute test: the ad still communicates product, benefit, and CTA.
 - Sound-on test: audio reinforces cuts instead of feeling pasted on.
+- Near-silent test: when `audioMode` is `sfx-only`, `music-sfx`, or `voiceover`, full-duration near-silent output is a blocking failure, not a successful sound-on render.
 - Rights test: every music, SFX, and voice asset has a rights status.
 - Mix test: voice and key SFX are not buried by music.
 - Render test: if audio is promised, run `ffprobe` to confirm an audio stream and `ffmpeg ... volumedetect` or `silencedetect` to confirm it is not full-duration silence.

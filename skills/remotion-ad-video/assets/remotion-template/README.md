@@ -17,5 +17,7 @@ Edit `src/default-props.json` or pass another props file to Remotion.
 
 - The template is intentionally simple and data-driven.
 - Replace placeholder copy and image URLs with approved assets.
-- Keep `audio.enabled` false for silent-safe drafts. Set it true only when `audio.tracks` points to audible rights-cleared music, SFX, or voiceover files.
+- The default props include short generated SFX so draft renders are audible by default.
+- Use `silent-safe` only when the user selects no audio or no generated/licensed/user-supplied audio can be used.
+- Keep `audio.enabled` true only when `audio.tracks` points to audible generated, licensed, user-supplied, or otherwise rights-cleared music, SFX, or voiceover files.
 - Confirm Remotion licensing and asset rights before commercial use.

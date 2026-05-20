@@ -105,7 +105,7 @@ Template rules:
 - Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
 - Prefer real product/app visuals. Use generated placeholders only when clearly marked.
 - Use harvested logo/icon/OG/screenshot assets when a URL was supplied and rights status is not blocked.
-- If music, SFX, or voiceover is promised, add actual Remotion audio tracks through props and rights-cleared files or URLs. If no audible track is available, label the output as a silent draft instead of implying sound.
+- If music, SFX, or voiceover is promised, add actual Remotion audio tracks through props and rights-cleared files, generated clips, data-URI WAV clips, or URLs. Do not silently downgrade `sfx-only` to `silent-safe`; generate short synced SFX for drafts unless the user chose no audio. If no audible track is available, label the output as a silent draft instead of implying sound.
 - Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis.
 - For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.
 - Keep typography readable at mobile sizes; do not rely on dense body text.

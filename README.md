@@ -41,6 +41,8 @@ matter.
   storyboard or code.
 - Link-adapted preflight questions for creative intent, audience, proof,
   format, and sound.
+- Audible generated SFX are used by default for draft ads unless you choose a
+  silent-safe output.
 - Ecommerce asset harvester with blocked-page detection and a fail-closed rule:
   if the product image cannot be confidently harvested, stop and request user
   assets.

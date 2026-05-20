@@ -286,9 +286,25 @@ for (const phrase of ["vertical-9x16", "square-1x1", "landscape-16x9", "1080 x 1
 }
 
 const audioSystem = read("references/audio-caption-system.md");
-for (const phrase of ["Sync Discipline", "cue sheet", "visible event", "Implementation Contract", "audio.enabled", "rightsStatus", "volumedetect"]) {
+for (const phrase of ["Sync Discipline", "cue sheet", "visible event", "Implementation Contract", "audio.enabled", "rightsStatus", "volumedetect", "near-silent", "blocking failure"]) {
   if (!audioSystem.includes(phrase)) {
     fail(`audio-caption-system.md missing phrase: ${phrase}`);
+  }
+}
+
+const templateDefaultProps = JSON.parse(read("assets/remotion-template/src/default-props.json"));
+if (templateDefaultProps.audio?.mode !== "sfx-only") {
+  fail("template default audio.mode must be sfx-only");
+}
+if (templateDefaultProps.audio?.enabled !== true) {
+  fail("template default audio.enabled must be true");
+}
+if (!Array.isArray(templateDefaultProps.audio?.tracks) || templateDefaultProps.audio.tracks.length < 1) {
+  fail("template default audio.tracks must include generated SFX");
+}
+for (const track of templateDefaultProps.audio.tracks) {
+  if (track.rightsStatus !== "generated") {
+    fail(`template default audio track ${track.id} must use generated rightsStatus`);
   }
 }
 

@@ -301,6 +301,10 @@ for (const phrase of [
   "creative route",
   "structured choice",
   "text fallback",
+  "interactionLanguage",
+  "sourceLanguage",
+  "outputLanguage",
+  "选项",
   "Do not ask the old 1-6 questionnaire",
   "If harvesting is blocked",
   "vertical, square, or landscape",
@@ -319,14 +323,19 @@ for (const phrase of [
   "ecommerce_product",
   "mobile_game",
   "assetPlan.status",
+  "interactionLanguage",
+  "sourceLanguage",
+  "outputLanguage",
+  "languagePlan",
   "interactionPlan",
   "choiceQuestions",
   "user_required",
   "blockers",
   "preflight_answers_required",
   "\"id\": \"creativeRoute\"",
-  "creativeRoute: Choose the main creative route",
+  "creativeRoute: 选择这个电商商品广告的主要创意路线",
   "--creative-route",
+  "--interaction-language",
   "Storyboard Traceability"
 ]) {
   if (!briefContract.includes(phrase)) {
@@ -430,6 +439,13 @@ for (const phrase of [
   "social_content_app",
   "saas_api",
   "brief-out",
+  "interaction-language",
+  "source-language",
+  "output-language",
+  "interactionLanguage",
+  "sourceLanguage",
+  "outputLanguage",
+  "detectLanguage",
   "preflightQuestions",
   "interactionPlan",
   "choiceQuestions",
@@ -480,8 +496,77 @@ try {
   if (classifierBrief.audioMode !== "sfx-only") {
     fail("classifier brief audioMode must still default to sfx-only");
   }
+  if (!classifierBrief.interactionLanguage || !classifierBrief.sourceLanguage || !classifierBrief.outputLanguage) {
+    fail("classifier brief must include interactionLanguage, sourceLanguage, and outputLanguage");
+  }
 } finally {
   rmSync(classifierBriefPath, { force: true });
+}
+
+const zhInteractionBriefPath = join(tmpdir(), `remotion-ad-zh-interaction-${Date.now()}.json`);
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://play.google.com/store/apps/details?id=com.anthropic.claude",
+    "--title",
+    "Claude by Anthropic",
+    "--description",
+    "AI assistant for writing, coding, and reasoning.",
+    "--interaction-language",
+    "zh-CN",
+    "--brief-out",
+    zhInteractionBriefPath,
+  ], { stdio: "pipe" });
+  const zhBrief = JSON.parse(readFileSync(zhInteractionBriefPath, "utf8"));
+  const unanswered = zhBrief.unansweredQuestions ?? [];
+  if (zhBrief.interactionLanguage !== "zh-CN") {
+    fail(`zh interaction brief interactionLanguage ${zhBrief.interactionLanguage} must be zh-CN`);
+  }
+  if (zhBrief.sourceLanguage !== "en" || zhBrief.outputLanguage !== "en") {
+    fail(`zh interaction brief source/output ${zhBrief.sourceLanguage}/${zhBrief.outputLanguage} must stay en for English source`);
+  }
+  if (!unanswered.some((question) => question.includes("选择输出尺寸"))) {
+    fail("zh interaction brief must ask format in Chinese");
+  }
+  if (!unanswered.some((question) => question.includes("应用演示=app demo"))) {
+    fail("zh interaction brief must localize creative route labels while preserving values");
+  }
+  if (unanswered.join("\n").includes("Choose the output size")) {
+    fail("zh interaction brief must not ask required preflight questions in English");
+  }
+  if (zhBrief.interactionPlan?.language !== "zh-CN") {
+    fail("zh interaction brief interactionPlan.language must be zh-CN");
+  }
+} finally {
+  rmSync(zhInteractionBriefPath, { force: true });
+}
+
+const zhSourceBriefPath = join(tmpdir(), `remotion-ad-zh-source-${Date.now()}.json`);
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://play.google.com/store/apps/details?id=com.example.doubao",
+    "--title",
+    "豆包 - AI助手",
+    "--description",
+    "智能聊天、写作和办公效率工具。",
+    "--interaction-language",
+    "en",
+    "--brief-out",
+    zhSourceBriefPath,
+  ], { stdio: "pipe" });
+  const zhSourceBrief = JSON.parse(readFileSync(zhSourceBriefPath, "utf8"));
+  if (zhSourceBrief.sourceLanguage !== "zh-CN") {
+    fail(`Chinese source brief sourceLanguage ${zhSourceBrief.sourceLanguage} must be zh-CN`);
+  }
+  if (zhSourceBrief.outputLanguage !== "zh-CN") {
+    fail(`Chinese source brief outputLanguage ${zhSourceBrief.outputLanguage} must default to zh-CN`);
+  }
+  if (zhSourceBrief.cta !== "获取应用") {
+    fail(`Chinese source brief CTA ${zhSourceBrief.cta} must be localized for video output`);
+  }
+} finally {
+  rmSync(zhSourceBriefPath, { force: true });
 }
 
 const answeredBriefPath = join(tmpdir(), `remotion-ad-answered-${Date.now()}.json`);

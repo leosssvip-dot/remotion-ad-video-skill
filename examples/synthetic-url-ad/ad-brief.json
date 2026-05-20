@@ -10,6 +10,14 @@
     "ecommerce_product: shopping/product URL signals"
   ],
   "productName": "Focus Lamp",
+  "interactionLanguage": "en",
+  "sourceLanguage": "en",
+  "outputLanguage": "en",
+  "languagePlan": {
+    "preflightQuestions": "en",
+    "videoScriptAndCaptions": "en",
+    "note": "Synthetic demo uses English for both interaction and video copy."
+  },
   "goal": "purchase",
   "cta": "Shop the demo",
   "audience": "desk workers, creators, and students who want calmer focus lighting",

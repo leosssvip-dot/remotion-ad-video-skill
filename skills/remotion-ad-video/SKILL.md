@@ -41,6 +41,12 @@ Load `references/game-ad-patterns.md` for casual games, mobile games, app-store 
 Load `references/social-feed-ad-patterns.md` for short-video, social, creator, UGC, live shopping, community, or content-feed apps.
 Load `references/variant-system.md` when the user wants options, batch ads, or a commercial-quality ad rather than a single sample.
 
+Language policy:
+
+- Ask user-facing preflight questions in the user's current interaction language. If the user is chatting in Chinese, ask the `format` and `creativeRoute` questions in Chinese even when the source URL is English.
+- Detect the source/link language from the harvested title, description, screenshots/listing copy, or page text. Generate video script, captions, CTA, and on-screen copy in that detected source language by default.
+- Record `interactionLanguage`, `sourceLanguage`, and `outputLanguage` in `ad-brief.json`. Only change `outputLanguage` when the user explicitly asks for a different video language.
+
 Required decisions:
 
 - Product or app name.
@@ -57,7 +63,7 @@ Recorded defaults, not required user decisions:
 
 Minimum URL jobs must attempt to harvest favicon, touch icon, Open Graph image, visible logo or screenshots, and brand colors. Ecommerce product URLs must also attempt a product main image with `scripts/harvest-ecommerce-assets.mjs` before creative work starts; the linked item is the ad subject, and platform/store context stays secondary. Store usable public assets locally in the generated project `public/<brand>/` folder, create or update an asset manifest when practical, and reference assets with `staticFile()`.
 
-Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers, includes `preflight_answers_required`, or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset. Use `interactionPlan.choiceQuestions` for the first preflight step: ask only format and creative route first. If the agent supports structured choice UI, present the choices there; otherwise use a text fallback with the same options. Audio defaults to audible synced SFX; ask about audio only when the user requests silent-safe, music, voiceover, or a platform-specific sound plan. Do not front-load the longer open-question list. Use `--preflight-mode defaults` only when the user explicitly approved skipping questions.
+Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, passing `--interaction-language <current-user-language>` when known, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, language plan, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers, includes `preflight_answers_required`, or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset. Use `interactionPlan.choiceQuestions` for the first preflight step: ask only format and creative route first, in `interactionLanguage`. If the agent supports structured choice UI, present the choices there; otherwise use a text fallback with the same options. Audio defaults to audible synced SFX; ask about audio only when the user requests silent-safe, music, voiceover, or a platform-specific sound plan. Do not front-load the longer open-question list. Use `--preflight-mode defaults` only when the user explicitly approved skipping questions.
 
 ### 2. Strategy
 
@@ -86,6 +92,7 @@ For commercial-quality requests, generate at least three distinct concepts befor
 ### 3. Storyboard
 
 Create a timed storyboard before code. Load `references/storyboard-contract.md` for the scene contract.
+Use `outputLanguage` from `ad-brief.json` for all video-facing copy unless the user explicitly asks for another language.
 
 Default 15s structure:
 
@@ -140,7 +147,7 @@ For skill tests, default to half-size draft video output and do not rerender ful
 Return:
 
 - Source summary with claim confidence.
-- `ad-brief.json` path or inline summary, including source type, preflight answers/defaults, blockers, format, and audio mode.
+- `ad-brief.json` path or inline summary, including source type, `interactionLanguage`, `sourceLanguage`, `outputLanguage`, preflight answers/defaults, blockers, format, and audio mode.
 - Preflight assumptions or user answers, including size preset and creative route.
 - Chosen ad angle and target platform.
 - Script and storyboard.

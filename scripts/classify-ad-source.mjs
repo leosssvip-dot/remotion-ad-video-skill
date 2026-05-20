@@ -24,6 +24,12 @@ Options:
   --format <preset>      vertical, square, or landscape. Defaults to vertical.
   --creative-route <text> Selected or user-supplied creative route to write into the brief.
   --audio <mode>         silent-safe, sfx-only, music-sfx, or voiceover. Defaults to sfx-only.
+  --interaction-language <locale>
+                         Language used when asking the user preflight questions. Defaults to en.
+  --source-language <locale|auto>
+                         Language detected from source content. Defaults to auto.
+  --output-language <locale|source>
+                         Language for video script, captions, and on-screen copy. Defaults to source.
   --preflight-mode <mode> required, defaults, or answered. Defaults to required.
   --brief-out <path>     Write a draft ad-brief.json artifact.
   --json <path>          Write classifier output JSON.`);
@@ -111,6 +117,108 @@ const creativeRouteFor = (raw, fallback) => {
   return value || fallback;
 };
 
+const normalizeLanguage = (raw, fallback = "en") => {
+  const value = cleanText(raw || fallback);
+  const lower = value.toLowerCase();
+  const aliases = {
+    chinese: "zh-CN",
+    cn: "zh-CN",
+    mandarin: "zh-CN",
+    "zh-cn": "zh-CN",
+    zh: "zh-CN",
+    english: "en",
+    "en-us": "en",
+    "en-gb": "en",
+    japanese: "ja",
+    jp: "ja",
+    korean: "ko",
+    kr: "ko",
+  };
+  return aliases[lower] ?? value;
+};
+
+const detectLanguage = (values) => {
+  const text = values.map(cleanText).filter(Boolean).join(" ");
+  if (/[\u3040-\u30ff]/.test(text)) {
+    return "ja";
+  }
+  if (/[\uac00-\ud7af]/.test(text)) {
+    return "ko";
+  }
+  if (/[\u4e00-\u9fff]/.test(text)) {
+    return "zh-CN";
+  }
+  return "en";
+};
+
+const isChineseLanguage = (language) =>
+  normalizeLanguage(language).toLowerCase().startsWith("zh");
+
+const sourceTypeLabel = (type, language) => {
+  if (!isChineseLanguage(language)) {
+    return type;
+  }
+  const labels = {
+    ecommerce_product: "电商商品",
+    mobile_game: "移动游戏",
+    social_content_app: "社交/内容应用",
+    saas_api: "SaaS/API 产品",
+    service_local: "本地服务",
+    mobile_app: "移动应用",
+    unknown: "未知类型",
+  };
+  return labels[type] ?? type;
+};
+
+const localizedRouteLabel = (route, language) => {
+  if (!isChineseLanguage(language)) {
+    return route;
+  }
+  const labels = {
+    "product close-up": "产品特写",
+    "try-on/lifestyle": "试用/生活方式",
+    "offer push": "优惠促单",
+    "high-energy gameplay": "高能玩法",
+    "fail-rescue": "失败救场",
+    "level-up reward": "升级奖励",
+    "feed-native swipe": "信息流滑动",
+    "creator POV": "创作者视角",
+    "comment drama": "评论冲突",
+    "old-way vs new-way": "旧方式对比新方式",
+    "workflow collapse": "流程压缩",
+    "terminal-to-result": "命令到结果",
+    "problem-solution": "问题-解决",
+    "before/after": "前后对比",
+    "booking urgency": "预约紧迫感",
+    "app demo": "应用演示",
+    "notification moment": "通知场景",
+    "product demo": "产品演示",
+    comparison: "对比",
+  };
+  return labels[route] ?? route;
+};
+
+const localizedDescription = (kind, index, language) => {
+  if (!isChineseLanguage(language)) {
+    if (kind === "format") {
+      return [
+        "Recommended for TikTok, Reels, Shorts, and mobile ads.",
+        "Use for feed placements where square assets are preferred.",
+        "Use for YouTube, website, and widescreen placements.",
+      ][index];
+    }
+    return index === 0 ? "Recommended default for this link type." : "Alternative creative direction.";
+  }
+  if (kind === "format") {
+    return [
+      "推荐用于 TikTok、Reels、Shorts 和移动广告。",
+      "适合偏方形素材的信息流广告位。",
+      "适合 YouTube、官网和宽屏投放。",
+    ][index];
+  }
+  return index === 0 ? "该链接类型的推荐默认方向。" : "可选创意方向。";
+};
+
 const goalFor = (type) => {
   const map = {
     ecommerce_product: { goal: "purchase", cta: "Shop now" },
@@ -122,6 +230,22 @@ const goalFor = (type) => {
     unknown: { goal: "learn_more", cta: "Learn more" },
   };
   return map[type] ?? map.unknown;
+};
+
+const localizedCta = (cta, language) => {
+  if (!isChineseLanguage(language)) {
+    return cta;
+  }
+  const labels = {
+    "Shop now": "立即购买",
+    "Play now": "立即游玩",
+    "Try it now": "立即试用",
+    "Start building": "开始构建",
+    "Book now": "立即预约",
+    "Get the app": "获取应用",
+    "Learn more": "了解更多",
+  };
+  return labels[cta] ?? cta;
 };
 
 const routesFor = (type) => {
@@ -181,46 +305,56 @@ const routesFor = (type) => {
   return routes[type] ?? routes.unknown;
 };
 
-const choiceQuestionsFor = (type, goal, cta, routes) => {
+const choiceQuestionsFor = (type, goal, cta, routes, interactionLanguage) => {
   const routeOptions = routes.slice(0, 3).map((route, index) => ({
-    label: route,
+    label: localizedRouteLabel(route, interactionLanguage),
     value: route,
-    description: index === 0 ? "Recommended default for this link type." : "Alternative creative direction.",
+    description: localizedDescription("route", index, interactionLanguage),
   }));
+  const chinese = isChineseLanguage(interactionLanguage);
 
   return [
     {
       id: "format",
-      question: "Choose the output size.",
+      question: chinese ? "选择输出尺寸。" : "Choose the output size.",
       options: [
-        { label: "Vertical 9:16", value: "vertical-9x16", description: "Recommended for TikTok, Reels, Shorts, and mobile ads." },
-        { label: "Square 1:1", value: "square-1x1", description: "Use for feed placements where square assets are preferred." },
-        { label: "Landscape 16:9", value: "landscape-16x9", description: "Use for YouTube, website, and widescreen placements." },
+        { label: chinese ? "竖屏 9:16" : "Vertical 9:16", value: "vertical-9x16", description: localizedDescription("format", 0, interactionLanguage) },
+        { label: chinese ? "方形 1:1" : "Square 1:1", value: "square-1x1", description: localizedDescription("format", 1, interactionLanguage) },
+        { label: chinese ? "横屏 16:9" : "Landscape 16:9", value: "landscape-16x9", description: localizedDescription("format", 2, interactionLanguage) },
       ],
     },
     {
       id: "creativeRoute",
-      question: `Choose the main creative route for this ${type} ad.`,
+      question: chinese
+        ? `选择这个${sourceTypeLabel(type, interactionLanguage)}广告的主要创意路线。`
+        : `Choose the main creative route for this ${type} ad.`,
       options: routeOptions,
     },
   ];
 };
 
-const formatChoiceQuestion = (question) =>
-  `${question.id}: ${question.question} Options: ${question.options
+const formatChoiceQuestion = (question, interactionLanguage) =>
+  `${question.id}: ${question.question} ${isChineseLanguage(interactionLanguage) ? "选项" : "Options"}: ${question.options
     .map((option) => `${option.label}=${option.value}`)
     .join(", ")}.`;
 
-const textFallbackQuestionsFor = (choiceQuestions) =>
-  choiceQuestions.map(formatChoiceQuestion);
+const textFallbackQuestionsFor = (choiceQuestions, interactionLanguage) =>
+  choiceQuestions.map((question) => formatChoiceQuestion(question, interactionLanguage));
 
-const openQuestionsFor = (goal, cta) => [
-  `Audience and hook: who should this target, and should the first 2 seconds hit desire, pain, curiosity, offer, status, FOMO, or challenge?`,
-  `Goal and CTA: I infer goal=${goal} and CTA="${cta}". Confirm or provide the preferred conversion action.`,
-  "Proof/assets: what proof may be shown, and can page-harvested assets be used as references?",
-];
+const openQuestionsFor = (goal, cta, interactionLanguage) =>
+  isChineseLanguage(interactionLanguage)
+    ? [
+      "受众和 hook：目标用户是谁？前 2 秒应该打欲望、痛点、好奇、优惠、身份感、FOMO，还是挑战感？",
+      `目标和 CTA：我推断 goal=${goal}，CTA="${cta}"。请确认或提供你想要的转化动作。`,
+      "证明和素材：哪些证明可以展示？页面采集到的素材是否可以作为草稿参考？",
+    ]
+    : [
+      `Audience and hook: who should this target, and should the first 2 seconds hit desire, pain, curiosity, offer, status, FOMO, or challenge?`,
+      `Goal and CTA: I infer goal=${goal} and CTA="${cta}". Confirm or provide the preferred conversion action.`,
+      "Proof/assets: what proof may be shown, and can page-harvested assets be used as references?",
+    ];
 
-const classify = ({ sourceUrl, title, description, input = {} }) => {
+const classify = ({ sourceUrl, title, description, input = {}, options = {} }) => {
   let parsed;
   try {
     parsed = new URL(sourceUrl);
@@ -246,6 +380,16 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
     path,
     appId,
   ]);
+  const detectedSourceLanguage = detectLanguage([title, input.title, input.name, input.productName, description, input.description, input.text, input.summary]);
+  const sourceLanguageOption = cleanText(options["source-language"] || "auto").toLowerCase();
+  const sourceLanguage = sourceLanguageOption === "auto"
+    ? detectedSourceLanguage
+    : normalizeLanguage(options["source-language"], detectedSourceLanguage);
+  const interactionLanguage = normalizeLanguage(options["interaction-language"], "en");
+  const outputLanguageOption = normalizeLanguage(options["output-language"], "source");
+  const outputLanguage = outputLanguageOption === "source"
+    ? sourceLanguage
+    : normalizeLanguage(options["output-language"], sourceLanguage);
 
   const state = {
     scores: Object.fromEntries(sourceTypes.map((type) => [type, 0])),
@@ -297,10 +441,11 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
   const [topType, topScore] = ranked[0] ?? ["unknown", 0];
   const sourceType = topScore >= 3 ? topType : "unknown";
   const confidence = sourceType === "unknown" ? 0.25 : Math.min(0.95, 0.35 + topScore * 0.1);
-  const { goal, cta } = goalFor(sourceType);
+  const { goal, cta: defaultCta } = goalFor(sourceType);
+  const cta = localizedCta(defaultCta, outputLanguage);
   const creativeRoutes = routesFor(sourceType);
-  const choiceQuestions = choiceQuestionsFor(sourceType, goal, cta, creativeRoutes);
-  const openQuestions = openQuestionsFor(goal, cta);
+  const choiceQuestions = choiceQuestionsFor(sourceType, goal, cta, creativeRoutes, interactionLanguage);
+  const openQuestions = openQuestionsFor(goal, cta, interactionLanguage);
 
   return {
     schemaVersion: "1.0",
@@ -309,13 +454,17 @@ const classify = ({ sourceUrl, title, description, input = {} }) => {
     confidence: Number(confidence.toFixed(2)),
     reasons: state.reasons,
     productName: cleanText(title || input.title || input.name || input.productName || host || "Unknown product"),
+    interactionLanguage,
+    sourceLanguage,
+    outputLanguage,
     goal,
     cta,
     creativeRoutes,
-    preflightQuestions: textFallbackQuestionsFor(choiceQuestions),
+    preflightQuestions: textFallbackQuestionsFor(choiceQuestions, interactionLanguage),
     interactionPlan: {
       preferredMode: "structured_choices",
       fallbackMode: "text",
+      language: interactionLanguage,
       requiredChoiceQuestionIds: choiceQuestions.map((question) => question.id),
       choiceQuestions,
       openQuestions,
@@ -351,6 +500,14 @@ const makeBrief = ({ classification, options }) => {
     classificationConfidence: classification.confidence,
     classificationReasons: classification.reasons,
     productName: classification.productName,
+    interactionLanguage: classification.interactionLanguage,
+    sourceLanguage: classification.sourceLanguage,
+    outputLanguage: classification.outputLanguage,
+    languagePlan: {
+      preflightQuestions: classification.interactionLanguage,
+      videoScriptAndCaptions: classification.outputLanguage,
+      note: "Ask user-facing preflight questions in interactionLanguage. Generate video script, captions, and on-screen copy in outputLanguage unless the user explicitly overrides it.",
+    },
     goal: classification.goal,
     cta: classification.cta,
     audience: "inferred from source; needs confirmation",
@@ -375,7 +532,10 @@ const makeBrief = ({ classification, options }) => {
     interactionPlan: {
       preferredMode: "structured_choices",
       fallbackMode: "text",
-      instructions: "Ask only choiceQuestions first. If the agent supports selectable UI, use it; if not, render those same choices as text fallback. Audio defaults to sfx-only and should not be a required preflight question unless the user asks for silent-safe, music, or voiceover. Do not ask openQuestions until after these choices unless the user asks for deeper brief work.",
+      language: classification.interactionLanguage,
+      instructions: isChineseLanguage(classification.interactionLanguage)
+        ? "先只询问 choiceQuestions。若 agent 支持可选择 UI，就用可选择 UI；否则用同样选项的文本 fallback。Audio 默认 sfx-only，除非用户要求 silent-safe、音乐或旁白，否则不要作为必答预检问题。除非用户要求更深入 brief，否则不要在这些选择前询问 openQuestions。"
+        : "Ask only choiceQuestions first. If the agent supports selectable UI, use it; if not, render those same choices as text fallback. Audio defaults to sfx-only and should not be a required preflight question unless the user asks for silent-safe, music, or voiceover. Do not ask openQuestions until after these choices unless the user asks for deeper brief work.",
       requiredChoiceQuestionIds: classification.interactionPlan.requiredChoiceQuestionIds,
       choiceQuestions: classification.interactionPlan.choiceQuestions,
       openQuestions: classification.interactionPlan.openQuestions,
@@ -383,6 +543,7 @@ const makeBrief = ({ classification, options }) => {
     unansweredQuestions: requiresPreflight ? classification.preflightQuestions : [],
     assumptions: [
       `Category inferred as ${classification.sourceType} with confidence ${classification.confidence}.`,
+      `Interaction language is ${classification.interactionLanguage}; output language is ${classification.outputLanguage}.`,
       routeIsDefault ? `Default creative route is ${primaryRoute}.` : `Creative route selected from preflight answer is ${primaryRoute}.`,
       `Default format is ${format.preset} with draft scale ${format.renderScale}.`,
       requiresPreflight ? "Preflight answers are required before storyboard or render." : `Preflight mode is ${preflightMode}.`,
@@ -402,6 +563,7 @@ const classification = classify({
   title: options.title,
   description: options.description,
   input,
+  options,
 });
 
 if (options.json) {

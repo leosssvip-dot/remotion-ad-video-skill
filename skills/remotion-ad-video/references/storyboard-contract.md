@@ -19,6 +19,15 @@ Each scene should include:
 - `layoutMode`: poster-scale type, aggressive crop, oversized product, kinetic split, asymmetric reveal, or category-native simulation.
 - `textBudget`: maximum two text groups per scene; one dominant hook plus one optional support line.
 
+## Language
+
+- Use `outputLanguage` from `ad-brief.json` for `headline`, `body`, `proof`,
+  `voiceover`, captions, CTA, and any rendered on-screen copy.
+- Do not use `interactionLanguage` for video copy unless it matches
+  `outputLanguage` or the user explicitly requests the video in that language.
+- Keep internal ids, enum values, and file paths stable in English; only
+  user-facing video copy is localized.
+
 ## Default Structures
 
 ### Product Link Ad

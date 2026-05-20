@@ -11,7 +11,7 @@ makes unanswered creative or asset decisions explicit.
 - For URL jobs, run the deterministic source classifier first:
 
 ```bash
-node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-brief.json
+node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --brief-out examples/<brand>-ad/ad-brief.json
 ```
 
 - If the user answers preflight questions, update `mode` to `answered` and move
@@ -20,6 +20,9 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   `--creative-route` with `--preflight-mode answered`.
 - For quick tests, defaults are allowed, but defaults must be recorded in the
   brief instead of only mentioned in chat.
+- `interactionLanguage` controls user-facing questions. `sourceLanguage` is
+  detected from the URL/source content. `outputLanguage` controls video script,
+  captions, CTA, and on-screen copy, and defaults to `sourceLanguage`.
 
 ## Required Fields
 
@@ -34,6 +37,14 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   "classificationConfidence": 0.85,
   "classificationReasons": [],
   "productName": "Product",
+  "interactionLanguage": "zh-CN",
+  "sourceLanguage": "en",
+  "outputLanguage": "en",
+  "languagePlan": {
+    "preflightQuestions": "zh-CN",
+    "videoScriptAndCaptions": "en",
+    "note": "Ask user-facing preflight questions in interactionLanguage. Generate video script, captions, and on-screen copy in outputLanguage unless the user explicitly overrides it."
+  },
   "goal": "purchase",
   "cta": "Shop now",
   "audience": "inferred from source; needs confirmation",
@@ -63,33 +74,34 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   "interactionPlan": {
     "preferredMode": "structured_choices",
     "fallbackMode": "text",
-    "instructions": "Ask only choiceQuestions first. If the agent supports selectable UI, use it; if not, render the same choices as text fallback. Audio defaults to sfx-only and is not a required preflight choice.",
+    "language": "zh-CN",
+    "instructions": "先只询问 choiceQuestions。若 agent 支持可选择 UI，就用可选择 UI；否则用同样选项的文本 fallback。Audio 默认 sfx-only，除非用户要求 silent-safe、音乐或旁白，否则不要作为必答预检问题。",
     "requiredChoiceQuestionIds": ["format", "creativeRoute"],
     "choiceQuestions": [
       {
         "id": "format",
-        "question": "Choose the output size.",
+        "question": "选择输出尺寸。",
         "options": [
-          {"label": "Vertical 9:16", "value": "vertical-9x16"},
-          {"label": "Square 1:1", "value": "square-1x1"},
-          {"label": "Landscape 16:9", "value": "landscape-16x9"}
+          {"label": "竖屏 9:16", "value": "vertical-9x16"},
+          {"label": "方形 1:1", "value": "square-1x1"},
+          {"label": "横屏 16:9", "value": "landscape-16x9"}
         ]
       },
       {
         "id": "creativeRoute",
-        "question": "Choose the main creative route for this ecommerce_product ad.",
+        "question": "选择这个电商商品广告的主要创意路线。",
         "options": [
-          {"label": "product close-up", "value": "product close-up"},
-          {"label": "try-on/lifestyle", "value": "try-on/lifestyle"},
-          {"label": "offer push", "value": "offer push"}
+          {"label": "产品特写", "value": "product close-up"},
+          {"label": "试用/生活方式", "value": "try-on/lifestyle"},
+          {"label": "优惠促单", "value": "offer push"}
         ]
       }
     ],
     "openQuestions": []
   },
   "unansweredQuestions": [
-    "format: Choose the output size. Options: Vertical 9:16=vertical-9x16, Square 1:1=square-1x1, Landscape 16:9=landscape-16x9.",
-    "creativeRoute: Choose the main creative route for this ecommerce_product ad. Options: product close-up=product close-up, try-on/lifestyle=try-on/lifestyle, offer push=offer push."
+    "format: 选择输出尺寸。 选项: 竖屏 9:16=vertical-9x16, 方形 1:1=square-1x1, 横屏 16:9=landscape-16x9.",
+    "creativeRoute: 选择这个电商商品广告的主要创意路线。 选项: 产品特写=product close-up, 试用/生活方式=try-on/lifestyle, 优惠促单=offer push."
   ],
   "assumptions": [],
   "blockers": ["preflight_answers_required"]
@@ -129,8 +141,10 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   first.
 - If `blockers` includes `preflight_answers_required`, ask
   `interactionPlan.choiceQuestions` first using structured choices when
-  supported, or text fallback when not supported. Do not ask the longer
-  optional follow-up questions as the initial required prompt.
+  supported, or text fallback when not supported. Use
+  `interactionPlan.language` / `interactionLanguage` for those questions. Do
+  not ask the longer optional follow-up questions as the initial required
+  prompt.
 - Audio defaults to `sfx-only`; do not ask audio as a required preflight choice
   unless the user requests silent-safe, music, voiceover, or a specific sound
   direction.
@@ -154,3 +168,5 @@ The storyboard and `default-props.json` should cite these brief values:
 - `format` and `durationSeconds` drive Remotion composition settings.
 - `interactionPlan.choiceQuestions` drives agent-native selectable preflight UI
   when supported.
+- `interactionLanguage` drives user-facing questions.
+- `outputLanguage` drives script, captions, CTA, and on-screen copy.

@@ -8,13 +8,25 @@ Record the inferred defaults and user answers in `ad-brief.json`. Chat-only
 answers are not enough; the storyboard and props must be traceable back to the
 brief.
 
+Language rule:
+
+- Ask preflight questions in the user's current interaction language, not
+  necessarily the source URL language.
+- Keep option `value` fields stable, but localize question text, option labels,
+  and text fallbacks. Example for a Chinese conversation:
+  `format: 选择输出尺寸。选项: 竖屏 9:16=vertical-9x16, 方形 1:1=square-1x1, 横屏 16:9=landscape-16x9.`
+- Record `interactionLanguage`, `sourceLanguage`, and `outputLanguage` in the
+  brief. Video copy uses `outputLanguage`; preflight questions use
+  `interactionLanguage`.
+
 ## Trigger Rules
 
 - For URL-only requests, ask link-adapted questions before creative work by default.
 - Do not treat "test this skill" as permission to skip questions. A test should still ask unless the user explicitly says to skip questions, use fastest possible defaults, or run a benchmark with inferred defaults.
 - When proceeding without answers by explicit user request, the answer must include a short `Preflight defaults` block before work continues.
 - For all URL jobs, create or update `ad-brief.json` with source type, goal,
-  CTA, creative route, format, audio mode, unresolved questions, and blockers.
+  CTA, creative route, format, audio mode, language plan, unresolved questions,
+  and blockers.
 - Ask only unresolved questions; do not ask what the link already proves.
 - The initial blocking preflight should be exactly two required choices:
   format and creative route.

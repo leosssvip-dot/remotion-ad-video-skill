@@ -16,9 +16,12 @@ brief.
 - For all URL jobs, create or update `ad-brief.json` with source type, goal,
   CTA, creative route, format, audio mode, unresolved questions, and blockers.
 - Ask only unresolved questions; do not ask what the link already proves.
-- The initial blocking preflight should be exactly three required choices:
-  format, creative route, and audio mode.
+- The initial blocking preflight should be exactly two required choices:
+  format and creative route.
 - Format choices should be vertical, square, or landscape.
+- Audio defaults to synced SFX only. Do not ask audio as a required choice unless
+  the user requests silent-safe, music plus SFX, voiceover, or a platform-specific
+  sound plan.
 - If harvesting is blocked, stop and ask for user-provided product images,
   screenshots, logo, or approved media before making the ad.
 - If product/app visuals cannot be harvested after crawler and browser-backed attempts, stop and ask the user to provide images or screenshots before making the ad.
@@ -26,12 +29,12 @@ brief.
 ## Interaction Adapter
 
 Prefer agent-native structured choice UI when available. Use it for the first
-three choices in `interactionPlan.choiceQuestions`: output size, creative route,
-and audio mode. If structured choice UI is not available, use a text fallback
-with the same options.
+two choices in `interactionPlan.choiceQuestions`: output size and creative route.
+If structured choice UI is not available, use a text fallback with the same
+options.
 
 Do not ask the old 1-6 questionnaire up front. `unansweredQuestions` should
-mirror only the three required choice questions. Ask open questions only after
+mirror only the two required choice questions. Ask open questions only after
 the user has answered those choices, or when the user requests deeper creative
 briefing.
 
@@ -40,13 +43,15 @@ chips/forms/dropdowns are preferred, but plain chat questions are valid fallback
 
 ## Optional Follow-Up Questions
 
-After the three required choices are answered, ask at most 1-3 optional follow-up
+After the two required choices are answered, ask at most 1-3 optional follow-up
 questions only if they materially change the ad. Do not ask them as a required
 1-6 list before storyboard.
 
 - Goal/CTA: confirm the inferred conversion action only if the source is ambiguous.
 - Audience/hook: ask who to target and whether the first 2 seconds should hit desire, pain, curiosity, offer, status, FOMO, or challenge.
 - Proof/assets: ask which proof may be shown and whether page-harvested assets can be used as draft references.
+- Audio: ask only if the user asks for silent-safe, music plus SFX, voiceover,
+  or platform-specific sound; otherwise keep synced SFX only.
 
 ## Default Block For Fast Tests
 

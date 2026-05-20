@@ -262,14 +262,14 @@ const preflight = read("references/preflight-questionnaire.md");
 for (const phrase of [
   "link-adapted questions",
   "Preflight defaults",
-  "exactly three required choices",
+  "exactly two required choices",
   "creative route",
   "structured choice",
   "text fallback",
   "Do not ask the old 1-6 questionnaire",
   "If harvesting is blocked",
   "vertical, square, or landscape",
-  "synced SFX"
+  "Audio defaults to synced SFX"
 ]) {
   if (!preflight.includes(phrase)) {
     fail(`preflight-questionnaire.md missing phrase: ${phrase}`);
@@ -303,7 +303,7 @@ for (const phrase of ["vertical-9x16", "square-1x1", "landscape-16x9", "1080 x 1
 }
 
 const audioSystem = read("references/audio-caption-system.md");
-for (const phrase of ["Sync Discipline", "cue sheet", "visible event", "Implementation Contract", "audio.enabled", "rightsStatus", "volumedetect", "near-silent", "blocking failure"]) {
+for (const phrase of ["Sync Discipline", "cue sheet", "visible event", "Implementation Contract", "audio.enabled", "rightsStatus", "Audio is a default implementation detail", "Optional Audio Review"]) {
   if (!audioSystem.includes(phrase)) {
     fail(`audio-caption-system.md missing phrase: ${phrase}`);
   }
@@ -400,19 +400,28 @@ try {
   if (classifierBrief.blockers?.[0] !== "preflight_answers_required") {
     fail("classifier brief must block on preflight_answers_required by default");
   }
-  if (unanswered.length !== 3) {
-    fail(`classifier brief unansweredQuestions length ${unanswered.length} must be 3`);
+  if (unanswered.length !== 2) {
+    fail(`classifier brief unansweredQuestions length ${unanswered.length} must be 2`);
   }
-  for (const id of ["format", "creativeRoute", "audioMode"]) {
+  for (const id of ["format", "creativeRoute"]) {
     if (!unanswered.some((question) => question.startsWith(`${id}:`))) {
       fail(`classifier brief unansweredQuestions missing ${id}`);
     }
   }
+  if (unanswered.some((question) => question.startsWith("audioMode:"))) {
+    fail("classifier brief must not require audioMode by default");
+  }
   if (unanswered.join("\n").includes("Proof and claims")) {
     fail("classifier brief must not put legacy proof question in unansweredQuestions");
   }
-  if ((classifierBrief.interactionPlan?.choiceQuestions ?? []).length !== 3) {
-    fail("classifier brief interactionPlan.choiceQuestions must contain 3 questions");
+  if ((classifierBrief.interactionPlan?.choiceQuestions ?? []).length !== 2) {
+    fail("classifier brief interactionPlan.choiceQuestions must contain 2 questions");
+  }
+  if ((classifierBrief.interactionPlan?.requiredChoiceQuestionIds ?? []).includes("audioMode")) {
+    fail("classifier brief requiredChoiceQuestionIds must not contain audioMode by default");
+  }
+  if (classifierBrief.audioMode !== "sfx-only") {
+    fail("classifier brief audioMode must still default to sfx-only");
   }
 } finally {
   rmSync(classifierBriefPath, { force: true });

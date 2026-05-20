@@ -40,9 +40,9 @@ matter.
   audio mode, asset requirements, assumptions, and blockers are explicit before
   storyboard or code.
 - Link-adapted preflight questions for creative intent, audience, proof,
-  format, and sound.
+  and format.
 - Audible generated SFX are used by default for draft ads unless you choose a
-  silent-safe output.
+  silent-safe output; sound is not a required preflight question by default.
 - Creative QA pushes bold ad layouts: poster-scale hooks, one dominant visual,
   aggressive crops, and lower text density.
 - Ecommerce asset harvester with blocked-page detection and a fail-closed rule:
@@ -140,8 +140,8 @@ The agent should:
 1. Classify the URL and create `ad-brief.json`.
 2. Ask link-adapted creative preflight questions by default.
    If the agent supports selectable UI, it should use choices for size,
-   creative route, and audio mode; otherwise it should ask only those same
-   three options in text before any optional follow-up questions.
+   and creative route; otherwise it should ask only those same two options in
+   text before any optional follow-up questions. Audio defaults to synced SFX.
 3. Harvest or request usable assets.
 4. Propose ad concepts and pick the strongest route.
 5. Create or update a Remotion project.
@@ -228,8 +228,8 @@ A normal ad build should produce:
   private URLs, API keys, tokens, or internal payloads.
 - If ecommerce crawling is blocked or the main product image is not credible,
   stop and request user-provided product images.
-- If audio is promised, include actual audible rights-cleared files or mark the
-  result as a silent draft.
+- Drafts include generated SFX by default. Music, voiceover, or special sound
+  assets still need clear usage rights when requested.
 - Confirm Remotion licensing separately for commercial rendering and deployment.
 
 ## Maintainer Checks

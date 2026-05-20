@@ -11,7 +11,7 @@ Prefer three separate layers:
 - `voiceover`: optional short narration for clarity or offer.
 
 Do not use copyrighted music, voices, or celebrity likenesses unless the user supplies rights-cleared assets.
-Default URL ads should use `sfx-only` with short generated interaction sounds unless the user selects `silent-safe`. If no rights-cleared or generated audio is available, call the output a silent-safe draft. Do not say the video has SFX, music, or voiceover unless the Remotion composition includes audible audio tracks.
+Default URL ads should use `sfx-only` with short generated interaction sounds unless the user selects `silent-safe`. Audio is a default implementation detail, not a required preflight or QA gate.
 
 ## Sync Discipline
 
@@ -51,11 +51,12 @@ Default URL ads should use `sfx-only` with short generated interaction sounds un
 - SaaS/productivity: click, complete, send, success, notification, whoosh.
 - Ecommerce: tactile product sounds, reveal hits, comparison snaps.
 
-## QA
+## Optional Audio Review
 
-- Mute test: the ad still communicates product, benefit, and CTA.
-- Sound-on test: audio reinforces cuts instead of feeling pasted on.
-- Near-silent test: when `audioMode` is `sfx-only`, `music-sfx`, or `voiceover`, full-duration near-silent output is a blocking failure, not a successful sound-on render.
-- Rights test: every music, SFX, and voice asset has a rights status.
-- Mix test: voice and key SFX are not buried by music.
-- Render test: if audio is promised, run `ffprobe` to confirm an audio stream and `ffmpeg ... volumedetect` or `silencedetect` to confirm it is not full-duration silence.
+Only do this when the user explicitly asks for audio review, music, voiceover,
+silent-safe output, or platform-specific sound polish:
+
+- Sound-on check: audio reinforces cuts instead of feeling pasted on.
+- Rights check: every music, SFX, and voice asset has a rights status.
+- Mix check: voice and key SFX are not buried by music.
+- Stream check: use `ffprobe` only when audio deliverables are part of the ask.

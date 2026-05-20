@@ -54,7 +54,7 @@ Required decisions:
 
 Minimum URL jobs must attempt to harvest favicon, touch icon, Open Graph image, visible logo or screenshots, and brand colors. Ecommerce product URLs must also attempt a product main image with `scripts/harvest-ecommerce-assets.mjs` before creative work starts; the linked item is the ad subject, and platform/store context stays secondary. Store usable public assets locally in the generated project `public/<brand>/` folder, create or update an asset manifest when practical, and reference assets with `staticFile()`.
 
-Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers, includes `preflight_answers_required`, or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset. Use `interactionPlan.choiceQuestions` for the first preflight step: ask only format, creative route, and audio mode first. If the agent supports structured choice UI, present the choices there; otherwise use a text fallback with the same options. Do not front-load the longer open-question list. Use `--preflight-mode defaults` only when the user explicitly approved skipping questions.
+Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers, includes `preflight_answers_required`, or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset. Use `interactionPlan.choiceQuestions` for the first preflight step: ask only format and creative route first. If the agent supports structured choice UI, present the choices there; otherwise use a text fallback with the same options. Audio defaults to audible synced SFX; ask about audio only when the user requests silent-safe, music, voiceover, or a platform-specific sound plan. Do not front-load the longer open-question list. Use `--preflight-mode defaults` only when the user explicitly approved skipping questions.
 
 ### 2. Strategy
 
@@ -107,7 +107,7 @@ Template rules:
 - Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
 - Prefer real product/app visuals. Use generated placeholders only when clearly marked.
 - Use harvested logo/icon/OG/screenshot assets when a URL was supplied and rights status is not blocked.
-- If music, SFX, or voiceover is promised, add actual Remotion audio tracks through props and rights-cleared files, generated clips, data-URI WAV clips, or URLs. Do not silently downgrade `sfx-only` to `silent-safe`; generate short synced SFX for drafts unless the user chose no audio. If no audible track is available, label the output as a silent draft instead of implying sound.
+- Add generated synced SFX by default through props. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
 - Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis.
 - For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.
 - Keep typography readable at mobile sizes; do not rely on dense body text.
@@ -125,7 +125,6 @@ Minimum checks:
 - Text does not overflow or overlap.
 - Visuals are present, not blank.
 - Hook, middle, and CTA stills show different visual states.
-- If audio is promised, the rendered MP4 is not full-duration silence.
 - Advertising-aesthetic QA passes using `references/ad-aesthetic-qa.md` for commercial-quality requests.
 - CTA, offer, and disclaimer match approved copy.
 - Any unsupported claims are removed or rewritten.
@@ -139,7 +138,7 @@ Return:
 
 - Source summary with claim confidence.
 - `ad-brief.json` path or inline summary, including source type, preflight answers/defaults, blockers, format, and audio mode.
-- Preflight assumptions or user answers, including size preset and audio mode.
+- Preflight assumptions or user answers, including size preset and creative route.
 - Chosen ad angle and target platform.
 - Script and storyboard.
 - Remotion props JSON.

@@ -197,15 +197,6 @@ const choiceQuestionsFor = (type, goal, cta, routes) => {
       question: `Choose the main creative route for this ${type} ad.`,
       options: routeOptions,
     },
-    {
-      id: "audioMode",
-      question: "Choose the audio mode.",
-      options: [
-        { label: "Synced SFX", value: "sfx-only", description: "Recommended: interaction sounds matched to visible events." },
-        { label: "Silent safe", value: "silent-safe", description: "No required audio; captions and visuals carry the ad." },
-        { label: "Music + SFX", value: "music-sfx", description: "Use when a rights-cleared track is available." },
-      ],
-    },
   ];
 };
 
@@ -376,7 +367,7 @@ const makeBrief = ({ classification, options }) => {
     interactionPlan: {
       preferredMode: "structured_choices",
       fallbackMode: "text",
-      instructions: "Ask only choiceQuestions first. If the agent supports selectable UI, use it; if not, render those same choices as text fallback. Do not ask openQuestions until after these choices unless the user asks for deeper brief work.",
+      instructions: "Ask only choiceQuestions first. If the agent supports selectable UI, use it; if not, render those same choices as text fallback. Audio defaults to sfx-only and should not be a required preflight question unless the user asks for silent-safe, music, or voiceover. Do not ask openQuestions until after these choices unless the user asks for deeper brief work.",
       requiredChoiceQuestionIds: classification.interactionPlan.requiredChoiceQuestionIds,
       choiceQuestions: classification.interactionPlan.choiceQuestions,
       openQuestions: classification.interactionPlan.openQuestions,

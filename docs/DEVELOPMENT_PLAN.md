@@ -2,12 +2,12 @@
 
 ## Roadmap Status
 
-- Overall status: MVP skill package created
+- Overall status: MVP skill package published and iterating from real URL tests
 - Current phase: Skill workflow and reusable Remotion template
 - Current milestone: Create a portable `remotion-ad-video-skill` open-source package
-- Next milestone: Validate the skill against real product and app links
+- Next milestone: Improve deterministic intake and creative-route answer handling
 - Blockers: None
-- Last roadmap review: 2026-05-19
+- Last roadmap review: 2026-05-21
 
 ## Goal
 
@@ -27,8 +27,8 @@ The useful wedge is not generic Remotion code generation. The wedge is a repeata
 ## Non-Goals
 
 - No hosted rendering service yet.
-- No product scraper implementation yet.
-- No live Remotion render in this empty repo.
+- No claim that crawling can bypass anti-bot or blocked ecommerce pages.
+- No guarantee that public store or product media is commercially reusable.
 - No claim that scraped third-party media is safe for commercial use.
 
 ## Acceptance Criteria

@@ -11,11 +11,15 @@ Use the smallest reliable source set:
 - `conversion_goal`: Install, buy, trial, lead, waitlist, or retargeting.
 - `size_preset`: Vertical, square, landscape, or a platform-specific alias.
 - `duration_seconds`: 15, 30, or 45 unless the user asks otherwise.
-- `audio_mode`: Silent-safe, SFX only, music plus SFX, or voiceover.
 - `assets`: Logo, screenshots, product images, clips, music, SFX, voice, fonts.
 - `rights_status`: User-owned, licensed, generated, public reference only, or unknown.
 
 If the user supplies only a URL, ask the compact questions in `preflight-questionnaire.md` only when the missing choice changes the output. Otherwise infer defaults and record them.
+
+Recorded default:
+
+- `audio_mode`: default `sfx-only`; ask only when the user requests silent-safe,
+  music plus SFX, voiceover, or a specific sound direction.
 
 ## Source Confidence Tags
 

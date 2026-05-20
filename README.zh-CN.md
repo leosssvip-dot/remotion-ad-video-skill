@@ -109,7 +109,7 @@ https://example.com/products/focus-lamp
 Agent 应该完成：
 
 1. 识别 URL 类型并创建 `ad-brief.json`。
-2. 默认先询问和链接匹配的创意预调研问题。
+2. 默认先询问两个必答创意预调研选项。
    如果 agent 支持可点选 UI，应优先用点选方式确认尺寸和创意方向；
    如果不支持，就只用同样的两个选项文本提问，不要先抛出 1-6 长问题列表。
    声音默认使用同步音效，除非你主动要求静音、音乐或旁白。
@@ -168,7 +168,7 @@ stills 没问题后再渲染半尺寸 draft MP4。
 
 ```text
 Use $remotion-ad-video to turn this product or app link into a 15s ad.
-Create ad-brief.json first, ask link-adapted creative preflight questions,
+Create ad-brief.json first, ask the two required preflight choices,
 harvest usable assets, propose three concepts, implement the strongest one in
 Remotion, render low-resolution stills before any MP4, and report rights or
 asset gaps.

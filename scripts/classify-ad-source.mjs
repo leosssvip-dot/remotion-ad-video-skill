@@ -22,6 +22,7 @@ Options:
   --title <text>         Optional title from the page or app listing.
   --description <text>   Optional description/body text from the source.
   --format <preset>      vertical, square, or landscape. Defaults to vertical.
+  --creative-route <text> Selected or user-supplied creative route to write into the brief.
   --audio <mode>         silent-safe, sfx-only, music-sfx, or voiceover. Defaults to sfx-only.
   --preflight-mode <mode> required, defaults, or answered. Defaults to required.
   --brief-out <path>     Write a draft ad-brief.json artifact.
@@ -103,6 +104,11 @@ const preflightModeFor = (raw) => {
     return value;
   }
   throw new Error(`Unsupported --preflight-mode: ${raw}`);
+};
+
+const creativeRouteFor = (raw, fallback) => {
+  const value = cleanText(raw);
+  return value || fallback;
 };
 
 const goalFor = (type) => {
@@ -322,7 +328,9 @@ const makeBrief = ({ classification, options }) => {
   const audioMode = cleanText(options.audio || "sfx-only");
   const preflightMode = preflightModeFor(options["preflight-mode"]);
   const requiresPreflight = preflightMode === "required";
-  const primaryRoute = classification.creativeRoutes[0] ?? "product demo";
+  const defaultRoute = classification.creativeRoutes[0] ?? "product demo";
+  const primaryRoute = creativeRouteFor(options["creative-route"] ?? options.creativeRoute, defaultRoute);
+  const routeIsDefault = primaryRoute === defaultRoute;
   const assetNotes = {
     ecommerce_product: "Run ecommerce harvesting for product main image before storyboard. If blocked, stop and request user images.",
     mobile_game: "Use store screenshots or page-harvested visuals as reference; build kinetic gameplay-style motion instead of static slides.",
@@ -375,7 +383,7 @@ const makeBrief = ({ classification, options }) => {
     unansweredQuestions: requiresPreflight ? classification.preflightQuestions : [],
     assumptions: [
       `Category inferred as ${classification.sourceType} with confidence ${classification.confidence}.`,
-      `Default creative route is ${primaryRoute}.`,
+      routeIsDefault ? `Default creative route is ${primaryRoute}.` : `Creative route selected from preflight answer is ${primaryRoute}.`,
       `Default format is ${format.preset} with draft scale ${format.renderScale}.`,
       requiresPreflight ? "Preflight answers are required before storyboard or render." : `Preflight mode is ${preflightMode}.`,
     ],

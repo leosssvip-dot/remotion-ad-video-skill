@@ -34,7 +34,7 @@ Load `references/ad-intake.md` when source quality, claim safety, or asset right
 Load `references/ad-brief-contract.md` for every URL job before storyboard or code. Create or update `ad-brief.json` after source classification and keep preflight answers/defaults there.
 Load `references/asset-harvest.md` for URL-based jobs before writing the storyboard.
 Load `references/fast-test-workflow.md` for skill tests, first-pass iterations, or when the user cares about speed.
-Load `references/preflight-questionnaire.md` for URL-only jobs before storyboard or code. Ask 4-6 link-adapted creative questions by default, even for "test the skill" prompts. Only skip questions when the user explicitly asks for no questions, fastest possible defaults, or a benchmark run with inferred defaults.
+Load `references/preflight-questionnaire.md` for URL-only jobs before storyboard or code. Ask exactly two required preflight choices first: format and creative route. Only skip questions when the user explicitly asks for no questions, fastest possible defaults, or a benchmark run with inferred defaults. Ask optional follow-ups only after those choices, and only when they materially change the ad.
 Load `references/platform-presets.md` when the user needs to choose vertical, square, or landscape output.
 Load `references/industry-angle-library.md` when the product category is not obviously covered by games or social-feed patterns.
 Load `references/game-ad-patterns.md` for casual games, mobile games, app-store game listings, puzzle games, hypercasual games, or simple gameplay loops.
@@ -49,8 +49,11 @@ Required decisions:
 - Duration: default 15s for short-form ads; use 30s or 45s only when the brief needs explanation depth or the user requests it.
 - One primary conversion goal.
 - Usable assets and rights status.
-- Audio mode: silent-safe, SFX only, music plus SFX, or voiceover.
 - Remotion license suitability for the intended commercial use.
+
+Recorded defaults, not required user decisions:
+
+- Audio mode defaults to `sfx-only`; ask only if the user requests silent-safe, music, voiceover, or a platform-specific sound plan.
 
 Minimum URL jobs must attempt to harvest favicon, touch icon, Open Graph image, visible logo or screenshots, and brand colors. Ecommerce product URLs must also attempt a product main image with `scripts/harvest-ecommerce-assets.mjs` before creative work starts; the linked item is the ad subject, and platform/store context stays secondary. Store usable public assets locally in the generated project `public/<brand>/` folder, create or update an asset manifest when practical, and reference assets with `staticFile()`.
 

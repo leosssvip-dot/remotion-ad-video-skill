@@ -16,6 +16,8 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
 
 - If the user answers preflight questions, update `mode` to `answered` and move
   answered items out of `unansweredQuestions`.
+- To write answered choices deterministically, pass `--format` and
+  `--creative-route` with `--preflight-mode answered`.
 - For quick tests, defaults are allowed, but defaults must be recorded in the
   brief instead of only mentioned in chat.
 
@@ -26,8 +28,8 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
   "schemaVersion": "1.0",
   "sourceUrl": "https://example.com/product",
   "generatedAt": "2026-05-19T00:00:00.000Z",
-  "mode": "defaults",
-  "status": "draft",
+  "mode": "requires_input",
+  "status": "blocked",
   "sourceType": "ecommerce_product",
   "classificationConfidence": 0.85,
   "classificationReasons": [],
@@ -72,15 +74,25 @@ node scripts/classify-ad-source.mjs "<url>" --brief-out examples/<brand>-ad/ad-b
           {"label": "Square 1:1", "value": "square-1x1"},
           {"label": "Landscape 16:9", "value": "landscape-16x9"}
         ]
+      },
+      {
+        "id": "creativeRoute",
+        "question": "Choose the main creative route for this ecommerce_product ad.",
+        "options": [
+          {"label": "product close-up", "value": "product close-up"},
+          {"label": "try-on/lifestyle", "value": "try-on/lifestyle"},
+          {"label": "offer push", "value": "offer push"}
+        ]
       }
     ],
     "openQuestions": []
   },
   "unansweredQuestions": [
-    "format: Choose the output size. Options: Vertical 9:16=vertical-9x16, Square 1:1=square-1x1, Landscape 16:9=landscape-16x9."
+    "format: Choose the output size. Options: Vertical 9:16=vertical-9x16, Square 1:1=square-1x1, Landscape 16:9=landscape-16x9.",
+    "creativeRoute: Choose the main creative route for this ecommerce_product ad. Options: product close-up=product close-up, try-on/lifestyle=try-on/lifestyle, offer push=offer push."
   ],
   "assumptions": [],
-  "blockers": []
+  "blockers": ["preflight_answers_required"]
 }
 ```
 

@@ -110,6 +110,15 @@ for (const phrase of [
     fail(`SKILL.md missing core phrase: ${phrase}`);
   }
 }
+if (skillMd.includes("Ask 4-6 link-adapted creative questions")) {
+  fail("SKILL.md must not contain old 4-6 preflight question wording");
+}
+if (skillMd.includes("- Audio mode: silent-safe")) {
+  fail("SKILL.md must not list audio mode as a required user decision");
+}
+if (!skillMd.includes("Ask exactly two required preflight choices first")) {
+  fail("SKILL.md must state the two-choice preflight rule");
+}
 
 const openaiYaml = read("agents/openai.yaml");
 if (!openaiYaml.includes("default_prompt:")) {
@@ -197,6 +206,14 @@ if (!license.includes("MIT License")) {
 const syntheticBrief = JSON.parse(readRoot("examples/synthetic-url-ad/ad-brief.json"));
 if (syntheticBrief.sourceUrl !== "https://example.com/products/focus-lamp") {
   fail("synthetic demo brief must use the fake example.com URL");
+}
+
+const adIntake = read("references/ad-intake.md");
+if (adIntake.includes("- `audio_mode`: Silent-safe")) {
+  fail("ad-intake.md must not list audio_mode as a required input");
+}
+if (!adIntake.includes("Recorded default") || !adIntake.includes("default `sfx-only`")) {
+  fail("ad-intake.md must document audio_mode as a recorded default");
 }
 if (syntheticBrief.assetPlan?.rightsStatus !== "synthetic_demo") {
   fail("synthetic demo must mark rightsStatus as synthetic_demo");
@@ -288,6 +305,10 @@ for (const phrase of [
   "choiceQuestions",
   "user_required",
   "blockers",
+  "preflight_answers_required",
+  "\"id\": \"creativeRoute\"",
+  "creativeRoute: Choose the main creative route",
+  "--creative-route",
   "Storyboard Traceability"
 ]) {
   if (!briefContract.includes(phrase)) {
@@ -380,6 +401,8 @@ for (const phrase of [
   "choiceQuestions",
   "requiredChoiceQuestionIds",
   "textFallbackQuestionsFor",
+  "creativeRouteFor",
+  "creative-route",
   "assetPlan",
 ]) {
   if (!classifierScript.includes(phrase)) {
@@ -425,6 +448,40 @@ try {
   }
 } finally {
   rmSync(classifierBriefPath, { force: true });
+}
+
+const answeredBriefPath = join(tmpdir(), `remotion-ad-answered-${Date.now()}.json`);
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://play.google.com/store/apps/details?id=com.roblox.client",
+    "--format",
+    "square",
+    "--creative-route",
+    "fail-rescue",
+    "--preflight-mode",
+    "answered",
+    "--brief-out",
+    answeredBriefPath,
+  ], { stdio: "pipe" });
+  const answeredBrief = JSON.parse(readFileSync(answeredBriefPath, "utf8"));
+  if (answeredBrief.status !== "answered") {
+    fail(`answered classifier brief status ${answeredBrief.status} must be answered`);
+  }
+  if (answeredBrief.creativeRoute !== "fail-rescue") {
+    fail(`answered classifier brief creativeRoute ${answeredBrief.creativeRoute} must use selected route`);
+  }
+  if (answeredBrief.format?.preset !== "square-1x1") {
+    fail(`answered classifier brief format ${answeredBrief.format?.preset} must use selected format`);
+  }
+  if ((answeredBrief.unansweredQuestions ?? []).length !== 0) {
+    fail("answered classifier brief must not keep unansweredQuestions");
+  }
+  if ((answeredBrief.blockers ?? []).length !== 0) {
+    fail("answered classifier brief must not keep blockers");
+  }
+} finally {
+  rmSync(answeredBriefPath, { force: true });
 }
 
 const ecommerceHarvestScript = readRoot("scripts/harvest-ecommerce-assets.mjs");

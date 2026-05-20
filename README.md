@@ -39,8 +39,7 @@ matter.
 - Mandatory `ad-brief.json` contract so source type, creative route, format,
   audio mode, asset requirements, assumptions, and blockers are explicit before
   storyboard or code.
-- Link-adapted preflight questions for creative intent, audience, proof,
-  and format.
+- Link-adapted preflight choices for output format and creative route.
 - Audible generated SFX are used by default for draft ads unless you choose a
   silent-safe output; sound is not a required preflight question by default.
 - Creative QA pushes bold ad layouts: poster-scale hooks, one dominant visual,
@@ -138,8 +137,8 @@ https://example.com/products/focus-lamp
 The agent should:
 
 1. Classify the URL and create `ad-brief.json`.
-2. Ask link-adapted creative preflight questions by default.
-   If the agent supports selectable UI, it should use choices for size,
+2. Ask the two required creative preflight choices by default.
+   If the agent supports selectable UI, it should use choices for size
    and creative route; otherwise it should ask only those same two options in
    text before any optional follow-up questions. Audio defaults to synced SFX.
 3. Harvest or request usable assets.
@@ -199,7 +198,7 @@ until I approve the draft.
 
 ```text
 Use $remotion-ad-video to turn this product or app link into a 15s ad.
-Create ad-brief.json first, ask link-adapted creative preflight questions,
+Create ad-brief.json first, ask the two required preflight choices,
 harvest usable assets, propose three concepts, implement the strongest one in
 Remotion, render low-resolution stills before any MP4, and report rights or
 asset gaps.

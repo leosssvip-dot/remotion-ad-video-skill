@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync, rmSync, statSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -46,6 +46,21 @@ const requiredRootFiles = [
 const fail = (message) => {
   console.error(`FAIL ${message}`);
   process.exitCode = 1;
+};
+
+const runChecked = (label, command, args, options = {}) => {
+  try {
+    execFileSync(command, args, { stdio: "pipe", ...options });
+    return true;
+  } catch (error) {
+    const output = [
+      error.stdout?.toString?.(),
+      error.stderr?.toString?.(),
+      error.message,
+    ].filter(Boolean).join("\n").trim();
+    fail(`${label} failed${output ? `:\n${output}` : ""}`);
+    return false;
+  }
 };
 
 const read = (relativePath) =>
@@ -207,6 +222,9 @@ const syntheticBrief = JSON.parse(readRoot("examples/synthetic-url-ad/ad-brief.j
 if (syntheticBrief.sourceUrl !== "https://example.com/products/focus-lamp") {
   fail("synthetic demo brief must use the fake example.com URL");
 }
+if (syntheticBrief.audioMode !== "sfx-only") {
+  fail("synthetic demo brief must use audioMode=sfx-only");
+}
 
 const adIntake = read("references/ad-intake.md");
 if (adIntake.includes("- `audio_mode`: Silent-safe")) {
@@ -343,6 +361,22 @@ if (!Array.isArray(templateDefaultProps.audio?.tracks) || templateDefaultProps.a
 for (const track of templateDefaultProps.audio.tracks) {
   if (track.rightsStatus !== "generated") {
     fail(`template default audio track ${track.id} must use generated rightsStatus`);
+  }
+}
+
+const syntheticDefaultProps = JSON.parse(readRoot("examples/synthetic-url-ad/src/default-props.json"));
+if (syntheticDefaultProps.audio?.mode !== "sfx-only") {
+  fail("synthetic demo default props must use audio.mode=sfx-only");
+}
+if (syntheticDefaultProps.audio?.enabled !== true) {
+  fail("synthetic demo default props must keep audio.enabled=true");
+}
+if (!Array.isArray(syntheticDefaultProps.audio?.tracks) || syntheticDefaultProps.audio.tracks.length < 1) {
+  fail("synthetic demo default props must include generated SFX");
+}
+for (const track of syntheticDefaultProps.audio.tracks) {
+  if (track.rightsStatus !== "generated") {
+    fail(`synthetic demo audio track ${track.id} must use generated rightsStatus`);
   }
 }
 
@@ -501,6 +535,11 @@ for (const phrase of [
   "AbsoluteFill",
   "Audio",
   "z.object",
+  "imagePath",
+  "scene.imagePath",
+  "props.logoPath",
+  "props.heroImagePath",
+  "assetSrc",
   "vertical-9x16",
   "square-1x1",
   "landscape-16x9",
@@ -510,6 +549,41 @@ for (const phrase of [
 ]) {
   if (!sourceFiles.includes(phrase)) {
     fail(`template source missing phrase: ${phrase}`);
+  }
+}
+
+if (process.argv.includes("--template-runtime")) {
+  const templateSmokeDir = mkdtempSync(join(tmpdir(), "remotion-ad-template-smoke-"));
+  try {
+    cpSync(join(skillDir, "assets", "remotion-template"), templateSmokeDir, { recursive: true });
+    mkdirSync(join(templateSmokeDir, "public", "acme"), { recursive: true });
+    writeFileSync(
+      join(templateSmokeDir, "public", "acme", "logo.svg"),
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="12" fill="#7CFF6B"/><text x="40" y="50" text-anchor="middle" font-family="Arial" font-size="28" font-weight="700" fill="#151515">A</text></svg>\n`
+    );
+    writeFileSync(
+      join(templateSmokeDir, "public", "acme", "hero.svg"),
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080"><rect width="1080" height="1080" fill="#151515"/><circle cx="540" cy="540" r="280" fill="#7CFF6B"/><text x="540" y="575" text-anchor="middle" font-family="Arial" font-size="92" font-weight="700" fill="#151515">Local Asset</text></svg>\n`
+    );
+    const smokePropsPath = join(templateSmokeDir, "src", "default-props.json");
+    const smokeProps = JSON.parse(readFileSync(smokePropsPath, "utf8"));
+    smokeProps.logoPath = "acme/logo.svg";
+    smokeProps.heroImagePath = "acme/hero.svg";
+    smokeProps.scenes[0].imagePath = "acme/hero.svg";
+    writeFileSync(smokePropsPath, `${JSON.stringify(smokeProps, null, 2)}\n`);
+
+    const installed = runChecked(
+      "template npm install",
+      "npm",
+      ["install", "--ignore-scripts", "--no-audit", "--no-fund"],
+      { cwd: templateSmokeDir }
+    );
+    const typed = installed && runChecked("template typecheck", "npm", ["run", "typecheck"], { cwd: templateSmokeDir });
+    if (typed) {
+      runChecked("template still render", "npm", ["run", "still", "--", "--scale=0.25"], { cwd: templateSmokeDir });
+    }
+  } finally {
+    rmSync(templateSmokeDir, { recursive: true, force: true });
   }
 }
 

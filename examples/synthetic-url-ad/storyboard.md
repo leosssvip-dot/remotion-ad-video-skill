@@ -1,6 +1,6 @@
 # Storyboard
 
-15s vertical ad, silent-safe.
+15s vertical ad, sfx-only with generated draft cues.
 
 | Time | Beat | Visual |
 | --- | --- | --- |

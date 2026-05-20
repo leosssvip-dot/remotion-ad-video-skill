@@ -44,7 +44,7 @@
     "draftHeight": 960
   },
   "durationSeconds": 15,
-  "audioMode": "silent-safe",
+  "audioMode": "sfx-only",
   "unansweredQuestions": [
     "Replace synthetic claims with approved product claims before commercial use.",
     "Replace synthetic visuals with approved product photos or video before commercial use."

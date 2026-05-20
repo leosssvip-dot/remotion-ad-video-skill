@@ -11,6 +11,7 @@ React 以代码方式创建视频的框架。
 这个项目是一个通用的 agent skill 和工具包，适用于商品链接、应用商店链接、落地页或产品 brief。Agent 负责理解链接、规划广告创意、整理素材和生成 Remotion 工程；Remotion 负责用 React 代码稳定渲染视频。你不需要 Sora、Runway、Pika、Kling 或其他视频生成模型。
 
 ## 演示视频
+
 https://github.com/user-attachments/assets/d93f65f0-cb47-47b5-a8d6-a20be31c0553
 
 https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2

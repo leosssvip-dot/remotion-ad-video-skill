@@ -14,6 +14,8 @@ import type { AdVideoProps } from "./schema";
 type SceneProps = {
   backgroundColor: string;
   brandName: string;
+  heroImagePath?: string;
+  logoPath?: string;
   primaryColor: string;
   scene: AdVideoProps["scenes"][number];
 };
@@ -21,8 +23,8 @@ type SceneProps = {
 type AudioSpec = NonNullable<AdVideoProps["audio"]>;
 type AudioTrack = AudioSpec["tracks"][number];
 
-const audioSrc = (src: string) =>
-  /^(https?:|data:audio\/)/i.test(src) ? src : staticFile(src);
+const assetSrc = (src: string) =>
+  /^(https?:|data:)/i.test(src) ? src : staticFile(src);
 
 const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
   const { fps } = useVideoConfig();
@@ -39,7 +41,7 @@ const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
           : undefined;
         const renderedAudio = (
           <Audio
-            src={audioSrc(track.src)}
+            src={assetSrc(track.src)}
             volume={track.volume ?? 0.85}
             loop={track.loop ?? false}
           />
@@ -62,6 +64,8 @@ const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
 const Scene: React.FC<SceneProps> = ({
   backgroundColor,
   brandName,
+  heroImagePath,
+  logoPath,
   primaryColor,
   scene
 }) => {
@@ -77,6 +81,8 @@ const Scene: React.FC<SceneProps> = ({
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
+  const visualAsset =
+    scene.imagePath ?? scene.imageUrl ?? (scene.id === "hook" ? heroImagePath : undefined);
 
   return (
     <AbsoluteFill
@@ -91,8 +97,21 @@ const Scene: React.FC<SceneProps> = ({
         transform: `translateY(${y}px)`
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 24 }}>
-        <strong style={{ fontSize: 34 }}>{brandName}</strong>
+      <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between", gap: 24 }}>
+        <div style={{ alignItems: "center", display: "flex", gap: 16, minWidth: 0 }}>
+          {logoPath ? (
+            <Img
+              src={assetSrc(logoPath)}
+              style={{
+                borderRadius: 8,
+                height: 46,
+                objectFit: "contain",
+                width: 46
+              }}
+            />
+          ) : null}
+          <strong style={{ fontSize: 34 }}>{brandName}</strong>
+        </div>
         {scene.eyebrow ? (
           <span style={{ color: primaryColor, fontSize: 28, fontWeight: 700 }}>
             {scene.eyebrow}
@@ -121,9 +140,9 @@ const Scene: React.FC<SceneProps> = ({
             width: "100%"
           }}
         >
-          {scene.imageUrl ? (
+          {visualAsset ? (
             <Img
-              src={scene.imageUrl}
+              src={assetSrc(visualAsset)}
               style={{ height: "100%", objectFit: "cover", width: "100%" }}
             />
           ) : (
@@ -185,6 +204,8 @@ export const AdVideo: React.FC<AdVideoProps> = (props) => {
           <Scene
             backgroundColor={props.backgroundColor}
             brandName={props.brandName}
+            heroImagePath={props.heroImagePath}
+            logoPath={props.logoPath}
             primaryColor={props.primaryColor}
             scene={scene}
           />

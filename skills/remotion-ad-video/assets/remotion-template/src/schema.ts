@@ -9,6 +9,7 @@ export const SceneSchema = z.object({
   body: z.string().optional(),
   visual: z.string(),
   proof: z.string().optional(),
+  imagePath: z.string().optional(),
   imageUrl: z.string().url().optional()
 });
 

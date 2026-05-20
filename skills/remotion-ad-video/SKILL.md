@@ -72,6 +72,8 @@ Every claim must be tagged as `observed`, `user_supplied`, `inferred`, or `block
 
 Every real commercial sample needs a thumb-stopping visual idea, not just copy. Examples: chat bubbles becoming completed tasks, before/after workflow collapse, a product screenshot exploding into features, or a terminal command triggering visible automation.
 
+Every concept also needs a bold layout idea before storyboard or code: poster-scale type, one dominant visual, asymmetric composition, aggressive crop, oversized product/app frame, kinetic split screen, or a staged reveal. Avoid neat centered slide layouts unless the contrast or motion makes them feel like an ad.
+
 For simple games, especially app-store listings, the visual idea should usually be a gameplay-style simulation: falling pieces, swaps, merges, collisions, score pops, explosions, level-up moments, near-fail rescues, or reward cascades. Static screenshots alone are proof assets, not the ad.
 
 For short-video, creator, or social-feed apps, the visual idea should usually be a feed-native simulation: a phone frame that scrolls or swaps content, creator imagery, UI rails, sound/effect stickers, LIVE or Shop chips when source-supported, and quick cuts that feel like the platform itself rather than a product explainer.
@@ -89,7 +91,7 @@ Default 15s structure:
 - 6-11s: Main benefit, differentiator, or second payoff.
 - 11-15s: CTA, offer, and disclaimer.
 
-Keep each beat to one visual idea. Avoid paragraphs in video text; prefer short lines that fit mobile. For games, use fast kinetic shots; cuts are fine, but each shot should contain gameplay, product motion, character/world action, or a visual payoff rather than a static information card.
+Keep each beat to one visual idea. Avoid paragraphs in video text; prefer short lines that fit mobile. In most scenes, use one headline plus one support line at most; make the dominant word or number much larger instead of spreading many equal-size text blocks. For games, use fast kinetic shots; cuts are fine, but each shot should contain gameplay, product motion, character/world action, or a visual payoff rather than a static information card.
 For social or short-video apps, cuts are expected. Each shot should feel like a feed moment, creator clip, notification, sound cue, live/shop moment, or action prompt instead of a static feature card.
 Load `references/audio-caption-system.md` when adding music, sound effects, voiceover, captions, or silent-autoplay readability.
 

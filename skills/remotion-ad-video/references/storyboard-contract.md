@@ -16,6 +16,8 @@ Each scene should include:
 - `voiceover`: Optional narration.
 - `claimTags`: `observed`, `user_supplied`, `inferred`, or `blocked`.
 - `assetRefs`: Local files or URLs and rights status.
+- `layoutMode`: poster-scale type, aggressive crop, oversized product, kinetic split, asymmetric reveal, or category-native simulation.
+- `textBudget`: maximum two text groups per scene; one dominant hook plus one optional support line.
 
 ## Default Structures
 
@@ -60,3 +62,10 @@ Each scene should include:
 - CTA: 2-5 words.
 
 If the product requires more explanation, move detail into voiceover or captions rather than dense on-screen copy.
+
+## Layout Rules
+
+- Each scene needs one dominant visual or one dominant text object, not several competing blocks.
+- Use maximum two text groups per scene unless the format intentionally mimics comments, UI stickers, or game score bursts.
+- Prefer poster-scale type for the hook and CTA; supporting text should be visibly secondary.
+- Do not reuse centered card/title layouts across consecutive scenes.

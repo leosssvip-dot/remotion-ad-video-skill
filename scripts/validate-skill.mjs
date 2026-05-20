@@ -222,9 +222,23 @@ for (const phrase of ["Default Variant Set", "Hook Shock", "Scoring", "claimSafe
 }
 
 const aestheticQa = read("references/ad-aesthetic-qa.md");
-for (const phrase of ["firstTwoSeconds", "adNotSlides", "categoryNative", "Revision Moves"]) {
+for (const phrase of ["firstTwoSeconds", "adNotSlides", "categoryNative", "layoutShock", "textDensity", "poster-scale", "Revision Moves"]) {
   if (!aestheticQa.includes(phrase)) {
     fail(`ad-aesthetic-qa.md missing phrase: ${phrase}`);
+  }
+}
+
+const creativeDirection = read("references/creative-direction.md");
+for (const phrase of ["Layout Shock", "poster-scale type", "maximum two text groups", "one dominant visual", "Thumb-Stopping Layouts"]) {
+  if (!creativeDirection.includes(phrase)) {
+    fail(`creative-direction.md missing phrase: ${phrase}`);
+  }
+}
+
+const storyboardContract = read("references/storyboard-contract.md");
+for (const phrase of ["layoutMode", "textBudget", "maximum two text groups", "one dominant visual"]) {
+  if (!storyboardContract.includes(phrase)) {
+    fail(`storyboard-contract.md missing phrase: ${phrase}`);
   }
 }
 

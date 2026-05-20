@@ -43,6 +43,8 @@ matter.
   format, and sound.
 - Audible generated SFX are used by default for draft ads unless you choose a
   silent-safe output.
+- Creative QA pushes bold ad layouts: poster-scale hooks, one dominant visual,
+  aggressive crops, and lower text density.
 - Ecommerce asset harvester with blocked-page detection and a fail-closed rule:
   if the product image cannot be confidently harvested, stop and request user
   assets.

@@ -46,6 +46,15 @@ const noise = (index: number) => {
 };
 const env = (time: number, duration: number, attack = 0.01, release = 0.08) =>
   Math.max(0, Math.min(1, time / attack, (duration - time) / release));
+const sweepTone = (from: number, to: number, time: number, duration: number) => {
+  const progress = Math.max(0, Math.min(1, time / duration));
+  const frequency = from + (to - from) * progress;
+  return tone(frequency, time);
+};
+const hit = (frequency: number, time: number, decay = 12) =>
+  tone(frequency, time) * Math.exp(-time * decay);
+const tick = (frequency: number, time: number, index: number, duration: number) =>
+  (tone(frequency, time) * 0.42 + noise(index) * 0.2) * env(time, duration, 0.001, 0.035);
 
 const presetDuration: Record<AudioPreset, number> = {
   "music-pulse-120": 2,
@@ -62,7 +71,17 @@ const presetDuration: Record<AudioPreset, number> = {
   "sfx-notification": 0.42,
   "sfx-coin": 0.46,
   "sfx-tactile-snap": 0.14,
-  "sfx-glitch": 0.24
+  "sfx-glitch": 0.24,
+  "sfx-camera-shutter": 0.2,
+  "sfx-light-switch": 0.16,
+  "sfx-sub-boom": 0.5,
+  "sfx-sparkle": 0.62,
+  "sfx-count-tick": 0.12,
+  "sfx-bass-drop": 0.76,
+  "sfx-pack-open": 0.44,
+  "sfx-combo-burst": 0.58,
+  "sfx-reveal-hit": 0.36,
+  "sfx-soft-chime": 0.68
 };
 
 const sampleForPreset = (preset: AudioPreset, time: number, index: number, duration: number) => {
@@ -107,6 +126,42 @@ const sampleForPreset = (preset: AudioPreset, time: number, index: number, durat
       return (tone(190, time) * 0.34 + noise(index) * 0.42) * env(time, duration, 0.002, 0.05);
     case "sfx-glitch":
       return (Math.sign(tone(95 + index % 900, time)) * 0.32 + noise(index) * 0.25) * env(time, duration, 0.002, 0.08);
+    case "sfx-camera-shutter": {
+      const first = time < 0.045 ? tick(900, time, index, 0.045) : 0;
+      const secondTime = Math.max(0, time - 0.072);
+      const second = time > 0.072 ? tick(1250, secondTime, index, 0.06) : 0;
+      const body = noise(index) * Math.exp(-time * 20) * 0.18;
+      return (first + second + body) * 0.78;
+    }
+    case "sfx-light-switch":
+      return (hit(125, time, 18) * 0.42 + tick(1700, time, index, duration) * 0.55) * envelope;
+    case "sfx-sub-boom":
+      return (hit(46, time, 5) * 0.82 + hit(92, time, 9) * 0.28 + noise(index) * Math.exp(-time * 18) * 0.12) * envelope;
+    case "sfx-sparkle": {
+      const sparkleOne = time < 0.18 ? tone(1760, time) * env(time, 0.18, 0.004, 0.12) : 0;
+      const sparkleTwoTime = Math.max(0, time - 0.16);
+      const sparkleTwo = time > 0.16 ? tone(2349, sparkleTwoTime) * env(sparkleTwoTime, 0.22, 0.004, 0.14) : 0;
+      const shimmer = tone(3136 + Math.sin(time * 24) * 140, time) * 0.12;
+      return (sparkleOne * 0.34 + sparkleTwo * 0.28 + shimmer) * envelope;
+    }
+    case "sfx-count-tick":
+      return tick(1500 + (index % 5) * 80, time, index, duration) * 0.95;
+    case "sfx-bass-drop":
+      return (sweepTone(180, 42, time, duration) * 0.52 + hit(55, time, 4) * 0.5 + noise(index) * Math.exp(-time * 10) * 0.08) * envelope;
+    case "sfx-pack-open":
+      return (noise(index) * 0.36 + sweepTone(780, 340, time, duration) * 0.14) * env(time, duration, 0.02, 0.2);
+    case "sfx-combo-burst": {
+      const a = time < 0.16 ? tone(660, time) * env(time, 0.16, 0.004, 0.08) : 0;
+      const bTime = Math.max(0, time - 0.14);
+      const b = time > 0.14 && time < 0.34 ? tone(880, bTime) * env(bTime, 0.2, 0.004, 0.08) : 0;
+      const cTime = Math.max(0, time - 0.3);
+      const c = time > 0.3 ? tone(1320, cTime) * env(cTime, 0.18, 0.004, 0.1) : 0;
+      return (a * 0.24 + b * 0.24 + c * 0.22 + noise(index) * Math.exp(-time * 12) * 0.12) * envelope;
+    }
+    case "sfx-reveal-hit":
+      return (hit(72, time, 8) * 0.5 + sweepTone(420, 980, time, duration) * 0.18 + noise(index) * Math.exp(-time * 22) * 0.16) * envelope;
+    case "sfx-soft-chime":
+      return (tone(523, time) * Math.exp(-time * 2.8) + tone(784, time) * Math.exp(-time * 3.3) * 0.5 + tone(1046, time) * Math.exp(-time * 4.2) * 0.24) * envelope * 0.32;
   }
 };
 
@@ -168,10 +223,10 @@ const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
   return (
     <>
       {audio.tracks.map((track: AudioTrack) => {
-        const from = Math.round((track.startSecond ?? 0) * fps);
-        const durationInFrames = track.durationSecond
+        const from = track.startFrame ?? Math.round((track.startSecond ?? 0) * fps);
+        const durationInFrames = track.durationFrames ?? (track.durationSecond
           ? Math.round(track.durationSecond * fps)
-          : undefined;
+          : undefined);
         const source = track.src ? assetSrc(track.src) : track.preset ? audioPresetSrc(track.preset) : undefined;
         if (!source) {
           return null;

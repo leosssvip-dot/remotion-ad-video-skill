@@ -436,6 +436,11 @@ for (const phrase of ["Music Bed Decision", "SFX Palette", "Cue Density", "Mix T
     fail(`audio-caption-system.md missing richer audio phrase: ${phrase}`);
   }
 }
+for (const phrase of ["Frame-Locked Cue Sheet", "startFrame", "durationFrames", "sync.sceneId", "sync.anchor", "audio category"]) {
+  if (!audioSystem.includes(phrase)) {
+    fail(`audio-caption-system.md missing precise audio phrase: ${phrase}`);
+  }
+}
 
 const templateDefaultProps = JSON.parse(read("assets/remotion-template/src/default-props.json"));
 if (templateDefaultProps.audio?.mode !== "sfx-only") {
@@ -444,10 +449,20 @@ if (templateDefaultProps.audio?.mode !== "sfx-only") {
 if (templateDefaultProps.audio?.enabled !== true) {
   fail("template default audio.enabled must be true");
 }
-if (!Array.isArray(templateDefaultProps.audio?.tracks) || templateDefaultProps.audio.tracks.length < 8) {
-  fail("template default audio.tracks must include at least 8 generated SFX cues");
+if (!Array.isArray(templateDefaultProps.audio?.tracks) || templateDefaultProps.audio.tracks.length < 12) {
+  fail("template default audio.tracks must include at least 12 generated SFX cues");
 }
 const templateAudioPresets = new Set();
+const templateAudioCategories = new Set();
+const requiredAudioPresets = new Set([
+  "sfx-camera-shutter",
+  "sfx-light-switch",
+  "sfx-sub-boom",
+  "sfx-sparkle",
+  "sfx-count-tick",
+  "sfx-bass-drop"
+]);
+const templateFps = 30;
 for (const track of templateDefaultProps.audio.tracks) {
   if (track.rightsStatus !== "generated") {
     fail(`template default audio track ${track.id} must use generated rightsStatus`);
@@ -461,10 +476,31 @@ for (const track of templateDefaultProps.audio.tracks) {
   if (!track.preset) {
     fail(`template default audio track ${track.id} must use a generated audio preset`);
   }
+  if (!Number.isInteger(track.startFrame)) {
+    fail(`template default audio track ${track.id} must use exact startFrame timing`);
+  }
+  if (typeof track.startSecond === "number" && Math.abs(track.startSecond - track.startFrame / templateFps) > 0.001) {
+    fail(`template default audio track ${track.id} startSecond must match startFrame at 30fps`);
+  }
+  if (!track.sync?.sceneId || !track.sync?.anchor) {
+    fail(`template default audio track ${track.id} must include sync.sceneId and sync.anchor`);
+  }
+  if (!track.category) {
+    fail(`template default audio track ${track.id} must include an audio category`);
+  }
   templateAudioPresets.add(track.preset);
+  templateAudioCategories.add(track.category);
 }
-if (templateAudioPresets.size < 6) {
-  fail("template default audio must use at least 6 distinct generated SFX presets");
+if (templateAudioPresets.size < 12) {
+  fail("template default audio must use at least 12 distinct generated SFX presets");
+}
+for (const preset of requiredAudioPresets) {
+  if (!templateAudioPresets.has(preset)) {
+    fail(`template default audio missing richer generated preset: ${preset}`);
+  }
+}
+if (templateAudioCategories.size < 5) {
+  fail("template default audio must span at least 5 audio categories");
 }
 if (!templateDefaultProps.scenes?.some((scene) => scene.metric?.to === 4.8)) {
   fail("template default props must include an animated metric example");
@@ -852,8 +888,17 @@ for (const phrase of [
   "music-pulse-120",
   "sfx-tactile-snap",
   "sfx-glitch",
+  "sfx-camera-shutter",
+  "sfx-light-switch",
+  "sfx-sub-boom",
+  "sfx-sparkle",
+  "sfx-count-tick",
+  "startFrame",
+  "durationFrames",
+  "AudioSyncSchema",
   "kind",
   "preset",
+  "category",
 ]) {
   if (!sourceFiles.includes(phrase)) {
     fail(`template source missing phrase: ${phrase}`);

@@ -38,16 +38,56 @@ export const AudioPresetSchema = z.enum([
   "sfx-notification",
   "sfx-coin",
   "sfx-tactile-snap",
-  "sfx-glitch"
+  "sfx-glitch",
+  "sfx-camera-shutter",
+  "sfx-light-switch",
+  "sfx-sub-boom",
+  "sfx-sparkle",
+  "sfx-count-tick",
+  "sfx-bass-drop",
+  "sfx-pack-open",
+  "sfx-combo-burst",
+  "sfx-reveal-hit",
+  "sfx-soft-chime"
 ]);
+
+export const AudioSyncSchema = z.object({
+  sceneId: z.string(),
+  anchor: z.enum([
+    "scene-start",
+    "scene-cut",
+    "headline-enter",
+    "visual-lock",
+    "metric-count",
+    "cta-land",
+    "transition-lead",
+    "reward"
+  ]),
+  offsetFrames: z.number().int().min(-90).max(180).optional(),
+  note: z.string().optional()
+});
 
 export const AudioTrackSchema = z.object({
   id: z.string(),
   src: z.string().optional(),
   preset: AudioPresetSchema.optional(),
   kind: z.enum(["musicBed", "sfx", "voiceover"]).optional(),
+  category: z.enum([
+    "ui",
+    "transition",
+    "impact",
+    "product",
+    "metric",
+    "reward",
+    "notification",
+    "music",
+    "voice"
+  ]).optional(),
   event: z.string().optional(),
+  sync: AudioSyncSchema.optional(),
+  startFrame: z.number().int().min(0).optional(),
   startSecond: z.number().min(0).optional(),
+  durationFrames: z.number().int().positive().optional(),
   durationSecond: z.number().positive().optional(),
   volume: z.number().min(0).max(1).optional(),
   loop: z.boolean().optional(),

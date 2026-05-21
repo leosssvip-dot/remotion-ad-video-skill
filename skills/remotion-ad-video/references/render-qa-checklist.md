@@ -73,5 +73,6 @@ Report:
 Audio is default-on via generated SFX, but it is not part of required render QA.
 Run audio-specific checks only when the user asks for music, voiceover,
 silent-safe output, or sound polish. In those cases, confirm the cue sheet has
-visible-event triggers, `music-sfx` has a rights-cleared or generated music bed,
-and repeated SFX use a varied palette rather than one reused click.
+visible-event triggers, final SFX cues use `startFrame` with `sync.sceneId` and
+`sync.anchor`, `music-sfx` has a rights-cleared or generated music bed, and
+repeated SFX use a varied palette rather than one reused click.

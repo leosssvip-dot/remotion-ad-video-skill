@@ -10,6 +10,7 @@ const lockDir = `${outputDir}.lock`;
 
 const allowlist = [
   ".gitignore",
+  "AGENTS.md",
   "LICENSE",
   "README.md",
   "README.zh-CN.md",

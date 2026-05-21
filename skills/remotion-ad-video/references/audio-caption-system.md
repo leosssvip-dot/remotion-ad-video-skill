@@ -24,11 +24,19 @@ Default URL ads should use `sfx-only` with short generated interaction sounds un
 ## Sync Discipline
 
 - Every SFX track must map to a visible event: tap, click, swipe, card pop, score burst, block placement, CTA button press, transition, or reward.
-- Write a cue sheet with `time -> visual event -> sound` before final render when SFX are included.
+- Write a cue sheet with `frame/time -> scene -> visual event -> sound` before final render when SFX are included.
 - Prefer short interactive sounds over a generic music bed for test drafts.
 - For `sfx-only`, generate or include small click/pop/whoosh/impact sounds before rendering; do not downgrade to `silent-safe` just because the user did not provide audio.
 - If a sound does not have a clear on-screen trigger, remove it. A silent-safe ad is better than mismatched audio.
 - Place cues within roughly 2-4 frames of the visual event unless intentionally leading a transition.
+
+## Frame-Locked Cue Sheet
+
+- Use exact `startFrame` for generated template SFX whenever the composition fps is known; keep `startSecond` as a readable mirror of `startFrame / fps`.
+- Use `durationFrames` for short hits that must not smear across cuts. Use `durationSecond` only for external music, voiceover, or clips whose source timing matters more than frame trimming.
+- Each SFX cue should include `sync.sceneId`, `sync.anchor`, and optional `sync.offsetFrames` so the sound can be audited against a visible scene event.
+- Valid anchors should describe the picture event, for example `scene-start`, `scene-cut`, `headline-enter`, `visual-lock`, `metric-count`, `cta-land`, `transition-lead`, or `reward`.
+- Treat a cue without `startFrame` or `sync.anchor` as a draft placeholder, not a final sound pass.
 
 ## SFX Palette
 
@@ -39,8 +47,11 @@ Use a varied palette instead of repeating one click or pop:
 - Game/app reward: coin, combo, burst, level-up, fail-rescue.
 - Ecommerce/product: tactile snap, fabric, pack open, reveal hit, comparison snap.
 - Social/feed: sticker pop, glitch, live ping, shop tap, camera shutter.
+- Physical product: light switch, pack open, camera shutter, tactile snap, reveal hit.
+- Proof/metric: count tick, sparkle, soft chime, notification.
+- Bass/impact: sub boom, bass drop, impact, stinger.
 
-Pick sounds by visual event and product category. A 15s ad should usually use at least six distinct generated or rights-cleared SFX presets unless the creative is intentionally restrained.
+Pick sounds by visual event and audio category. A 15s ad should usually use at least twelve distinct generated or rights-cleared SFX presets across product, transition, impact, UI, metric, reward, and notification categories unless the creative is intentionally restrained.
 
 ## Cue Density
 
@@ -62,8 +73,10 @@ Pick sounds by visual event and product category. A 15s ad should usually use at
 - Set `audio.enabled` to `true` only when at least one track is present.
 - Use one track per music bed, SFX hit, or voiceover clip so cuts can be timed precisely.
 - Each track should include `kind`: `musicBed`, `sfx`, or `voiceover`.
+- Each SFX track should include an audio category such as `product`, `transition`, `impact`, `ui`, `metric`, `reward`, or `notification`.
 - Each generated template track should use a named `preset`; external tracks should use `src`.
 - Each SFX track should include an `event` that names the visible trigger.
+- Each final SFX track should include exact `startFrame`; include `durationFrames` for clipped hits and `sync.sceneId` / `sync.anchor` for reviewable cue timing.
 - Each audio track must include `rightsStatus`: `user_supplied`, `licensed`, `generated`, `public_reference`, or `needs_verification`.
 - For silent-safe drafts, set `audio.enabled` to `false` and keep on-screen copy readable without sound.
 

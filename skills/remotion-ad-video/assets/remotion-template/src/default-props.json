@@ -14,101 +14,257 @@
     "mode": "sfx-only",
     "tracks": [
       {
-        "id": "hook-click",
+        "id": "hook-light-switch",
         "kind": "sfx",
-        "event": "first frame product click lands",
-        "preset": "sfx-click",
-        "startSecond": 0.12,
-        "volume": 0.72,
+        "category": "product",
+        "event": "lamp switch clicks on during first product flash",
+        "sync": {
+          "sceneId": "hook",
+          "anchor": "scene-start",
+          "offsetFrames": 3
+        },
+        "preset": "sfx-light-switch",
+        "startFrame": 3,
+        "startSecond": 0.1,
+        "durationFrames": 5,
+        "volume": 0.7,
+        "rightsStatus": "generated"
+      },
+      {
+        "id": "hook-camera-shutter",
+        "kind": "sfx",
+        "category": "product",
+        "event": "product hero freezes into a crisp visual frame",
+        "sync": {
+          "sceneId": "hook",
+          "anchor": "visual-lock",
+          "offsetFrames": 9
+        },
+        "preset": "sfx-camera-shutter",
+        "startFrame": 9,
+        "startSecond": 0.3,
+        "durationFrames": 6,
+        "volume": 0.5,
         "rightsStatus": "generated"
       },
       {
         "id": "hook-riser",
         "kind": "sfx",
+        "category": "transition",
         "event": "headline rises into hook payoff",
+        "sync": {
+          "sceneId": "hook",
+          "anchor": "headline-enter",
+          "offsetFrames": 17
+        },
         "preset": "sfx-riser",
-        "startSecond": 0.52,
+        "startFrame": 17,
+        "startSecond": 0.567,
+        "durationFrames": 22,
         "volume": 0.42,
         "rightsStatus": "generated"
       },
       {
-        "id": "hook-impact",
+        "id": "hook-sub-boom",
         "kind": "sfx",
+        "category": "impact",
         "event": "hero visual locks into place",
-        "preset": "sfx-impact",
-        "startSecond": 1.55,
-        "volume": 0.78,
+        "sync": {
+          "sceneId": "hook",
+          "anchor": "visual-lock",
+          "offsetFrames": 47
+        },
+        "preset": "sfx-sub-boom",
+        "startFrame": 47,
+        "startSecond": 1.567,
+        "durationFrames": 15,
+        "volume": 0.66,
         "rightsStatus": "generated"
       },
       {
         "id": "pain-whoosh",
         "kind": "sfx",
+        "category": "transition",
         "event": "problem scene wipes in",
+        "sync": {
+          "sceneId": "pain",
+          "anchor": "scene-cut",
+          "offsetFrames": 3
+        },
         "preset": "sfx-whoosh",
+        "startFrame": 63,
         "startSecond": 2.1,
+        "durationFrames": 14,
         "volume": 0.46,
+        "rightsStatus": "generated"
+      },
+      {
+        "id": "pain-pack-open",
+        "kind": "sfx",
+        "category": "product",
+        "event": "before-state object opens into the problem close-up",
+        "sync": {
+          "sceneId": "pain",
+          "anchor": "visual-lock",
+          "offsetFrames": 42
+        },
+        "preset": "sfx-pack-open",
+        "startFrame": 102,
+        "startSecond": 3.4,
+        "durationFrames": 13,
+        "volume": 0.5,
         "rightsStatus": "generated"
       },
       {
         "id": "before-snap",
         "kind": "sfx",
+        "category": "product",
         "event": "before state snaps to comparison",
+        "sync": {
+          "sceneId": "pain",
+          "anchor": "visual-lock",
+          "offsetFrames": 84
+        },
         "preset": "sfx-tactile-snap",
+        "startFrame": 144,
         "startSecond": 4.8,
+        "durationFrames": 5,
         "volume": 0.58,
         "rightsStatus": "generated"
       },
       {
         "id": "demo-pop",
         "kind": "sfx",
+        "category": "ui",
         "event": "feature demo card pops forward",
+        "sync": {
+          "sceneId": "demo",
+          "anchor": "scene-start",
+          "offsetFrames": 3
+        },
         "preset": "sfx-pop",
+        "startFrame": 183,
         "startSecond": 6.1,
+        "durationFrames": 6,
         "volume": 0.62,
         "rightsStatus": "generated"
       },
       {
         "id": "demo-swipe",
         "kind": "sfx",
+        "category": "transition",
         "event": "product visual swipes through benefit",
+        "sync": {
+          "sceneId": "demo",
+          "anchor": "visual-lock",
+          "offsetFrames": 44
+        },
         "preset": "sfx-swipe",
-        "startSecond": 7.45,
+        "startFrame": 224,
+        "startSecond": 7.467,
+        "durationFrames": 9,
         "volume": 0.44,
         "rightsStatus": "generated"
       },
       {
-        "id": "metric-coin",
+        "id": "demo-reveal-hit",
         "kind": "sfx",
-        "event": "proof metric counts upward",
-        "preset": "sfx-coin",
-        "startSecond": 11.08,
-        "volume": 0.48,
+        "category": "impact",
+        "event": "benefit reveal hits at the end of the demo move",
+        "sync": {
+          "sceneId": "demo",
+          "anchor": "visual-lock",
+          "offsetFrames": 90
+        },
+        "preset": "sfx-reveal-hit",
+        "startFrame": 270,
+        "startSecond": 9,
+        "durationFrames": 11,
+        "volume": 0.56,
         "rightsStatus": "generated"
       },
       {
-        "id": "proof-notification",
+        "id": "metric-count-tick",
         "kind": "sfx",
-        "event": "proof label appears",
-        "preset": "sfx-notification",
-        "startSecond": 11.72,
+        "category": "metric",
+        "event": "proof metric counts upward",
+        "sync": {
+          "sceneId": "proof",
+          "anchor": "metric-count",
+          "offsetFrames": 2
+        },
+        "preset": "sfx-count-tick",
+        "startFrame": 332,
+        "startSecond": 11.067,
+        "durationFrames": 4,
         "volume": 0.42,
+        "rightsStatus": "generated"
+      },
+      {
+        "id": "metric-sparkle",
+        "kind": "sfx",
+        "category": "metric",
+        "event": "proof label glints after the number settles",
+        "sync": {
+          "sceneId": "proof",
+          "anchor": "metric-count",
+          "offsetFrames": 21
+        },
+        "preset": "sfx-sparkle",
+        "startFrame": 351,
+        "startSecond": 11.7,
+        "durationFrames": 18,
+        "volume": 0.42,
+        "rightsStatus": "generated"
+      },
+      {
+        "id": "cta-bass-drop",
+        "kind": "sfx",
+        "category": "impact",
+        "event": "CTA panel lands",
+        "sync": {
+          "sceneId": "cta",
+          "anchor": "cta-land",
+          "offsetFrames": 1
+        },
+        "preset": "sfx-bass-drop",
+        "startFrame": 391,
+        "startSecond": 13.033,
+        "durationFrames": 23,
+        "volume": 0.54,
         "rightsStatus": "generated"
       },
       {
         "id": "cta-stinger",
         "kind": "sfx",
-        "event": "CTA panel lands",
+        "category": "notification",
+        "event": "CTA button glow pulses",
+        "sync": {
+          "sceneId": "cta",
+          "anchor": "cta-land",
+          "offsetFrames": 16
+        },
         "preset": "sfx-stinger",
-        "startSecond": 13.05,
-        "volume": 0.68,
+        "startFrame": 406,
+        "startSecond": 13.533,
+        "durationFrames": 17,
+        "volume": 0.56,
         "rightsStatus": "generated"
       },
       {
         "id": "cta-success",
         "kind": "sfx",
+        "category": "reward",
         "event": "final CTA confirmation pulse",
+        "sync": {
+          "sceneId": "cta",
+          "anchor": "reward",
+          "offsetFrames": 33
+        },
         "preset": "sfx-success",
-        "startSecond": 14.05,
+        "startFrame": 423,
+        "startSecond": 14.1,
+        "durationFrames": 18,
         "volume": 0.5,
         "rightsStatus": "generated"
       }

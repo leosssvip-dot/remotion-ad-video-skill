@@ -125,7 +125,7 @@ Remotion template rules:
 - Prefer real product/app visuals. Use generated placeholders only when clearly marked.
 - Use harvested logo/icon/OG/screenshot assets when a URL was supplied and rights status is not blocked.
 - Support animated metric/counter props for ratings, discounts, prices, savings, review counts, and game/app scores when those numbers are source-backed.
-- Add generated synced SFX by default through props. Use a varied generated SFX palette with visible-event cue metadata, not one repeated click. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
+- Add generated synced SFX by default through props. Use a varied generated SFX palette with frame-locked `startFrame`, category, scene/anchor sync metadata, and visible-event cue descriptions, not one repeated click. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
 - Support `music-sfx` with a generated, licensed, or user-supplied music bed plus picture-locked SFX when the user requests music. Keep normal URL jobs on default `sfx-only`.
 - Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis.
 - For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.

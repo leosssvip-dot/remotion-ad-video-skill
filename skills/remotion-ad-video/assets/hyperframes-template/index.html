@@ -10,6 +10,12 @@
     {"id":"body1","type":"string","label":"Hook support","default":"A cleaner desk light for deep work."},
     {"id":"headline2","type":"string","label":"Demo headline","default":"Show the product in motion"},
     {"id":"body2","type":"string","label":"Demo support","default":"Swap these lines with the approved storyboard copy."},
+    {"id":"metricLabel","type":"string","label":"Animated metric label","default":"Verified proof"},
+    {"id":"metricFrom","type":"number","label":"Metric start value","default":0},
+    {"id":"metricTo","type":"number","label":"Metric final value","default":4.8},
+    {"id":"metricPrefix","type":"string","label":"Metric prefix","default":""},
+    {"id":"metricSuffix","type":"string","label":"Metric suffix","default":"/5"},
+    {"id":"metricDecimals","type":"number","label":"Metric decimals","default":1},
     {"id":"headline3","type":"string","label":"CTA headline","default":"Make the next session easier"},
     {"id":"cta","type":"string","label":"CTA","default":"Shop now"},
     {"id":"disclaimer","type":"string","label":"Disclaimer","default":"Draft concept. Verify claims and asset rights before launch."},
@@ -171,6 +177,31 @@
         text-align: center;
       }
 
+      .metric-badge {
+        width: fit-content;
+        min-width: 260px;
+        padding: 24px 30px;
+        border: 5px solid var(--text-color, #f7f7f0);
+        border-radius: 14px;
+        background: var(--primary-color, #7cff6b);
+        color: #111111;
+        box-shadow: 0 28px 90px rgb(0 0 0 / 0.45);
+        transform: rotate(-3deg);
+      }
+
+      .metric-value {
+        font-size: 88px;
+        font-weight: 950;
+        line-height: 0.85;
+      }
+
+      .metric-label {
+        margin-top: 8px;
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1.05;
+      }
+
       .disclaimer {
         position: absolute;
         left: 72px;
@@ -203,6 +234,10 @@
         font-size: 34px;
       }
 
+      #stage[data-layout-mode="square"] .metric-value {
+        font-size: 66px;
+      }
+
       #stage[data-layout-mode="landscape"] .brand-strip {
         inset: 48px 64px auto;
       }
@@ -233,6 +268,18 @@
       #stage[data-layout-mode="landscape"] .cta {
         font-size: 30px;
       }
+
+      #stage[data-layout-mode="landscape"] .metric-badge {
+        padding: 18px 24px;
+      }
+
+      #stage[data-layout-mode="landscape"] .metric-value {
+        font-size: 58px;
+      }
+
+      #stage[data-layout-mode="landscape"] .metric-label {
+        font-size: 20px;
+      }
     </style>
   </head>
   <body>
@@ -262,6 +309,10 @@
       <section id="scene-demo" class="scene clip" data-stage="demo" data-start="4" data-duration="7" data-track-index="1">
         <div id="headline-2" class="headline"></div>
         <div id="body-2" class="body"></div>
+        <div id="metric-badge" class="metric-badge">
+          <div id="metric-value" class="metric-value"></div>
+          <div id="metric-label" class="metric-label"></div>
+        </div>
       </section>
 
       <section id="scene-cta" class="scene clip" data-stage="cta" data-start="11" data-duration="4" data-track-index="1">
@@ -283,6 +334,12 @@
       defaults.body1 = "A cleaner desk light for deep work.";
       defaults.headline2 = "Show the product in motion";
       defaults.body2 = "Swap these lines with the approved storyboard copy.";
+      defaults.metricLabel = "Verified proof";
+      defaults.metricFrom = 0;
+      defaults.metricTo = 4.8;
+      defaults.metricPrefix = "";
+      defaults.metricSuffix = "/5";
+      defaults.metricDecimals = 1;
       defaults.headline3 = "Make the next session easier";
       defaults.cta = "Shop now";
       defaults.disclaimer = "Draft concept. Verify claims and asset rights before launch.";
@@ -299,8 +356,15 @@
         var number = Number(value);
         return Number.isFinite(number) && number > 0 ? number : fallback;
       }
+      function numberVariable(value, fallback) {
+        var number = Number(value);
+        return Number.isFinite(number) ? number : fallback;
+      }
       variables.width = numericVariable(variables.width, defaults.width);
       variables.height = numericVariable(variables.height, defaults.height);
+      variables.metricFrom = numberVariable(variables.metricFrom, defaults.metricFrom);
+      variables.metricTo = numberVariable(variables.metricTo, defaults.metricTo);
+      variables.metricDecimals = Math.max(0, Math.min(2, Math.round(numberVariable(variables.metricDecimals, defaults.metricDecimals))));
       variables.layoutMode = variables.layoutMode || (
         variables.width > variables.height
           ? "landscape"
@@ -320,6 +384,15 @@
       function setText(id, value) {
         document.getElementById(id).textContent = value || "";
       }
+      function formatMetricValue(value) {
+        return value.toLocaleString("en-US", {
+          maximumFractionDigits: variables.metricDecimals,
+          minimumFractionDigits: variables.metricDecimals
+        });
+      }
+      function setMetricValue(value) {
+        setText("metric-value", (variables.metricPrefix || "") + formatMetricValue(value) + (variables.metricSuffix || ""));
+      }
       function assetUrl(path) {
         if (!path || path.indexOf("http://") === 0 || path.indexOf("https://") === 0) {
           return path;
@@ -335,6 +408,8 @@
       setText("body-1", variables.body1);
       setText("headline-2", variables.headline2);
       setText("body-2", variables.body2);
+      setText("metric-label", variables.metricLabel);
+      setMetricValue(variables.metricFrom);
       setText("headline-3", variables.headline3);
       setText("cta", variables.cta);
       setText("disclaimer", variables.disclaimer);
@@ -351,6 +426,7 @@
         document.getElementById("visual-placeholder").hidden = true;
       }
       window.__timelines = window.__timelines || {};
+      var metricState = { value: variables.metricFrom };
       var tl = gsap.timeline({ paused: true });
       tl.from(".brand-strip", { y: -36, opacity: 0, duration: 0.45, ease: "power3.out" }, 0);
       tl.from(".visual", { scale: 0.86, y: 90, opacity: 0, duration: 0.8, ease: "power3.out" }, 0.18);
@@ -360,6 +436,9 @@
       tl.set("#scene-hook", { opacity: 0 }, 4);
       tl.from("#scene-demo .headline", { x: -70, opacity: 0, duration: 0.5, ease: "power3.out" }, 4.18);
       tl.from("#scene-demo .body", { x: -46, opacity: 0, duration: 0.45, ease: "power3.out" }, 4.48);
+      tl.from("#metric-badge", { scale: 0.72, rotation: -10, opacity: 0, duration: 0.48, ease: "back.out(1.9)" }, 4.78);
+      tl.to(metricState, { value: variables.metricTo, duration: 1.15, ease: "power3.out", onUpdate: function () { setMetricValue(metricState.value); } }, 4.86);
+      tl.to("#metric-badge", { scale: 1.08, duration: 0.18, repeat: 1, yoyo: true, ease: "power1.inOut" }, 5.95);
       tl.to(".visual", { scale: 1.05, y: -36, duration: 6.3, ease: "none" }, 4);
       tl.to("#scene-demo", { y: -72, opacity: 0, duration: 0.35, ease: "power2.in" }, 10.7);
       tl.set("#scene-demo", { opacity: 0 }, 11);

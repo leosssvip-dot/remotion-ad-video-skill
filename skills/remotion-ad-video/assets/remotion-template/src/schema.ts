@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export const SceneMetricSchema = z.object({
+  label: z.string().optional(),
+  from: z.number().optional(),
+  to: z.number(),
+  prefix: z.string().optional(),
+  suffix: z.string().optional(),
+  decimals: z.number().int().min(0).max(2).optional()
+});
+
 export const SceneSchema = z.object({
   id: z.string(),
   startSecond: z.number().min(0),
@@ -9,6 +18,7 @@ export const SceneSchema = z.object({
   body: z.string().optional(),
   visual: z.string(),
   proof: z.string().optional(),
+  metric: SceneMetricSchema.optional(),
   imagePath: z.string().optional(),
   imageUrl: z.string().url().optional()
 });

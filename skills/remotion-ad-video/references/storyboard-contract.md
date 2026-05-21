@@ -13,11 +13,39 @@ Each scene should include:
 - `headline`: Main on-screen line.
 - `body`: Optional supporting line.
 - `proof`: Optional evidence line.
+- `metric`: Optional animated numeric proof object with `label`, `from`, `to`,
+  `prefix`, `suffix`, and `decimals`.
 - `voiceover`: Optional narration.
 - `claimTags`: `observed`, `user_supplied`, `inferred`, or `blocked`.
 - `assetRefs`: Local files or URLs and rights status.
 - `layoutMode`: poster-scale type, aggressive crop, oversized product, kinetic split, asymmetric reveal, or category-native simulation.
 - `textBudget`: maximum two text groups per scene; one dominant hook plus one optional support line.
+
+## Metric Rules
+
+Use `metric` when the ad shows source-backed ratings, discounts, prices,
+savings, review counts, download counts, scores, speed, or time saved. The final
+`to` value must match the approved source number. `from` should usually start at
+0 or a nearby lower value that makes the growth legible. Use `decimals: 1` for
+ratings like `4.8`, `decimals: 0` for whole percentages/counts, and explicit
+`prefix`/`suffix` for currency and percent signs.
+
+Example:
+
+```json
+{
+  "metric": {
+    "label": "Store rating",
+    "from": 0,
+    "to": 4.8,
+    "suffix": "/5",
+    "decimals": 1
+  }
+}
+```
+
+If the number is inferred, blocked, or not safe to claim, do not put it in
+`metric`; use a non-claim visual payoff instead.
 
 ## Language
 
@@ -87,4 +115,5 @@ If the product requires more explanation, move detail into voiceover or captions
 - Each scene needs one dominant visual or one dominant text object, not several competing blocks.
 - Use maximum two text groups per scene unless the format intentionally mimics comments, UI stickers, or game score bursts.
 - Prefer poster-scale type for the hook and CTA; supporting text should be visibly secondary.
+- Numeric proof should become a large counter, badge, meter, or sticker instead of another small text line.
 - Do not reuse centered card/title layouts across consecutive scenes.

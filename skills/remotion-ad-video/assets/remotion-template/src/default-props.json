@@ -72,6 +72,13 @@
       "headline": "Built for long work sessions",
       "body": "Only render proof the user supplied or the source confirmed.",
       "proof": "User-supplied claim required",
+      "metric": {
+        "label": "Replace with approved rating, discount, or savings",
+        "from": 0,
+        "to": 4.8,
+        "suffix": "/5",
+        "decimals": 1
+      },
       "visual": "Proof"
     },
     {

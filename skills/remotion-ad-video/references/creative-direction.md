@@ -28,6 +28,21 @@ it wants attention even before it moves.
 Keep the first frame to maximum two text groups: a large hook and a short support
 or CTA. Do not fill the viewport with several similarly sized labels.
 
+## Numeric Proof Motion
+
+If the source gives usable numbers, treat them as a motion surface, not a line
+of copy. Ratings, discounts, prices, savings, review counts, download counts,
+scores, speed, or time saved should count, tick, roll, pop, or meter-fill toward
+the exact approved final number.
+
+- Rating examples: `0.0` -> `4.8`, with stars or a badge snapping in at the end.
+- Discount examples: `0%` -> `50%`, with a flash, price slash, or offer sticker.
+- Price examples: `$0` -> `$29`, or old price crossed out while savings count up.
+- Game/app examples: score and coins climb with bursts, combos, or HUD-style pops.
+
+Never invent a higher number for drama. If the number is inferred or blocked,
+animate the product behavior instead and keep the proof claim out of the render.
+
 ## Motion Requirements
 
 Use Remotion `useCurrentFrame()`, `spring()`, and `interpolate()` for:
@@ -35,6 +50,7 @@ Use Remotion `useCurrentFrame()`, `spring()`, and `interpolate()` for:
 - Logo or product reveal.
 - Staggered task/card entrances.
 - Kinetic headline movement.
+- Dynamic numeric counters or meters when the ad uses source-backed proof.
 - At least one continuous background or particle motion.
 - CTA emphasis in the final scene.
 
@@ -46,6 +62,7 @@ Avoid:
 - CSS transitions or CSS keyframe animations.
 - Dense equal-weight text blocks.
 - Safe, centered composition in every scene.
+- Static numeric proof where the same number could be animated safely.
 
 ## Commercial QA
 

@@ -23,9 +23,16 @@ type SceneProps = {
 
 type AudioSpec = NonNullable<AdVideoProps["audio"]>;
 type AudioTrack = AudioSpec["tracks"][number];
+type SceneMetric = NonNullable<AdVideoProps["scenes"][number]["metric"]>;
 
 const assetSrc = (src: string) =>
   /^(https?:|data:)/i.test(src) ? src : staticFile(src);
+
+const formatMetricValue = (value: number, decimals: number) =>
+  value.toLocaleString("en-US", {
+    maximumFractionDigits: decimals,
+    minimumFractionDigits: decimals
+  });
 
 const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
   const { fps } = useVideoConfig();
@@ -62,6 +69,66 @@ const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
   );
 };
 
+const AnimatedMetric: React.FC<{
+  isLandscape: boolean;
+  isSquare: boolean;
+  metric: SceneMetric;
+  primaryColor: string;
+  sceneFrames: number;
+}> = ({ isLandscape, isSquare, metric, primaryColor, sceneFrames }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const from = metric.from ?? 0;
+  const decimals = metric.decimals ?? (Number.isInteger(metric.to) && Number.isInteger(from) ? 0 : 1);
+  const countFrames = Math.max(1, Math.min(sceneFrames - 1, Math.round(fps * 1.15)));
+  const value = interpolate(frame, [0, countFrames], [from, metric.to], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const scale = interpolate(frame, [0, countFrames], [0.84, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const rotate = interpolate(frame, [0, countFrames], [-4, -1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const metricSize = isLandscape ? 54 : isSquare ? 62 : 78;
+  const labelSize = isLandscape ? 18 : isSquare ? 20 : 24;
+
+  return (
+    <div
+      style={{
+        alignItems: "flex-start",
+        background: primaryColor,
+        border: "5px solid #fff",
+        borderRadius: 8,
+        boxShadow: "0 24px 70px rgba(0,0,0,0.42)",
+        color: "#111",
+        display: "inline-flex",
+        flexDirection: "column",
+        gap: 2,
+        marginTop: isLandscape ? 24 : 28,
+        padding: isLandscape ? "16px 22px" : "20px 26px",
+        transform: `rotate(${rotate}deg) scale(${scale})`,
+        transformOrigin: "left center",
+        width: "fit-content"
+      }}
+    >
+      <strong style={{ fontSize: metricSize, lineHeight: 0.86 }}>
+        {metric.prefix ?? ""}
+        {formatMetricValue(value, decimals)}
+        {metric.suffix ?? ""}
+      </strong>
+      {metric.label ? (
+        <span style={{ fontSize: labelSize, fontWeight: 900, lineHeight: 1.1 }}>
+          {metric.label}
+        </span>
+      ) : null}
+    </div>
+  );
+};
+
 const Scene: React.FC<SceneProps> = ({
   backgroundColor,
   brandName,
@@ -81,6 +148,28 @@ const Scene: React.FC<SceneProps> = ({
   const proofSize = isLandscape ? 25 : isSquare ? 27 : 30;
   const brandSize = isLandscape ? 27 : isSquare ? 30 : 34;
   const eyebrowSize = isLandscape ? 22 : isSquare ? 24 : 28;
+  const sceneFrames = Math.max(1, Math.round(scene.durationSecond * fps));
+  const fadeOutStart = Math.max(10, sceneFrames - 16);
+  const opacity = interpolate(frame, [0, 10, fadeOutStart, sceneFrames], [0, 1, 1, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const y = interpolate(frame, [0, 18], [36, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const visualScale = interpolate(frame, [0, 18, sceneFrames], [0.88, 1.02, 1.07], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const visualRotate = interpolate(frame, [0, 18], [isLandscape ? -2 : -3, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  const headlineScale = interpolate(frame, [0, 14, sceneFrames], [1.08, 1, 1.02], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
   const contentLayout: React.CSSProperties = isLandscape
     ? {
         gridTemplateColumns: "0.95fr 1.05fr",
@@ -101,15 +190,11 @@ const Scene: React.FC<SceneProps> = ({
     maxHeight: isSquare ? 470 : undefined,
     minHeight: isLandscape ? 420 : isSquare ? 390 : 560,
     overflow: "hidden",
+    boxShadow: `0 28px 96px rgba(0,0,0,0.36), 0 0 0 12px ${primaryColor}22`,
+    transform: `rotate(${visualRotate}deg) scale(${visualScale})`,
     width: "100%"
   };
-  const sceneFrames = Math.max(1, Math.round(scene.durationSecond * fps));
-  const fadeOutStart = Math.max(10, sceneFrames - 16);
-  const opacity = interpolate(frame, [0, 10, fadeOutStart, sceneFrames], [0, 1, 1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const y = interpolate(frame, [0, 18], [36, 0], {
+  const accentShift = interpolate(frame, [0, sceneFrames], [-120, 120], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
@@ -124,12 +209,47 @@ const Scene: React.FC<SceneProps> = ({
         fontFamily:
           'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         justifyContent: "space-between",
+        overflow: "hidden",
         opacity,
         padding,
         transform: `translateY(${y}px)`
       }}
     >
-      <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between", gap: 24 }}>
+      <div
+        aria-hidden="true"
+        style={{
+          background: `repeating-linear-gradient(115deg, transparent 0 44px, ${primaryColor}20 44px 56px)`,
+          inset: -160,
+          opacity: 0.72,
+          position: "absolute",
+          transform: `translateX(${accentShift}px)`,
+          zIndex: 0
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          background: primaryColor,
+          height: isLandscape ? 150 : 210,
+          left: -80,
+          opacity: 0.18,
+          position: "absolute",
+          right: -80,
+          top: isLandscape ? 160 : 270,
+          transform: "rotate(-8deg)",
+          zIndex: 0
+        }}
+      />
+      <div
+        style={{
+          alignItems: "center",
+          display: "flex",
+          gap: 24,
+          justifyContent: "space-between",
+          position: "relative",
+          zIndex: 1
+        }}
+      >
         <div style={{ alignItems: "center", display: "flex", gap: 16, minWidth: 0 }}>
           {logoPath ? (
             <Img
@@ -156,6 +276,8 @@ const Scene: React.FC<SceneProps> = ({
           alignItems: "center",
           display: "grid",
           gap: isLandscape ? 52 : 48,
+          position: "relative",
+          zIndex: 1,
           ...contentLayout
         }}
       >
@@ -181,7 +303,15 @@ const Scene: React.FC<SceneProps> = ({
         </div>
 
         <div>
-          <h1 style={{ fontSize: headlineSize, lineHeight: isLandscape ? 0.98 : 1.02, margin: 0 }}>
+          <h1
+            style={{
+              fontSize: headlineSize,
+              lineHeight: isLandscape ? 0.98 : 1.02,
+              margin: 0,
+              transform: `scale(${headlineScale})`,
+              transformOrigin: "left center"
+            }}
+          >
             {scene.headline}
           </h1>
           {scene.body ? (
@@ -201,9 +331,18 @@ const Scene: React.FC<SceneProps> = ({
               {scene.proof}
             </p>
           ) : null}
+          {scene.metric ? (
+            <AnimatedMetric
+              isLandscape={isLandscape}
+              isSquare={isSquare}
+              metric={scene.metric}
+              primaryColor={primaryColor}
+              sceneFrames={sceneFrames}
+            />
+          ) : null}
         </div>
       </div>
-      <div aria-hidden="true" style={{ height: 48 }} />
+      <div aria-hidden="true" style={{ height: 48, position: "relative", zIndex: 1 }} />
     </AbsoluteFill>
   );
 };

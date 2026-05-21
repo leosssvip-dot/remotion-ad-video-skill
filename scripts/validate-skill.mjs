@@ -150,6 +150,7 @@ for (const phrase of [
   "ad-brief-contract",
   "ad-brief.json",
   "classify-ad-source.mjs",
+  "source-backed numeric proof",
 ]) {
   if (!skillMd.includes(phrase)) {
     fail(`SKILL.md missing core phrase: ${phrase}`);
@@ -303,21 +304,21 @@ for (const phrase of ["Default Variant Set", "Hook Shock", "Scoring", "claimSafe
 }
 
 const aestheticQa = read("references/ad-aesthetic-qa.md");
-for (const phrase of ["firstTwoSeconds", "adNotSlides", "categoryNative", "layoutShock", "textDensity", "poster-scale", "Revision Moves"]) {
+for (const phrase of ["firstTwoSeconds", "adNotSlides", "categoryNative", "layoutShock", "textDensity", "numericMotion", "poster-scale", "Revision Moves"]) {
   if (!aestheticQa.includes(phrase)) {
     fail(`ad-aesthetic-qa.md missing phrase: ${phrase}`);
   }
 }
 
 const creativeDirection = read("references/creative-direction.md");
-for (const phrase of ["Layout Shock", "poster-scale type", "maximum two text groups", "one dominant visual", "Thumb-Stopping Layouts"]) {
+for (const phrase of ["Layout Shock", "Numeric Proof Motion", "poster-scale type", "maximum two text groups", "one dominant visual", "Dynamic numeric counters", "Thumb-Stopping Layouts"]) {
   if (!creativeDirection.includes(phrase)) {
     fail(`creative-direction.md missing phrase: ${phrase}`);
   }
 }
 
 const storyboardContract = read("references/storyboard-contract.md");
-for (const phrase of ["layoutMode", "textBudget", "maximum two text groups", "one dominant visual", "renderEngine", "variables.json", "data-track-index"]) {
+for (const phrase of ["layoutMode", "textBudget", "Metric Rules", "\"metric\"", "\"to\"", "\"decimals\"", "maximum two text groups", "one dominant visual", "renderEngine", "variables.json", "data-track-index"]) {
   if (!storyboardContract.includes(phrase)) {
     fail(`storyboard-contract.md missing phrase: ${phrase}`);
   }
@@ -445,6 +446,9 @@ for (const track of templateDefaultProps.audio.tracks) {
   if (track.rightsStatus !== "generated") {
     fail(`template default audio track ${track.id} must use generated rightsStatus`);
   }
+}
+if (!templateDefaultProps.scenes?.some((scene) => scene.metric?.to === 4.8)) {
+  fail("template default props must include an animated metric example");
 }
 
 const syntheticDefaultProps = JSON.parse(readRoot("examples/synthetic-url-ad/src/default-props.json"));
@@ -821,6 +825,9 @@ for (const phrase of [
   "rightsStatus",
   "platform",
   "cta",
+  "SceneMetricSchema",
+  "AnimatedMetric",
+  "formatMetricValue",
 ]) {
   if (!sourceFiles.includes(phrase)) {
     fail(`template source missing phrase: ${phrase}`);
@@ -854,6 +861,9 @@ for (const phrase of [
   "npx hyperframes inspect",
   "productName",
   "cta",
+  "metricLabel",
+  "metricTo",
+  "metricState",
 ]) {
   if (!hyperframesTemplate.includes(phrase)) {
     fail(`hyperframes template missing phrase: ${phrase}`);

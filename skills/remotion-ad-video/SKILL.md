@@ -85,6 +85,8 @@ Every real commercial sample needs a thumb-stopping visual idea, not just copy. 
 
 Every concept also needs a bold layout idea before storyboard or code: poster-scale type, one dominant visual, asymmetric composition, aggressive crop, oversized product/app frame, kinetic split screen, or a staged reveal. Avoid neat centered slide layouts unless the contrast or motion makes them feel like an ad.
 
+When source-backed numeric proof exists, plan it as motion instead of static copy: ratings count up, discounts snap from 0 to the final percent, prices or savings roll into place, download/review counts tick upward, and scores burst like a game HUD. Use the exact approved number as the final value and never animate unsupported or inflated claims.
+
 For simple games, especially app-store listings, the visual idea should usually be a gameplay-style simulation: falling pieces, swaps, merges, collisions, score pops, explosions, level-up moments, near-fail rescues, or reward cascades. Static screenshots alone are proof assets, not the ad.
 
 For short-video, creator, or social-feed apps, the visual idea should usually be a feed-native simulation: a phone frame that scrolls or swaps content, creator imagery, UI rails, sound/effect stickers, LIVE or Shop chips when source-supported, and quick cuts that feel like the platform itself rather than a product explainer.
@@ -103,7 +105,7 @@ Default 15s structure:
 - 6-11s: Main benefit, differentiator, or second payoff.
 - 11-15s: CTA, offer, and disclaimer.
 
-Keep each beat to one visual idea. Avoid paragraphs in video text; prefer short lines that fit mobile. In most scenes, use one headline plus one support line at most; make the dominant word or number much larger instead of spreading many equal-size text blocks. For games, use fast kinetic shots; cuts are fine, but each shot should contain gameplay, product motion, character/world action, or a visual payoff rather than a static information card.
+Keep each beat to one visual idea. Avoid paragraphs in video text; prefer short lines that fit mobile. In most scenes, use one headline plus one support line at most; make the dominant word or number much larger instead of spreading many equal-size text blocks. If a scene uses a source-backed numeric claim, include a `metric` plan with `from`, `to`, `prefix`/`suffix`, `decimals`, and a short label so the renderer can animate the value. For games, use fast kinetic shots; cuts are fine, but each shot should contain gameplay, product motion, character/world action, or a visual payoff rather than a static information card.
 For social or short-video apps, cuts are expected. Each shot should feel like a feed moment, creator clip, notification, sound cue, live/shop moment, or action prompt instead of a static feature card.
 Load `references/audio-caption-system.md` when adding music, sound effects, voiceover, captions, or silent-autoplay readability.
 
@@ -122,6 +124,7 @@ Remotion template rules:
 - Map the chosen `format` / `platform` into the actual composition dimensions and scene layout. Square and landscape outputs must not reuse the vertical layout unchanged.
 - Prefer real product/app visuals. Use generated placeholders only when clearly marked.
 - Use harvested logo/icon/OG/screenshot assets when a URL was supplied and rights status is not blocked.
+- Support animated metric/counter props for ratings, discounts, prices, savings, review counts, and game/app scores when those numbers are source-backed.
 - Add generated synced SFX by default through props. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
 - Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis.
 - For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.
@@ -150,6 +153,7 @@ Minimum checks:
 - Text does not overflow or overlap.
 - Visuals are present, not blank.
 - Hook, middle, and CTA stills show different visual states.
+- Source-backed numeric proof animates to the exact final value and is not rendered as a flat text-only proof card.
 - Advertising-aesthetic QA passes using `references/ad-aesthetic-qa.md` for commercial-quality requests.
 - CTA, offer, and disclaimer match approved copy.
 - Any unsupported claims are removed or rewritten.

@@ -10,6 +10,8 @@ Remotion 是 React/TS 路线，Hyperframes 是 HTML/CSS/GSAP 路线。Skill 会�
 
 ## 演示视频
 
+https://github.com/user-attachments/assets/56fd55e5-af66-4737-b12b-88034d1fad52
+
 [https://github.com/user-attachments/assets/1cd069a8-db27-4801-b6bd-9e66f41a6b90](https://github.com/user-attachments/assets/d39807fa-ffc4-4229-a98d-bb11738d747c)
 
 https://github.com/user-attachments/assets/d93f65f0-cb47-47b5-a8d6-a20be31c0553

@@ -431,6 +431,11 @@ for (const phrase of ["Sync Discipline", "cue sheet", "visible event", "Implemen
     fail(`audio-caption-system.md missing phrase: ${phrase}`);
   }
 }
+for (const phrase of ["Music Bed Decision", "SFX Palette", "Cue Density", "Mix Targets", "music-sfx", "musicBed", "stinger", "riser"]) {
+  if (!audioSystem.includes(phrase)) {
+    fail(`audio-caption-system.md missing richer audio phrase: ${phrase}`);
+  }
+}
 
 const templateDefaultProps = JSON.parse(read("assets/remotion-template/src/default-props.json"));
 if (templateDefaultProps.audio?.mode !== "sfx-only") {
@@ -439,13 +444,27 @@ if (templateDefaultProps.audio?.mode !== "sfx-only") {
 if (templateDefaultProps.audio?.enabled !== true) {
   fail("template default audio.enabled must be true");
 }
-if (!Array.isArray(templateDefaultProps.audio?.tracks) || templateDefaultProps.audio.tracks.length < 1) {
-  fail("template default audio.tracks must include generated SFX");
+if (!Array.isArray(templateDefaultProps.audio?.tracks) || templateDefaultProps.audio.tracks.length < 8) {
+  fail("template default audio.tracks must include at least 8 generated SFX cues");
 }
+const templateAudioPresets = new Set();
 for (const track of templateDefaultProps.audio.tracks) {
   if (track.rightsStatus !== "generated") {
     fail(`template default audio track ${track.id} must use generated rightsStatus`);
   }
+  if (!track.event) {
+    fail(`template default audio track ${track.id} must document its visible event`);
+  }
+  if (track.kind !== "sfx") {
+    fail(`template default audio track ${track.id} must stay kind=sfx for default sfx-only mode`);
+  }
+  if (!track.preset) {
+    fail(`template default audio track ${track.id} must use a generated audio preset`);
+  }
+  templateAudioPresets.add(track.preset);
+}
+if (templateAudioPresets.size < 6) {
+  fail("template default audio must use at least 6 distinct generated SFX presets");
 }
 if (!templateDefaultProps.scenes?.some((scene) => scene.metric?.to === 4.8)) {
   fail("template default props must include an animated metric example");
@@ -828,6 +847,13 @@ for (const phrase of [
   "SceneMetricSchema",
   "AnimatedMetric",
   "formatMetricValue",
+  "AudioPresetSchema",
+  "audioPresetSrc",
+  "music-pulse-120",
+  "sfx-tactile-snap",
+  "sfx-glitch",
+  "kind",
+  "preset",
 ]) {
   if (!sourceFiles.includes(phrase)) {
     fail(`template source missing phrase: ${phrase}`);

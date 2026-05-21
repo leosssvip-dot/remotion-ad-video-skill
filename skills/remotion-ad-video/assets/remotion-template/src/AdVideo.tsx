@@ -23,10 +23,135 @@ type SceneProps = {
 
 type AudioSpec = NonNullable<AdVideoProps["audio"]>;
 type AudioTrack = AudioSpec["tracks"][number];
+type AudioPreset = NonNullable<AudioTrack["preset"]>;
 type SceneMetric = NonNullable<AdVideoProps["scenes"][number]["metric"]>;
 
 const assetSrc = (src: string) =>
   /^(https?:|data:)/i.test(src) ? src : staticFile(src);
+
+const sampleRate = 22050;
+const audioPresetCache = new Map<string, string>();
+
+const writeAscii = (view: DataView, offset: number, value: string) => {
+  for (let index = 0; index < value.length; index += 1) {
+    view.setUint8(offset + index, value.charCodeAt(index));
+  }
+};
+
+const clampAudio = (value: number) => Math.max(-1, Math.min(1, value));
+const tone = (frequency: number, time: number) => Math.sin(Math.PI * 2 * frequency * time);
+const noise = (index: number) => {
+  const value = Math.sin(index * 12.9898 + 78.233) * 43758.5453;
+  return (value - Math.floor(value)) * 2 - 1;
+};
+const env = (time: number, duration: number, attack = 0.01, release = 0.08) =>
+  Math.max(0, Math.min(1, time / attack, (duration - time) / release));
+
+const presetDuration: Record<AudioPreset, number> = {
+  "music-pulse-120": 2,
+  "music-clean-100": 2.4,
+  "sfx-click": 0.07,
+  "sfx-tap": 0.09,
+  "sfx-pop": 0.18,
+  "sfx-swipe": 0.3,
+  "sfx-whoosh": 0.45,
+  "sfx-riser": 0.72,
+  "sfx-impact": 0.42,
+  "sfx-stinger": 0.55,
+  "sfx-success": 0.58,
+  "sfx-notification": 0.42,
+  "sfx-coin": 0.46,
+  "sfx-tactile-snap": 0.14,
+  "sfx-glitch": 0.24
+};
+
+const sampleForPreset = (preset: AudioPreset, time: number, index: number, duration: number) => {
+  const envelope = env(time, duration);
+  switch (preset) {
+    case "music-pulse-120": {
+      const beat = (time * 2) % 1;
+      const kick = tone(54, time) * Math.exp(-beat * 12);
+      const bass = tone(110 + 18 * Math.sin(Math.PI * 2 * time), time) * 0.18;
+      const hat = beat > 0.48 && beat < 0.62 ? noise(index) * env(beat - 0.48, 0.14, 0.004, 0.08) * 0.12 : 0;
+      return (kick * 0.46 + bass + hat) * envelope;
+    }
+    case "music-clean-100": {
+      const beat = (time * 1.6667) % 1;
+      const pad = tone(220, time) * 0.08 + tone(330, time) * 0.06;
+      const pluck = tone(440, time) * Math.exp(-beat * 8) * 0.18;
+      return (pad + pluck) * envelope;
+    }
+    case "sfx-click":
+      return (tone(2400, time) * 0.34 + noise(index) * 0.2) * env(time, duration, 0.001, 0.025);
+    case "sfx-tap":
+      return (tone(980, time) * 0.24 + noise(index) * 0.18) * env(time, duration, 0.002, 0.04);
+    case "sfx-pop":
+      return tone(520 - time * 1300, time) * env(time, duration, 0.004, 0.1) * 0.55;
+    case "sfx-swipe":
+      return (tone(420 + time * 1200, time) * 0.14 + noise(index) * 0.2) * env(time, duration, 0.03, 0.12);
+    case "sfx-whoosh":
+      return (noise(index) * 0.32 + tone(180 + time * 520, time) * 0.12) * env(time, duration, 0.08, 0.14);
+    case "sfx-riser":
+      return (tone(260 + time * 850, time) * 0.28 + noise(index) * 0.08) * env(time, duration, 0.04, 0.08);
+    case "sfx-impact":
+      return (tone(62, time) * 0.72 * Math.exp(-time * 7) + noise(index) * 0.22 * Math.exp(-time * 16)) * envelope;
+    case "sfx-stinger":
+      return (tone(330, time) * Math.exp(-time * 4) + tone(660, time) * Math.exp(-time * 7)) * envelope * 0.45;
+    case "sfx-success":
+      return (time < 0.24 ? tone(660, time) : tone(880, time - 0.24)) * env(time % 0.24, 0.24, 0.004, 0.09) * 0.45;
+    case "sfx-notification":
+      return (time < 0.18 ? tone(784, time) : tone(1046, time - 0.18)) * env(time % 0.18, 0.18, 0.003, 0.08) * 0.38;
+    case "sfx-coin":
+      return (tone(1260 + Math.sin(time * 80) * 120, time) + tone(1890, time) * 0.3) * env(time, duration, 0.006, 0.16) * 0.36;
+    case "sfx-tactile-snap":
+      return (tone(190, time) * 0.34 + noise(index) * 0.42) * env(time, duration, 0.002, 0.05);
+    case "sfx-glitch":
+      return (Math.sign(tone(95 + index % 900, time)) * 0.32 + noise(index) * 0.25) * env(time, duration, 0.002, 0.08);
+  }
+};
+
+const wavDataUri = (preset: AudioPreset) => {
+  const cached = audioPresetCache.get(preset);
+  if (cached) {
+    return cached;
+  }
+
+  const duration = presetDuration[preset];
+  const sampleCount = Math.max(1, Math.floor(duration * sampleRate));
+  const buffer = new ArrayBuffer(44 + sampleCount * 2);
+  const view = new DataView(buffer);
+  writeAscii(view, 0, "RIFF");
+  view.setUint32(4, 36 + sampleCount * 2, true);
+  writeAscii(view, 8, "WAVE");
+  writeAscii(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeAscii(view, 36, "data");
+  view.setUint32(40, sampleCount * 2, true);
+
+  for (let index = 0; index < sampleCount; index += 1) {
+    const time = index / sampleRate;
+    const value = clampAudio(sampleForPreset(preset, time, index, duration));
+    view.setInt16(44 + index * 2, value < 0 ? value * 0x8000 : value * 0x7fff, true);
+  }
+
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    const chunk = bytes.subarray(index, index + 0x8000);
+    binary += String.fromCharCode(...chunk);
+  }
+  const dataUri = `data:audio/wav;base64,${btoa(binary)}`;
+  audioPresetCache.set(preset, dataUri);
+  return dataUri;
+};
+
+const audioPresetSrc = (preset: AudioPreset) => wavDataUri(preset);
 
 const formatMetricValue = (value: number, decimals: number) =>
   value.toLocaleString("en-US", {
@@ -47,10 +172,14 @@ const AudioLayer: React.FC<{ audio?: AudioSpec }> = ({ audio }) => {
         const durationInFrames = track.durationSecond
           ? Math.round(track.durationSecond * fps)
           : undefined;
+        const source = track.src ? assetSrc(track.src) : track.preset ? audioPresetSrc(track.preset) : undefined;
+        if (!source) {
+          return null;
+        }
         const renderedAudio = (
           <Audio
-            src={assetSrc(track.src)}
-            volume={track.volume ?? 0.85}
+            src={source}
+            volume={track.volume ?? (track.kind === "musicBed" ? 0.24 : 0.68)}
             loop={track.loop ?? false}
           />
         );

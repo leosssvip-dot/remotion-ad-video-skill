@@ -23,9 +23,30 @@ export const SceneSchema = z.object({
   imageUrl: z.string().url().optional()
 });
 
+export const AudioPresetSchema = z.enum([
+  "music-pulse-120",
+  "music-clean-100",
+  "sfx-click",
+  "sfx-tap",
+  "sfx-pop",
+  "sfx-swipe",
+  "sfx-whoosh",
+  "sfx-riser",
+  "sfx-impact",
+  "sfx-stinger",
+  "sfx-success",
+  "sfx-notification",
+  "sfx-coin",
+  "sfx-tactile-snap",
+  "sfx-glitch"
+]);
+
 export const AudioTrackSchema = z.object({
   id: z.string(),
-  src: z.string(),
+  src: z.string().optional(),
+  preset: AudioPresetSchema.optional(),
+  kind: z.enum(["musicBed", "sfx", "voiceover"]).optional(),
+  event: z.string().optional(),
   startSecond: z.number().min(0).optional(),
   durationSecond: z.number().positive().optional(),
   volume: z.number().min(0).max(1).optional(),
@@ -37,6 +58,8 @@ export const AudioTrackSchema = z.object({
     "public_reference",
     "needs_verification"
   ])
+}).refine((track) => Boolean(track.src || track.preset), {
+  message: "Audio tracks must provide either src or preset"
 });
 
 export const AudioSpecSchema = z.object({

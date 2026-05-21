@@ -25,11 +25,15 @@ Language rule:
 - Do not treat "test this skill" as permission to skip questions. A test should still ask unless the user explicitly says to skip questions, use fastest possible defaults, or run a benchmark with inferred defaults.
 - When proceeding without answers by explicit user request, the answer must include a short `Preflight defaults` block before work continues.
 - For all URL jobs, create or update `ad-brief.json` with source type, goal,
-  CTA, creative route, format, audio mode, language plan, unresolved questions,
-  and blockers.
+  CTA, creative route, format, audio mode, render engine, language plan,
+  unresolved questions, and blockers.
 - Ask only unresolved questions; do not ask what the link already proves.
 - The initial blocking preflight should be exactly two required choices:
   format and creative route.
+- Do not include render engine in the initial two creative preflight choices.
+  Resolve it separately by explicit user choice, existing project stack, then
+  local renderer availability. If both engines are available, ask which one to
+  use. If neither is available, recommend choosing one to install.
 - Format choices should be vertical, square, or landscape.
 - Audio defaults to synced SFX only. Do not ask audio as a required choice unless
   the user requests silent-safe, music plus SFX, voiceover, or a platform-specific
@@ -70,7 +74,7 @@ questions only if they materially change the ad. Do not ask them as a required
 When proceeding without answers, write a compact block like:
 
 ```text
-Preflight defaults: goal=purchase, audience=inferred from page, format=vertical 9:16, creative route=category-native product demo, assets=page-harvested public references, audio=synced SFX only.
+Preflight defaults: goal=purchase, audience=inferred from page, format=vertical 9:16, creative route=category-native product demo, render engine=remotion, assets=page-harvested public references, audio=synced SFX only.
 ```
 
 If any default is high-risk or materially affects the creative, ask instead of

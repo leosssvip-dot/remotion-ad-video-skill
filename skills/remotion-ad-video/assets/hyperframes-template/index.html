@@ -1,0 +1,373 @@
+<!doctype html>
+<html
+  lang="en"
+  data-composition-variables='[
+    {"id":"productName","type":"string","label":"Product name","default":"Focus Lamp"},
+    {"id":"width","type":"number","label":"Composition width","default":1080},
+    {"id":"height","type":"number","label":"Composition height","default":1920},
+    {"id":"layoutMode","type":"string","label":"Layout mode","default":"vertical"},
+    {"id":"headline1","type":"string","label":"Hook headline","default":"Focus starts fast"},
+    {"id":"body1","type":"string","label":"Hook support","default":"A cleaner desk light for deep work."},
+    {"id":"headline2","type":"string","label":"Demo headline","default":"Show the product in motion"},
+    {"id":"body2","type":"string","label":"Demo support","default":"Swap these lines with the approved storyboard copy."},
+    {"id":"headline3","type":"string","label":"CTA headline","default":"Make the next session easier"},
+    {"id":"cta","type":"string","label":"CTA","default":"Shop now"},
+    {"id":"disclaimer","type":"string","label":"Disclaimer","default":"Draft concept. Verify claims and asset rights before launch."},
+    {"id":"primaryColor","type":"color","label":"Primary color","default":"#7CFF6B"},
+    {"id":"backgroundColor","type":"color","label":"Background color","default":"#111111"},
+    {"id":"textColor","type":"color","label":"Text color","default":"#F7F7F0"},
+    {"id":"logoPath","type":"string","label":"Logo path","default":""},
+    {"id":"heroImagePath","type":"string","label":"Hero image path","default":""}
+  ]'
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>Hyperframes Ad Video</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: Inter, Arial, sans-serif;
+        background: #111111;
+      }
+
+      #stage {
+        position: relative;
+        width: var(--stage-width, 1080px);
+        height: var(--stage-height, 1920px);
+        overflow: hidden;
+        color: var(--text-color, #f7f7f0);
+        background:
+          radial-gradient(circle at 20% 12%, color-mix(in srgb, var(--primary-color, #7cff6b) 32%, transparent), transparent 34%),
+          linear-gradient(160deg, var(--background-color, #111111), #202020 70%);
+      }
+
+      .brand-strip {
+        position: absolute;
+        inset: 70px 72px auto;
+        z-index: 4;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+
+      .logo {
+        width: 86px;
+        height: 86px;
+        display: grid;
+        place-items: center;
+        border-radius: 24px;
+        overflow: hidden;
+        background: var(--primary-color, #7cff6b);
+        color: #111111;
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      .logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .product-name {
+        font-size: 38px;
+        font-weight: 800;
+      }
+
+      .visual {
+        position: absolute;
+        left: 88px;
+        right: 88px;
+        top: 420px;
+        height: 720px;
+        z-index: 1;
+        border: 2px solid rgb(255 255 255 / 0.14);
+        border-radius: 44px;
+        overflow: hidden;
+        background: rgb(255 255 255 / 0.08);
+        box-shadow: 0 34px 110px rgb(0 0 0 / 0.42);
+      }
+
+      .visual img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .visual-placeholder {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 64px;
+        color: #111111;
+        background: var(--primary-color, #7cff6b);
+        font-size: 78px;
+        font-weight: 950;
+        line-height: 0.95;
+        text-align: center;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 30px;
+        padding: 0 72px 150px;
+      }
+
+      .scene[data-stage="hook"] {
+        justify-content: flex-end;
+        padding-bottom: 160px;
+      }
+
+      .scene[data-stage="demo"] {
+        justify-content: flex-start;
+        padding-top: 1240px;
+      }
+
+      .scene[data-stage="cta"] {
+        justify-content: flex-end;
+        padding-bottom: 180px;
+      }
+
+      .headline {
+        max-width: 930px;
+        font-size: 118px;
+        font-weight: 950;
+        line-height: 0.9;
+        letter-spacing: 0;
+      }
+
+      .body {
+        max-width: 780px;
+        font-size: 42px;
+        line-height: 1.16;
+        color: rgb(247 247 240 / 0.84);
+      }
+
+      .cta {
+        width: fit-content;
+        min-width: 280px;
+        padding: 28px 42px;
+        border-radius: 999px;
+        background: var(--primary-color, #7cff6b);
+        color: #111111;
+        font-size: 42px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .disclaimer {
+        position: absolute;
+        left: 72px;
+        right: 72px;
+        bottom: 58px;
+        z-index: 5;
+        font-size: 22px;
+        line-height: 1.2;
+        color: rgb(247 247 240 / 0.58);
+      }
+
+      #stage[data-layout-mode="square"] .visual {
+        top: 250px;
+        height: 460px;
+      }
+
+      #stage[data-layout-mode="square"] .scene {
+        padding-bottom: 98px;
+      }
+
+      #stage[data-layout-mode="square"] .scene[data-stage="demo"] {
+        padding-top: 740px;
+      }
+
+      #stage[data-layout-mode="square"] .headline {
+        font-size: 76px;
+      }
+
+      #stage[data-layout-mode="square"] .body {
+        font-size: 34px;
+      }
+
+      #stage[data-layout-mode="landscape"] .brand-strip {
+        inset: 48px 64px auto;
+      }
+
+      #stage[data-layout-mode="landscape"] .visual {
+        left: 64px;
+        right: auto;
+        top: 230px;
+        width: 770px;
+        height: 540px;
+      }
+
+      #stage[data-layout-mode="landscape"] .scene {
+        left: 880px;
+        right: 64px;
+        padding: 0 0 108px;
+      }
+
+      #stage[data-layout-mode="landscape"] .scene[data-stage="demo"] {
+        padding-top: 650px;
+      }
+
+      #stage[data-layout-mode="landscape"] .headline {
+        font-size: 70px;
+      }
+
+      #stage[data-layout-mode="landscape"] .body,
+      #stage[data-layout-mode="landscape"] .cta {
+        font-size: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="stage"
+      data-composition-id="ad-video"
+      data-start="0"
+      data-duration="15"
+      data-fps="30"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="brand-strip" class="brand-strip clip" data-start="0" data-duration="15" data-track-index="3">
+        <div id="logo" class="logo">AD</div>
+        <div id="product-name" class="product-name"></div>
+      </div>
+
+      <div id="hero-visual" class="visual clip" data-start="0" data-duration="15" data-track-index="2">
+        <div id="visual-placeholder" class="visual-placeholder">Product visual</div>
+      </div>
+
+      <section id="scene-hook" class="scene clip" data-stage="hook" data-start="0" data-duration="4" data-track-index="1">
+        <div id="headline-1" class="headline"></div>
+        <div id="body-1" class="body"></div>
+      </section>
+
+      <section id="scene-demo" class="scene clip" data-stage="demo" data-start="4" data-duration="7" data-track-index="1">
+        <div id="headline-2" class="headline"></div>
+        <div id="body-2" class="body"></div>
+      </section>
+
+      <section id="scene-cta" class="scene clip" data-stage="cta" data-start="11" data-duration="4" data-track-index="1">
+        <div id="headline-3" class="headline"></div>
+        <div id="cta" class="cta"></div>
+      </section>
+
+      <div id="disclaimer" class="disclaimer clip" data-start="11" data-duration="4" data-track-index="5"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      var defaults = {};
+      defaults.productName = "Focus Lamp";
+      defaults.width = 1080;
+      defaults.height = 1920;
+      defaults.layoutMode = "vertical";
+      defaults.headline1 = "Focus starts fast";
+      defaults.body1 = "A cleaner desk light for deep work.";
+      defaults.headline2 = "Show the product in motion";
+      defaults.body2 = "Swap these lines with the approved storyboard copy.";
+      defaults.headline3 = "Make the next session easier";
+      defaults.cta = "Shop now";
+      defaults.disclaimer = "Draft concept. Verify claims and asset rights before launch.";
+      defaults.primaryColor = "#7CFF6B";
+      defaults.backgroundColor = "#111111";
+      defaults.textColor = "#F7F7F0";
+      defaults.logoPath = "";
+      defaults.heroImagePath = "";
+
+      var resolvedVariables = window.__hyperframes ? window.__hyperframes.getVariables() : {};
+      var variables = Object.assign({}, defaults, resolvedVariables);
+      var root = document.getElementById("stage");
+      function numericVariable(value, fallback) {
+        var number = Number(value);
+        return Number.isFinite(number) && number > 0 ? number : fallback;
+      }
+      variables.width = numericVariable(variables.width, defaults.width);
+      variables.height = numericVariable(variables.height, defaults.height);
+      variables.layoutMode = variables.layoutMode || (
+        variables.width > variables.height
+          ? "landscape"
+          : variables.width === variables.height
+            ? "square"
+            : "vertical"
+      );
+      root.setAttribute("data-width", String(variables.width));
+      root.setAttribute("data-height", String(variables.height));
+      root.setAttribute("data-layout-mode", variables.layoutMode);
+      root.style.setProperty("--stage-width", variables.width + "px");
+      root.style.setProperty("--stage-height", variables.height + "px");
+      root.style.setProperty("--primary-color", variables.primaryColor);
+      root.style.setProperty("--background-color", variables.backgroundColor);
+      root.style.setProperty("--text-color", variables.textColor);
+
+      function setText(id, value) {
+        document.getElementById(id).textContent = value || "";
+      }
+      function assetUrl(path) {
+        if (!path || path.indexOf("http://") === 0 || path.indexOf("https://") === 0) {
+          return path;
+        }
+        if (path.indexOf("./") === 0) {
+          return path;
+        }
+        return "./" + path;
+      }
+
+      setText("product-name", variables.productName);
+      setText("headline-1", variables.headline1);
+      setText("body-1", variables.body1);
+      setText("headline-2", variables.headline2);
+      setText("body-2", variables.body2);
+      setText("headline-3", variables.headline3);
+      setText("cta", variables.cta);
+      setText("disclaimer", variables.disclaimer);
+
+      if (variables.logoPath) {
+        document.getElementById("logo").innerHTML = '<img src="' + assetUrl(variables.logoPath) + '" alt="" />';
+      }
+      if (variables.heroImagePath) {
+        var image = document.createElement("img");
+        image.id = "hero-image";
+        image.alt = "";
+        image.src = assetUrl(variables.heroImagePath);
+        document.getElementById("hero-visual").appendChild(image);
+        document.getElementById("visual-placeholder").hidden = true;
+      }
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+      tl.from(".brand-strip", { y: -36, opacity: 0, duration: 0.45, ease: "power3.out" }, 0);
+      tl.from(".visual", { scale: 0.86, y: 90, opacity: 0, duration: 0.8, ease: "power3.out" }, 0.18);
+      tl.from("#scene-hook .headline", { y: 72, opacity: 0, duration: 0.55, ease: "power3.out" }, 0.35);
+      tl.from("#scene-hook .body", { y: 42, opacity: 0, duration: 0.45, ease: "power3.out" }, 0.62);
+      tl.to("#scene-hook", { y: -80, opacity: 0, duration: 0.35, ease: "power2.in" }, 3.65);
+      tl.set("#scene-hook", { opacity: 0 }, 4);
+      tl.from("#scene-demo .headline", { x: -70, opacity: 0, duration: 0.5, ease: "power3.out" }, 4.18);
+      tl.from("#scene-demo .body", { x: -46, opacity: 0, duration: 0.45, ease: "power3.out" }, 4.48);
+      tl.to(".visual", { scale: 1.05, y: -36, duration: 6.3, ease: "none" }, 4);
+      tl.to("#scene-demo", { y: -72, opacity: 0, duration: 0.35, ease: "power2.in" }, 10.7);
+      tl.set("#scene-demo", { opacity: 0 }, 11);
+      tl.from("#scene-cta .headline", { y: 76, opacity: 0, duration: 0.55, ease: "power3.out" }, 11.15);
+      tl.from(".cta", { scale: 0.82, opacity: 0, duration: 0.45, ease: "back.out(1.8)" }, 11.75);
+      tl.from(".disclaimer", { opacity: 0, duration: 0.3 }, 12.2);
+      tl.to(".cta", { scale: 1.04, duration: 0.28, repeat: 2, yoyo: true, ease: "power1.inOut" }, 13.25);
+      window.__timelines["ad-video"] = tl;
+    </script>
+  </body>
+</html>

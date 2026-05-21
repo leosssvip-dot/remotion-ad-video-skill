@@ -28,6 +28,16 @@ Each scene should include:
 - Keep internal ids, enum values, and file paths stable in English; only
   user-facing video copy is localized.
 
+## Render Engine Handoff
+
+- If `renderEngine` is `remotion`, map scenes to Remotion props and
+  `Sequence` timing.
+- If `renderEngine` is `hyperframes`, map scenes to `index.html` clips with
+  `data-start`, `data-duration`, and `data-track-index`, and put approved copy,
+  colors, CTA, and local asset paths in `variables.json`.
+- Do not change storyboard copy because of the render engine. Render engine
+  changes implementation shape, not the language or claim rules.
+
 ## Default Structures
 
 ### Product Link Ad

@@ -2,15 +2,14 @@
 
 [English](README.md)
 
-给一个 URL，用 AI coding agent + Remotion 生成可编辑、可复现的广告视频工程。
-不需要接入视频生成 AI。
+给一个 URL，用 AI coding agent 生成可编辑、可复现的广告视频工程。Skill 负责规划广告，然后用 [Remotion](https://github.com/remotion-dev/remotion) 或 [Hyperframes](https://github.com/heygen-com/hyperframes) 渲染。不需要接入视频生成 AI。
 
-本项目基于 [Remotion](https://github.com/remotion-dev/remotion)，也就是用
-React 以代码方式创建视频的框架。
+Remotion 是 React/TS 路线，Hyperframes 是 HTML/CSS/GSAP 路线。Skill 会按“用户明确选择、目标项目已有技术栈、本机可用渲染器”的顺序自动选择，并把选择原因写进 `ad-brief.json`。
 
-这个项目是一个通用的 agent skill 和工具包，适用于商品链接、应用商店链接、落地页或产品 brief。Agent 负责理解链接、规划广告创意、整理素材和生成 Remotion 工程；Remotion 负责用 React 代码稳定渲染视频。你不需要 Sora、Runway、Pika、Kling 或其他视频生成模型。
+这是一个通用的 agent skill：任何能读文件、跑 Node 脚本的 coding agent 都能用。
 
 ## 演示视频
+
 https://github.com/user-attachments/assets/1cd069a8-db27-4801-b6bd-9e66f41a6b90
 
 https://github.com/user-attachments/assets/d93f65f0-cb47-47b5-a8d6-a20be31c0553
@@ -24,7 +23,7 @@ https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8
 很多 AI 视频工作流是把 prompt 发给视频模型，然后等待结果。这个 skill 走的是另一条路：
 
 ```text
-URL -> 来源分类 -> ad-brief.json -> 素材 -> 分镜 -> Remotion 代码 -> 草稿视频
+URL -> 来源分类 -> ad-brief.json -> 素材 -> 分镜 -> 渲染引擎代码 -> 草稿视频
 ```
 
 这样生成的结果是可编辑、可复用、可测试、可审计的。尤其适合广告场景，因为广告需要明确产品、CTA、卖点、尺寸、素材版权和可验证声明。
@@ -32,12 +31,13 @@ URL -> 来源分类 -> ad-brief.json -> 素材 -> 分镜 -> Remotion 代码 -> �
 ## 核心能力
 
 - 从 URL 到广告视频工程，覆盖电商商品、移动游戏、社交/内容 App、SaaS/API 产品、本地服务和通用 App。
-- 强制生成 `ad-brief.json`，在写分镜和代码前固定来源类型、创意路线、尺寸、音频模式、素材需求、假设和阻塞项。
+- 强制生成 `ad-brief.json`，在写分镜和代码前固定来源类型、创意路线、尺寸、渲染引擎、选择原因、音频模式、素材需求、假设和阻塞项。
 - 根据链接类型生成预调研问题，优先确认尺寸和创意方向。
 - 草稿广告默认使用可听见的生成音效；声音默认开启，不作为默认必答问题，只有你选择 silent-safe 时才默认静音。
 - 创意 QA 会推动更夸张的广告排版：大字 hook、单一主视觉、强裁切和更低文字密度。
 - 电商素材抓取有 fail-closed 规则：抓不到可信主图就停止，让用户提供图片，不做假的商品广告。
 - Remotion 快速测试流程：先低分辨率 still，再 preview，再半尺寸 draft MP4，最后才 full-size final。
+- 兼容 Hyperframes：提供 HTML starter、`variables.json`，以及 `npx hyperframes lint/inspect/preview/render` 校验流程。
 - 自带合成 URL demo，不使用第三方品牌素材，也不使用视频生成 AI。
 
 ## 目录结构
@@ -48,6 +48,7 @@ skills/remotion-ad-video/
   agents/openai.yaml               可选 OpenAI/Codex 展示元数据
   references/                      工作流合同和行业玩法规则
   assets/remotion-template/        可复用 Remotion 模板
+  assets/hyperframes-template/     可复用 Hyperframes HTML 模板
   scripts/build_asset_manifest.mjs skill 内部素材清单工具
 
 scripts/
@@ -68,14 +69,15 @@ examples/synthetic-url-ad/
 
 - Codex / OpenAI 兼容 skill loader 可以直接安装 `skills/remotion-ad-video/`。
 - Claude Code、Cursor、Windsurf 或其他代码型 agent 可以把 `skills/remotion-ad-video/SKILL.md` 当作 playbook 使用，并调用 `scripts/` 里的 Node 工具。
-- 确定性部分都是普通 Node 脚本和 Remotion 模板，不依赖某个 agent runtime。
+- 确定性部分都是普通 Node 脚本、Remotion 模板和 Hyperframes 模板，不依赖某个 agent runtime。
 
 ## 环境要求
 
 - Node.js 20+
 - npm 或其他 Node 包管理器
 - Chrome 或 Chromium，用于浏览器辅助的电商素材抓取
-- Remotion 商业使用需要你自行确认 license
+- Remotion 输出需要安装 Remotion 依赖；商业使用 Remotion 需要你自行确认 license
+- Hyperframes 输出需要 Node.js 22+ 和 FFmpeg
 - 生产广告需要拥有可用素材、Logo、音乐、音效、旁白和广告声明的使用权
 
 ## 让 AI Agent 安装
@@ -118,11 +120,58 @@ Agent 应该完成：
    声音默认使用同步音效，除非你主动要求静音、音乐或旁白。
 3. 抓取可用素材，或者在素材失败时让用户提供。
 4. 提出广告创意方向，并选择最强的一版。
-5. 创建或更新 Remotion 工程。
-6. 先渲染低分辨率 still，再考虑 MP4。
+5. 创建或更新被选中的渲染工程。选择顺序是：用户明确选择、目标项目已有技术栈、本机可用渲染器。
+6. 先跑对应渲染引擎的 QA，再考虑最终 MP4。
 7. 汇报素材版权、广告声明和产品信息缺口。
 
-普通使用时，让 agent 去运行脚本、创建 Remotion 工程、渲染草稿即可。你不需要自己运行校验命令。
+普通使用时，让 agent 去运行脚本、创建渲染工程、渲染草稿即可。你不需要自己运行校验命令。
+
+## 渲染引擎用法
+
+默认自动选择：
+
+1. 用户明确选择。
+2. 目标项目已有技术栈。
+3. 本机可用渲染器。
+4. 两个都可用就询问用户；两个都不可用就建议用户选一个安装。
+
+自动选择：
+
+```text
+调用 remotion-ad-video skill，为这个产品生成一个 15 秒竖屏广告：
+https://example.com/products/focus-lamp
+```
+
+强制 Remotion：
+
+```text
+调用 remotion-ad-video skill，为这个产品生成一个 15 秒 Remotion 竖屏广告：
+https://example.com/products/focus-lamp
+```
+
+强制 Hyperframes：
+
+```text
+调用 remotion-ad-video skill，为这个产品生成一个 15 秒 Hyperframes 竖屏广告：
+https://example.com/products/focus-lamp
+```
+
+Remotion 输出使用 `assets/remotion-template/`、`src/default-props.json`，并运行：
+
+```bash
+npm run typecheck
+npm run still
+npm run render
+```
+
+Hyperframes 输出使用 `assets/hyperframes-template/`、`variables.json`，并运行：
+
+```bash
+npx hyperframes lint
+npx hyperframes inspect --samples 12
+npx hyperframes preview
+npx hyperframes render --variables-file ./variables.json --quality draft
+```
 
 ## 合成 URL Demo
 
@@ -183,9 +232,9 @@ asset gaps.
 
 一次正常广告生成通常会得到：
 
-- `ad-brief.json`：来源类型、目标、CTA、创意路线、尺寸、音频模式、假设、未解决问题和阻塞项。
+- `ad-brief.json`：来源类型、目标、CTA、创意路线、尺寸、渲染引擎、选择原因、音频模式、假设、未解决问题和阻塞项。
 - `public/<brand>/`：用户批准或页面抓取到的素材。
-- `src/default-props.json`：Remotion 场景、尺寸、CTA、素材、声明和音频配置。
+- `src/default-props.json`：Remotion 场景、尺寸、CTA、素材、声明和音频配置；Hyperframes 输出则使用 `variables.json`。
 - `examples/<ad>/out/draft/`：草稿 still。
 - `examples/<ad>/out/`：可选 preview、draft MP4 和 final MP4。
 
@@ -195,7 +244,7 @@ asset gaps.
 - 不要渲染未验证数字声明、监管声明、客户数据、私有 URL、API key、token 或内部 payload。
 - 如果电商抓取被阻止，或者主图不可信，必须停止并让用户提供商品图片。
 - 草稿默认带生成音效。只有用户要求音乐、旁白或特殊声音资产时，才需要额外确认使用权。
-- 商业使用 Remotion 时，请自行确认 Remotion license。
+- 商业使用 Remotion 时，请自行确认 Remotion license。Hyperframes 输出需要确认 Node.js 22+ 和 FFmpeg 环境。
 
 ## 维护者校验和发布
 

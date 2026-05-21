@@ -2,24 +2,18 @@
 
 [中文说明](README.zh-CN.md)
 
-Create advertising videos from a URL with an AI coding agent and Remotion.
-No video-generation AI required.
+Create editable ad video projects from a URL with an AI coding agent. The skill
+plans the ad, then renders with either [Remotion](https://github.com/remotion-dev/remotion)
+or [Hyperframes](https://github.com/heygen-com/hyperframes). No video-generation AI required.
 
-Built on [Remotion](https://github.com/remotion-dev/remotion), the React
-framework for creating videos programmatically.
+Remotion is the React/TS path. Hyperframes is the HTML/CSS/GSAP path. The skill
+auto-selects the renderer from explicit user choice, existing project stack, and
+local availability, then records the reason in `ad-brief.json`.
 
-This project is an agent-agnostic skill and toolkit for turning product links,
-app-store listings, landing pages, or product briefs into performance-oriented
-Remotion ad video projects. The agent plans the ad; Remotion renders
-deterministic React-based video. You do not need Sora, Runway, Pika, Kling, or
-any other generated-video API.
+This is an agent-agnostic workflow: any coding agent that can read files and run
+Node scripts can use it.
 
 ## Demo Video
-
-
-https://github.com/user-attachments/assets/1cd069a8-db27-4801-b6bd-9e66f41a6b90
-
-
 https://github.com/user-attachments/assets/d93f65f0-cb47-47b5-a8d6-a20be31c0553
 
 https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2
@@ -32,7 +26,7 @@ Most AI video workflows send a prompt to a video model and wait. This skill
 takes a different path:
 
 ```text
-URL -> source classification -> ad-brief.json -> assets -> storyboard -> Remotion code -> draft video
+URL -> source classification -> ad-brief.json -> assets -> storyboard -> render-engine code -> draft video
 ```
 
 That makes the output editable, repeatable, brand-safe, and testable in code.
@@ -44,8 +38,8 @@ matter.
 - URL-to-ad workflow for ecommerce products, mobile games, social/content apps,
   SaaS/API products, local services, and generic mobile apps.
 - Mandatory `ad-brief.json` contract so source type, creative route, format,
-  audio mode, asset requirements, assumptions, and blockers are explicit before
-  storyboard or code.
+  render engine, render-engine reason, audio mode, asset requirements,
+  assumptions, and blockers are explicit before storyboard or code.
 - Link-adapted preflight choices for output format and creative route.
 - Audible generated SFX are used by default for draft ads unless you choose a
   silent-safe output; sound is not a required preflight question by default.
@@ -56,6 +50,8 @@ matter.
   assets.
 - Fast Remotion lab for low-resolution stills, preview MP4, half-size draft
   MP4, and explicit full-size final render.
+- Hyperframes compatibility with an HTML starter template, `variables.json`,
+  and `npx hyperframes lint/inspect/preview/render` QA flow.
 - Validation script for checking the skill package structure and key workflow
   contracts.
 - Synthetic URL demo showing URL to Remotion ad video without third-party media.
@@ -68,6 +64,7 @@ skills/remotion-ad-video/
   agents/openai.yaml               Optional OpenAI/Codex listing metadata
   references/                      Workflow contracts and category playbooks
   assets/remotion-template/        Reusable Remotion starter project
+  assets/hyperframes-template/     Reusable Hyperframes HTML starter project
   scripts/build_asset_manifest.mjs Skill-local asset manifest helper
 
 scripts/
@@ -87,9 +84,9 @@ examples/synthetic-url-ad/
 - Node.js 20+
 - npm or another Node package manager
 - Chrome or Chromium for browser-backed ecommerce harvesting
-- Remotion dependencies installed in `examples/ad-lab` or the active Remotion
-  example project
-- A valid Remotion license for the intended commercial use
+- For Remotion output: Remotion dependencies installed in the active project
+  and a valid Remotion license for the intended commercial use
+- For Hyperframes output: Node.js 22+ and FFmpeg for `npx hyperframes`
 - Rights-cleared product images, logos, music, SFX, voiceover, and claims for
   production ads
 
@@ -103,8 +100,8 @@ files and run Node scripts.
 - Claude Code, Cursor, Windsurf, or other agents can load
   `skills/remotion-ad-video/SKILL.md` as the playbook and use the scripts in
   `scripts/`.
-- The deterministic parts are plain Node scripts and a Remotion template; they
-  are not tied to one agent runtime.
+- The deterministic parts are plain Node scripts plus Remotion and Hyperframes
+  templates; they are not tied to one agent runtime.
 
 ## Install With Your AI Agent
 
@@ -150,12 +147,61 @@ The agent should:
    text before any optional follow-up questions. Audio defaults to synced SFX.
 3. Harvest or request usable assets.
 4. Propose ad concepts and pick the strongest route.
-5. Create or update a Remotion project.
-6. Render low-resolution stills before any MP4.
+5. Create or update the selected render project. The agent chooses by explicit
+   user choice, existing project stack, then local renderer availability.
+6. Run the matching render-engine QA before any final MP4.
 7. Report rights, asset, and claim gaps.
 
-For normal use, you should let the agent run the scripts, create the Remotion
+For normal use, you should let the agent run the scripts, create the render
 project, and render the draft. You do not need to run validation commands.
+
+## Renderer Usage
+
+Default auto-selection:
+
+1. Explicit user choice.
+2. Existing target project stack.
+3. Local renderer availability.
+4. Ask when both engines are available; recommend installing one when neither
+   is available.
+
+Use the remotion-ad-video skill with auto selection:
+
+```text
+Use $remotion-ad-video to create a 15s vertical ad for:
+https://example.com/products/focus-lamp
+```
+
+Force Remotion:
+
+```text
+Use $remotion-ad-video to create a 15s vertical Remotion ad for:
+https://example.com/products/focus-lamp
+```
+
+Force Hyperframes:
+
+```text
+Use $remotion-ad-video to create a 15s vertical Hyperframes ad for:
+https://example.com/products/focus-lamp
+```
+
+Remotion output uses `assets/remotion-template/`, `src/default-props.json`, and:
+
+```bash
+npm run typecheck
+npm run still
+npm run render
+```
+
+Hyperframes output uses `assets/hyperframes-template/`, `variables.json`, and:
+
+```bash
+npx hyperframes lint
+npx hyperframes inspect --samples 12
+npx hyperframes preview
+npx hyperframes render --variables-file ./variables.json --quality draft
+```
 
 ## Synthetic URL Demo
 
@@ -218,11 +264,13 @@ inferred defaults, but it must still write them into `ad-brief.json`.
 
 A normal ad build should produce:
 
-- `ad-brief.json`: source type, goal, CTA, creative route, format, audio mode,
-  assumptions, unresolved questions, and blockers.
+- `ad-brief.json`: source type, goal, CTA, creative route, format,
+  render engine, render-engine reason, audio mode, assumptions, unresolved
+  questions, and blockers.
 - `public/<brand>/`: approved or harvested source assets.
 - `src/default-props.json`: Remotion props for scenes, dimensions, CTA, assets,
-  claims, and audio settings.
+- `src/default-props.json` for Remotion, or `variables.json` for Hyperframes:
+  scenes, dimensions, CTA, assets, claims, and audio settings.
 - Draft stills under `examples/<ad>/out/draft/`.
 - Optional preview, draft MP4, and final MP4 under `examples/<ad>/out/`.
 
@@ -237,6 +285,7 @@ A normal ad build should produce:
 - Drafts include generated SFX by default. Music, voiceover, or special sound
   assets still need clear usage rights when requested.
 - Confirm Remotion licensing separately for commercial rendering and deployment.
+  For Hyperframes, confirm the project can run Node.js 22+ and FFmpeg.
 
 ## Maintainer Checks
 

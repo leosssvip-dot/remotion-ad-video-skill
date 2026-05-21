@@ -11,13 +11,18 @@ makes unanswered creative or asset decisions explicit.
 - For URL jobs, run the deterministic source classifier first:
 
 ```bash
-node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --brief-out examples/<brand>-ad/ad-brief.json
+node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --project-dir examples/<brand>-ad --brief-out examples/<brand>-ad/ad-brief.json
 ```
 
+- Use `--render-engine remotion|hyperframes` only when the user explicitly
+  picked one. Otherwise the classifier uses `auto`: explicit choice, existing
+  project stack, then local renderer availability.
 - If the user answers preflight questions, update `mode` to `answered` and move
   answered items out of `unansweredQuestions`.
 - To write answered choices deterministically, pass `--format` and
   `--creative-route` with `--preflight-mode answered`.
+- If `--project-dir` is supplied and `--brief-out` is omitted, the classifier
+  writes `<project-dir>/ad-brief.json`.
 - For quick tests, defaults are allowed, but defaults must be recorded in the
   brief instead of only mentioned in chat.
 - `interactionLanguage` controls user-facing questions. `sourceLanguage` is
@@ -71,6 +76,41 @@ node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --brief
   },
   "durationSeconds": 15,
   "audioMode": "sfx-only",
+  "renderEngine": "hyperframes",
+  "renderEngineReason": "Only Hyperframes appears available on this computer.",
+  "renderEngineSelection": {
+    "status": "selected",
+    "source": "local_availability",
+    "requested": "auto",
+    "reason": "Only Hyperframes appears available on this computer.",
+    "projectDir": "/absolute/path/to/project",
+    "projectMarkers": {
+      "remotion": [],
+      "hyperframes": []
+    },
+    "localAvailability": {
+      "remotion": false,
+      "hyperframes": true,
+      "source": "local"
+    },
+    "options": ["remotion", "hyperframes"]
+  },
+  "renderPlan": {
+    "engine": "hyperframes",
+    "format": "vertical-9x16",
+    "width": 1080,
+    "height": 1920,
+    "draftWidth": 540,
+    "draftHeight": 960,
+    "template": "skills/remotion-ad-video/assets/hyperframes-template",
+    "primarySource": "index.html",
+    "validationCommands": [
+      "npm install",
+      "npx hyperframes lint",
+      "npx hyperframes inspect",
+      "npx hyperframes render --variables-file ./variables.json --quality draft"
+    ]
+  },
   "interactionPlan": {
     "preferredMode": "structured_choices",
     "fallbackMode": "text",
@@ -135,6 +175,15 @@ node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --brief
 - `user_required`: stop and ask the user for product images, screenshots, logo,
   or approved media.
 
+`renderEngine`:
+
+- `remotion`: React/Remotion project output.
+- `hyperframes`: HTML/data-attribute Hyperframes project output.
+- `needs_selection`: both engines appear available or both project stacks are
+  present; ask the user which engine to use.
+- `install_required`: neither engine appears available; recommend choosing one
+  to install.
+
 ## Blocking Rules
 
 - If `blockers` is non-empty, do not storyboard or render. Resolve blockers
@@ -145,6 +194,11 @@ node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --brief
   `interactionPlan.language` / `interactionLanguage` for those questions. Do
   not ask the longer optional follow-up questions as the initial required
   prompt.
+- If `blockers` includes `render_engine_choice_required`, ask which detected
+  engine to use: Remotion or Hyperframes.
+- If `blockers` includes `render_engine_install_required`, recommend choosing
+  one engine to install. Remotion fits React/TS/Zod and the existing Remotion
+  lab; Hyperframes fits HTML/CSS/GSAP and the open-source renderer path.
 - Audio defaults to `sfx-only`; do not ask audio as a required preflight choice
   unless the user requests silent-safe, music, voiceover, or a specific sound
   direction.
@@ -154,6 +208,9 @@ node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --brief
   image or user-provided product visual.
 - For audio, do not promise sound unless `audioMode` maps to real rights-cleared
   files or generated cue assets in props.
+- If `renderEngine` is `hyperframes`, load `hyperframes-output.md` before
+  implementation and run the Hyperframes QA commands instead of Remotion still
+  commands.
 
 ## Storyboard Traceability
 
@@ -166,6 +223,10 @@ The storyboard and `default-props.json` should cite these brief values:
 - `proofPlan.allowed` is the only source for rendered proof claims.
 - `assetPlan.required` drives harvesting and visual QA.
 - `format` and `durationSeconds` drive Remotion composition settings.
+- `renderEngine` and `renderEngineReason` drive whether the implementation
+  writes Remotion TSX props or Hyperframes HTML plus `variables.json`.
+- For Hyperframes, write `format.width`, `format.height`, and the derived
+  orientation into `variables.json` as `width`, `height`, and `layoutMode`.
 - `interactionPlan.choiceQuestions` drives agent-native selectable preflight UI
   when supported.
 - `interactionLanguage` drives user-facing questions.

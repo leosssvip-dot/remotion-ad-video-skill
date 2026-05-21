@@ -2,7 +2,9 @@
 
 ## Before Render
 
-- Props JSON matches the Zod schema.
+- Remotion: props JSON matches the Zod schema.
+- Hyperframes: `variables.json` matches declared `data-composition-variables`
+  and the root composition has the expected dimensions.
 - Duration, fps, width, and height match the target platform.
 - Local assets exist and remote assets load.
 - Asset manifest exists when URL assets were harvested and the project has a stable `public/<brand>/` folder.
@@ -12,7 +14,7 @@
 
 ## Commands
 
-For the bundled template:
+For the bundled Remotion template:
 
 ```bash
 npm install
@@ -22,6 +24,16 @@ npm run render
 ```
 
 Adapt commands to the target repo package manager.
+
+For the bundled Hyperframes template:
+
+```bash
+npm install
+npx hyperframes lint
+npx hyperframes inspect --samples 12
+npx hyperframes preview
+npx hyperframes render --variables-file ./variables.json --quality draft
+```
 
 For fast skill tests, prefer the shared lab:
 
@@ -51,6 +63,7 @@ Report:
 
 - Commands run and pass/fail status.
 - Output paths for MP4 and stills.
+- Render engine used: Remotion or Hyperframes.
 - Any asset substitutions.
 - Asset manifest path when generated.
 - Remaining rights, license, or claim gaps.

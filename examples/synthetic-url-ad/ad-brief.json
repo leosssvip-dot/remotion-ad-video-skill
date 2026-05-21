@@ -53,6 +53,18 @@
   },
   "durationSeconds": 15,
   "audioMode": "sfx-only",
+  "renderEngine": "remotion",
+  "renderPlan": {
+    "engine": "remotion",
+    "template": "skills/remotion-ad-video/assets/remotion-template",
+    "primarySource": "src/AdVideo.tsx",
+    "validationCommands": [
+      "npm install",
+      "npm run typecheck",
+      "npm run still",
+      "npm run render"
+    ]
+  },
   "unansweredQuestions": [
     "Replace synthetic claims with approved product claims before commercial use.",
     "Replace synthetic visuals with approved product photos or video before commercial use."

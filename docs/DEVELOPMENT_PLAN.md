@@ -4,14 +4,14 @@
 
 - Overall status: MVP skill package published and iterating from real URL tests
 - Current phase: Skill workflow and reusable Remotion template
-- Current milestone: Create a portable `remotion-ad-video-skill` open-source package
-- Next milestone: Improve deterministic intake and creative-route answer handling
+- Current milestone: Add Hyperframes compatibility while keeping Remotion as the default renderer
+- Next milestone: Test real URL ad generation through both Remotion and Hyperframes paths
 - Blockers: None
 - Last roadmap review: 2026-05-21
 
 ## Goal
 
-Create a reusable agent skill that turns product links, app store links, or product briefs into ad video plans and Remotion renderable templates without requiring a generated-video AI API.
+Create a reusable agent skill that turns product links, app store links, or product briefs into ad video plans and deterministic Remotion or Hyperframes renderable templates without requiring a generated-video AI API.
 
 ## Business Context
 
@@ -19,9 +19,9 @@ The useful wedge is not generic Remotion code generation. The wedge is a repeata
 
 ## Scope
 
-- Skill instructions for ad video creation with Remotion.
+- Skill instructions for ad video creation with Remotion by default and Hyperframes when requested.
 - Reference contracts for intake, storyboard, and render QA.
-- A minimal Remotion starter template bundled as a skill asset.
+- Minimal Remotion and Hyperframes starter templates bundled as skill assets.
 - Local validation that checks the skill package shape.
 
 ## Non-Goals
@@ -36,4 +36,5 @@ The useful wedge is not generic Remotion code generation. The wedge is a repeata
 - The skill has valid `SKILL.md` metadata and product-facing `agents/openai.yaml`.
 - The skill defines a complete intake-to-render-QA workflow.
 - The bundled Remotion template is parametrized with Zod props.
+- The bundled Hyperframes template is parametrized with `data-composition-variables` and `variables.json`.
 - A local validation script passes.

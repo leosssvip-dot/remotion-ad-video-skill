@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 const sourceTypes = [
   "ecommerce_product",
@@ -11,6 +12,8 @@ const sourceTypes = [
   "mobile_app",
   "unknown",
 ];
+const renderEngines = ["remotion", "hyperframes"];
+const unresolvedRenderEngines = ["needs_selection", "install_required"];
 
 const usage = () => {
   console.error(`Usage:
@@ -24,6 +27,9 @@ Options:
   --format <preset>      vertical, square, or landscape. Defaults to vertical.
   --creative-route <text> Selected or user-supplied creative route to write into the brief.
   --audio <mode>         silent-safe, sfx-only, music-sfx, or voiceover. Defaults to sfx-only.
+  --render-engine <name> remotion, hyperframes, or auto. Defaults to auto.
+  --project-dir <path>   Optional target project directory for render-engine stack detection.
+                         If --brief-out is omitted, writes <project-dir>/ad-brief.json.
   --interaction-language <locale>
                          Language used when asking the user preflight questions. Defaults to en.
   --source-language <locale|auto>
@@ -95,13 +101,91 @@ const addScore = (state, type, points, reason) => {
 
 const formatPreset = (raw) => {
   const value = cleanText(raw || "vertical").toLowerCase();
-  if (["square", "1:1", "square-1x1"].includes(value)) {
+  const compactValue = value.replace(/[\s_]+/g, "-");
+  if ([
+    "square",
+    "1:1",
+    "square-1x1",
+    "square-1:1",
+    "meta-square",
+    "方形",
+    "方形-1:1",
+  ].includes(compactValue)) {
     return { preset: "square-1x1", width: 1080, height: 1080, renderScale: 0.5, draftWidth: 540, draftHeight: 540 };
   }
-  if (["landscape", "16:9", "landscape-16x9", "youtube"].includes(value)) {
+  if ([
+    "landscape",
+    "16:9",
+    "landscape-16x9",
+    "landscape-16:9",
+    "youtube",
+    "youtube-landscape",
+    "widescreen",
+    "横屏",
+    "横屏-16:9",
+  ].includes(compactValue)) {
     return { preset: "landscape-16x9", width: 1920, height: 1080, renderScale: 0.5, draftWidth: 960, draftHeight: 540 };
   }
-  return { preset: "vertical-9x16", width: 1080, height: 1920, renderScale: 0.5, draftWidth: 540, draftHeight: 960 };
+  if ([
+    "vertical",
+    "portrait",
+    "9:16",
+    "vertical-9x16",
+    "vertical-9:16",
+    "instagram-reel",
+    "tiktok",
+    "youtube-shorts",
+    "竖屏",
+    "竖屏-9:16",
+  ].includes(compactValue)) {
+    return { preset: "vertical-9x16", width: 1080, height: 1920, renderScale: 0.5, draftWidth: 540, draftHeight: 960 };
+  }
+  throw new Error(`Unsupported --format: ${raw}`);
+};
+
+const audioModeFor = (raw) => {
+  const value = cleanText(raw || "sfx-only").toLowerCase();
+  const aliases = {
+    silent: "silent-safe",
+    "silent-safe": "silent-safe",
+    sfx: "sfx-only",
+    "sfx-only": "sfx-only",
+    music: "music-sfx",
+    "music-sfx": "music-sfx",
+    voice: "voiceover",
+    vo: "voiceover",
+    voiceover: "voiceover",
+  };
+  const normalized = aliases[value] ?? value;
+  if (!["silent-safe", "sfx-only", "music-sfx", "voiceover"].includes(normalized)) {
+    throw new Error(`Unsupported --audio: ${raw}`);
+  }
+  return normalized;
+};
+
+const validateOptionInputs = (options) => {
+  if (options.format !== undefined) {
+    formatPreset(options.format);
+  }
+  if (options.audio !== undefined) {
+    audioModeFor(options.audio);
+  }
+  if (options["preflight-mode"] !== undefined) {
+    preflightModeFor(options["preflight-mode"]);
+  }
+  if (options["render-engine"] !== undefined || options.renderEngine !== undefined) {
+    normalizeRenderEngine(options["render-engine"] ?? options.renderEngine);
+  }
+};
+
+const defaultBriefOutFor = (options) => {
+  if (options["brief-out"]) {
+    return options["brief-out"];
+  }
+  if (options["project-dir"]) {
+    return join(resolve(options["project-dir"]), "ad-brief.json");
+  }
+  return null;
 };
 
 const preflightModeFor = (raw) => {
@@ -115,6 +199,243 @@ const preflightModeFor = (raw) => {
 const creativeRouteFor = (raw, fallback) => {
   const value = cleanText(raw);
   return value || fallback;
+};
+
+const normalizeRenderEngine = (raw) => {
+  const value = cleanText(raw || "auto").toLowerCase();
+  const aliases = {
+    auto: "auto",
+    hf: "hyperframes",
+    hyperframe: "hyperframes",
+    hyperframes: "hyperframes",
+    remotion: "remotion",
+  };
+  const normalized = aliases[value] ?? value;
+  if (![...renderEngines, "auto"].includes(normalized)) {
+    throw new Error(`Unsupported --render-engine: ${raw}`);
+  }
+  return normalized;
+};
+
+const parseRenderEngineSet = (value) => {
+  const normalized = cleanText(value).toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  if (["none", "false", "0"].includes(normalized)) {
+    return { remotion: false, hyperframes: false };
+  }
+  const parts = normalized.split(",").map((part) => normalizeRenderEngine(part.trim())).filter((part) => part !== "auto");
+  return {
+    remotion: parts.includes("remotion"),
+    hyperframes: parts.includes("hyperframes"),
+  };
+};
+
+const safeReadText = (path) => {
+  try {
+    return readFileSync(path, "utf8");
+  } catch {
+    return "";
+  }
+};
+
+const safeReadPackageJson = (projectDir) => {
+  try {
+    return JSON.parse(readFileSync(join(projectDir, "package.json"), "utf8"));
+  } catch {
+    return {};
+  }
+};
+
+const objectText = (value) =>
+  Object.values(value ?? {}).map((item) => String(item ?? "")).join(" ").toLowerCase();
+
+const detectProjectStack = (projectDir) => {
+  const absolute = resolve(projectDir || process.cwd());
+  const packageJson = safeReadPackageJson(absolute);
+  const dependencies = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies,
+    ...packageJson.peerDependencies,
+  };
+  const scriptText = objectText(packageJson.scripts);
+  const remotionSource = [
+    safeReadText(join(absolute, "src", "Root.tsx")),
+    safeReadText(join(absolute, "src", "Root.jsx")),
+    safeReadText(join(absolute, "src", "index.tsx")),
+    safeReadText(join(absolute, "src", "index.jsx")),
+  ].join("\n");
+  const indexHtml = safeReadText(join(absolute, "index.html"));
+  const remotionMarkers = [];
+  const hyperframesMarkers = [];
+
+  if (dependencies.remotion || dependencies["@remotion/cli"]) {
+    remotionMarkers.push("package.json dependency");
+  }
+  if (scriptText.includes("remotion")) {
+    remotionMarkers.push("package.json script");
+  }
+  if (remotionSource.includes("Composition") || remotionSource.includes("@remotion") || remotionSource.includes("remotion")) {
+    remotionMarkers.push("src Remotion entry");
+  }
+
+  if (dependencies.hyperframes || dependencies["@hyperframes/core"]) {
+    hyperframesMarkers.push("package.json dependency");
+  }
+  if (scriptText.includes("hyperframes")) {
+    hyperframesMarkers.push("package.json script");
+  }
+  if (indexHtml.includes("data-composition-id")) {
+    hyperframesMarkers.push("index.html data-composition-id");
+  }
+  if (existsSync(join(absolute, "variables.json")) && indexHtml.includes("data-composition-variables")) {
+    hyperframesMarkers.push("variables.json");
+  }
+
+  return {
+    projectDir: absolute,
+    remotion: remotionMarkers.length > 0,
+    hyperframes: hyperframesMarkers.length > 0,
+    markers: {
+      remotion: remotionMarkers,
+      hyperframes: hyperframesMarkers,
+    },
+  };
+};
+
+const commandSucceeds = (command) => {
+  const result = spawnSync("sh", ["-lc", command], {
+    encoding: "utf8",
+    stdio: "ignore",
+    timeout: 20000,
+  });
+  return result.status === 0;
+};
+
+const detectLocalRenderEngines = () => {
+  const envOverride = parseRenderEngineSet(process.env.REMOTION_AD_VIDEO_RENDER_ENGINES);
+  if (envOverride) {
+    return { ...envOverride, source: "env" };
+  }
+  return {
+    remotion: commandSucceeds("command -v remotion"),
+    hyperframes: commandSucceeds("command -v hyperframes || npx --no-install hyperframes --version"),
+    source: "local",
+  };
+};
+
+const projectDirFor = (options) => {
+  if (options["project-dir"]) {
+    return resolve(options["project-dir"]);
+  }
+  if (options["brief-out"]) {
+    return dirname(resolve(options["brief-out"]));
+  }
+  return process.cwd();
+};
+
+const selectRenderEngine = (options) => {
+  const requested = normalizeRenderEngine(options["render-engine"] ?? options.renderEngine ?? "auto");
+  const projectStack = detectProjectStack(projectDirFor(options));
+  const localAvailability = detectLocalRenderEngines();
+  const base = {
+    requested,
+    projectDir: projectStack.projectDir,
+    projectMarkers: projectStack.markers,
+    localAvailability,
+  };
+
+  if (requested !== "auto") {
+    return {
+      ...base,
+      engine: requested,
+      status: "selected",
+      source: "explicit",
+      reason: `User or caller explicitly selected ${requested}.`,
+    };
+  }
+
+  if (projectStack.remotion && !projectStack.hyperframes) {
+    return {
+      ...base,
+      engine: "remotion",
+      status: "selected",
+      source: "project",
+      reason: "Target project has Remotion markers.",
+    };
+  }
+  if (projectStack.hyperframes && !projectStack.remotion) {
+    return {
+      ...base,
+      engine: "hyperframes",
+      status: "selected",
+      source: "project",
+      reason: "Target project has Hyperframes markers.",
+    };
+  }
+  if (projectStack.remotion && projectStack.hyperframes) {
+    return {
+      ...base,
+      engine: "needs_selection",
+      status: "blocked",
+      source: "project",
+      blocker: "render_engine_choice_required",
+      reason: "Target project has both Remotion and Hyperframes markers.",
+    };
+  }
+
+  if (localAvailability.remotion && !localAvailability.hyperframes) {
+    return {
+      ...base,
+      engine: "remotion",
+      status: "selected",
+      source: "local_availability",
+      reason: "Only Remotion appears available on this computer.",
+    };
+  }
+  if (localAvailability.hyperframes && !localAvailability.remotion) {
+    return {
+      ...base,
+      engine: "hyperframes",
+      status: "selected",
+      source: "local_availability",
+      reason: "Only Hyperframes appears available on this computer.",
+    };
+  }
+  if (localAvailability.remotion && localAvailability.hyperframes) {
+    return {
+      ...base,
+      engine: "needs_selection",
+      status: "blocked",
+      source: "local_availability",
+      blocker: "render_engine_choice_required",
+      reason: "Both Remotion and Hyperframes appear available on this computer.",
+    };
+  }
+
+  return {
+    ...base,
+    engine: "install_required",
+    status: "blocked",
+    source: "local_availability",
+    blocker: "render_engine_install_required",
+    reason: "Neither Remotion nor Hyperframes appears installed or available for the target project.",
+  };
+};
+
+const isConcreteRenderEngine = (engine) => renderEngines.includes(engine);
+
+const renderEngineQuestionFor = (selection, interactionLanguage) => {
+  const chinese = isChineseLanguage(interactionLanguage);
+  if (selection.engine === "install_required") {
+    return chinese
+      ? "renderEngine: 这台电脑或目标项目没有检测到 Remotion 或 Hyperframes。请选择要安装/使用的渲染引擎：Remotion=remotion（React/TS/Zod 和现有 Remotion lab），Hyperframes=hyperframes（HTML/CSS/GSAP 和开源渲染链路）。"
+      : "renderEngine: Neither Remotion nor Hyperframes was detected on this computer or target project. Choose which renderer to install/use: Remotion=remotion (React/TS/Zod and existing Remotion lab), Hyperframes=hyperframes (HTML/CSS/GSAP and open-source renderer path).";
+  }
+  return chinese
+    ? "renderEngine: 检测到 Remotion 和 Hyperframes 都可用。请选择本次视频使用哪个渲染引擎：Remotion=remotion，Hyperframes=hyperframes。"
+    : "renderEngine: Both Remotion and Hyperframes appear available. Choose which renderer to use for this video: Remotion=remotion, Hyperframes=hyperframes.";
 };
 
 const normalizeLanguage = (raw, fallback = "en") => {
@@ -474,7 +795,10 @@ const classify = ({ sourceUrl, title, description, input = {}, options = {} }) =
 
 const makeBrief = ({ classification, options }) => {
   const format = formatPreset(options.format);
-  const audioMode = cleanText(options.audio || "sfx-only");
+  const audioMode = audioModeFor(options.audio);
+  const renderEngineSelection = selectRenderEngine(options);
+  const renderEngine = renderEngineSelection.engine;
+  const renderBlocked = !isConcreteRenderEngine(renderEngine);
   const preflightMode = preflightModeFor(options["preflight-mode"]);
   const requiresPreflight = preflightMode === "required";
   const defaultRoute = classification.creativeRoutes[0] ?? "product demo";
@@ -489,13 +813,21 @@ const makeBrief = ({ classification, options }) => {
     mobile_app: "Use app-store screenshots and icon where available; simulate real app interaction.",
     unknown: "Harvest public assets, then ask user for missing product images and creative direction.",
   };
+  const unansweredQuestions = [
+    ...(requiresPreflight ? classification.preflightQuestions : []),
+    ...(renderBlocked ? [renderEngineQuestionFor(renderEngineSelection, classification.interactionLanguage)] : []),
+  ];
+  const blockers = [
+    ...(requiresPreflight ? ["preflight_answers_required"] : []),
+    ...(renderEngineSelection.blocker ? [renderEngineSelection.blocker] : []),
+  ];
 
   return {
     schemaVersion: "1.0",
     sourceUrl: classification.sourceUrl,
     generatedAt: new Date().toISOString(),
-    mode: requiresPreflight ? "requires_input" : preflightMode,
-    status: requiresPreflight ? "blocked" : preflightMode === "answered" ? "answered" : "draft",
+    mode: requiresPreflight || renderBlocked ? "requires_input" : preflightMode,
+    status: blockers.length > 0 ? "blocked" : preflightMode === "answered" ? "answered" : "draft",
     sourceType: classification.sourceType,
     classificationConfidence: classification.confidence,
     classificationReasons: classification.reasons,
@@ -529,6 +861,41 @@ const makeBrief = ({ classification, options }) => {
     format,
     durationSeconds: 15,
     audioMode,
+    renderEngine,
+    renderEngineReason: renderEngineSelection.reason,
+    renderEngineSelection: {
+      status: renderEngineSelection.status,
+      source: renderEngineSelection.source,
+      requested: renderEngineSelection.requested,
+      reason: renderEngineSelection.reason,
+      projectDir: renderEngineSelection.projectDir,
+      projectMarkers: renderEngineSelection.projectMarkers,
+      localAvailability: renderEngineSelection.localAvailability,
+      options: renderEngines,
+    },
+    renderPlan: {
+      engine: renderEngine,
+      format: format.preset,
+      width: format.width,
+      height: format.height,
+      draftWidth: format.draftWidth,
+      draftHeight: format.draftHeight,
+      template: renderEngine === "hyperframes"
+        ? "skills/remotion-ad-video/assets/hyperframes-template"
+        : renderEngine === "remotion"
+          ? "skills/remotion-ad-video/assets/remotion-template"
+          : null,
+      primarySource: renderEngine === "hyperframes"
+        ? "index.html"
+        : renderEngine === "remotion"
+          ? "src/AdVideo.tsx"
+          : null,
+      validationCommands: renderEngine === "hyperframes"
+        ? ["npm install", "npx hyperframes lint", "npx hyperframes inspect", "npx hyperframes render --variables-file ./variables.json --quality draft"]
+        : renderEngine === "remotion"
+          ? ["npm install", "npm run typecheck", "npm run still", "npm run render"]
+          : [],
+    },
     interactionPlan: {
       preferredMode: "structured_choices",
       fallbackMode: "text",
@@ -540,15 +907,16 @@ const makeBrief = ({ classification, options }) => {
       choiceQuestions: classification.interactionPlan.choiceQuestions,
       openQuestions: classification.interactionPlan.openQuestions,
     },
-    unansweredQuestions: requiresPreflight ? classification.preflightQuestions : [],
+    unansweredQuestions,
     assumptions: [
       `Category inferred as ${classification.sourceType} with confidence ${classification.confidence}.`,
       `Interaction language is ${classification.interactionLanguage}; output language is ${classification.outputLanguage}.`,
+      `Render engine is ${renderEngine}: ${renderEngineSelection.reason}`,
       routeIsDefault ? `Default creative route is ${primaryRoute}.` : `Creative route selected from preflight answer is ${primaryRoute}.`,
       `Default format is ${format.preset} with draft scale ${format.renderScale}.`,
       requiresPreflight ? "Preflight answers are required before storyboard or render." : `Preflight mode is ${preflightMode}.`,
     ],
-    blockers: requiresPreflight ? ["preflight_answers_required"] : [],
+    blockers,
   };
 };
 
@@ -556,6 +924,7 @@ const { sourceUrl, options } = parseArgs(process.argv.slice(2));
 if (!sourceUrl) {
   usage();
 }
+validateOptionInputs(options);
 
 const input = readJson(options["input-json"]);
 const classification = classify({
@@ -569,8 +938,9 @@ const classification = classify({
 if (options.json) {
   writeJson(options.json, classification);
 }
-if (options["brief-out"]) {
-  writeJson(options["brief-out"], makeBrief({ classification, options }));
+const briefOut = defaultBriefOutFor(options);
+if (briefOut) {
+  writeJson(briefOut, makeBrief({ classification, options }));
 }
 
 console.log(JSON.stringify(classification, null, 2));

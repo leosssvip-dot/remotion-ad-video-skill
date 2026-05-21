@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const root = process.cwd();
 const skillDir = join(root, "skills", "remotion-ad-video");
@@ -16,6 +16,7 @@ const requiredFiles = [
   "references/creative-direction.md",
   "references/game-ad-patterns.md",
   "references/fast-test-workflow.md",
+  "references/hyperframes-output.md",
   "references/industry-angle-library.md",
   "references/platform-presets.md",
   "references/preflight-questionnaire.md",
@@ -30,6 +31,10 @@ const requiredFiles = [
   "assets/remotion-template/src/AdVideo.tsx",
   "assets/remotion-template/src/schema.ts",
   "assets/remotion-template/src/default-props.json",
+  "assets/hyperframes-template/README.md",
+  "assets/hyperframes-template/index.html",
+  "assets/hyperframes-template/package.json",
+  "assets/hyperframes-template/variables.json",
 ];
 const requiredRootFiles = [
   "LICENSE",
@@ -60,6 +65,27 @@ const runChecked = (label, command, args, options = {}) => {
     ].filter(Boolean).join("\n").trim();
     fail(`${label} failed${output ? `:\n${output}` : ""}`);
     return false;
+  }
+};
+
+const uniqueTempJson = (name) =>
+  join(mkdtempSync(join(tmpdir(), `${name}-`)), "brief.json");
+const removeTempJson = (path) =>
+  rmSync(dirname(path), { recursive: true, force: true });
+
+const expectFailure = (label, command, args, expectedText, options = {}) => {
+  try {
+    execFileSync(command, args, { stdio: "pipe", ...options });
+    fail(`${label} should fail`);
+  } catch (error) {
+    const output = [
+      error.stdout?.toString?.(),
+      error.stderr?.toString?.(),
+      error.message,
+    ].filter(Boolean).join("\n").trim();
+    if (!output.includes(expectedText)) {
+      fail(`${label} failed with unexpected output${output ? `:\n${output}` : ""}`);
+    }
   }
 };
 
@@ -117,6 +143,10 @@ for (const phrase of [
   "platform-presets",
   "rights",
   "Remotion license",
+  "Hyperframes",
+  "hyperframes-output",
+  "renderEngine",
+  "local renderer availability",
   "ad-brief-contract",
   "ad-brief.json",
   "classify-ad-source.mjs",
@@ -159,6 +189,13 @@ for (const dependency of ["@remotion/cli", "remotion", "react", "react-dom", "zo
   }
 }
 
+const hyperframesPackageJson = JSON.parse(read("assets/hyperframes-template/package.json"));
+for (const scriptName of ["lint", "inspect", "preview", "render"]) {
+  if (!hyperframesPackageJson.scripts?.[scriptName]?.includes("hyperframes")) {
+    fail(`hyperframes template package.json missing script: ${scriptName}`);
+  }
+}
+
 const rootPackageJson = JSON.parse(readRoot("package.json"));
 if (rootPackageJson.name !== "remotion-ad-video-skill") {
   fail("root package.json name must be remotion-ad-video-skill");
@@ -174,12 +211,15 @@ for (const phrase of [
   "remotion-ad-video-skill",
   "README.zh-CN.md",
   "https://github.com/remotion-dev/remotion",
+  "https://github.com/heygen-com/hyperframes",
   "https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2",
   "https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8",
   "No video-generation AI required",
   "agent-agnostic",
   "Agent Compatibility",
   "URL to Remotion ad video",
+  "Hyperframes compatibility",
+  "assets/hyperframes-template",
   "Use the remotion-ad-video skill",
   "Synthetic URL Demo",
   "Maintainer Checks",
@@ -196,11 +236,14 @@ const chineseReadme = readRoot("README.zh-CN.md");
 for (const phrase of [
   "remotion-ad-video-skill",
   "https://github.com/remotion-dev/remotion",
+  "https://github.com/heygen-com/hyperframes",
   "https://github.com/user-attachments/assets/5dbe2ade-fe7f-419f-8349-d73045320cd2",
   "https://github.com/user-attachments/assets/8e3605dc-f776-4f62-b763-f618f6d7f8d8",
   "不需要接入视频生成 AI",
   "通用的 agent skill",
   "URL -> 来源分类 -> ad-brief.json",
+  "兼容 Hyperframes",
+  "assets/hyperframes-template",
   "调用 remotion-ad-video skill",
   "合成 URL Demo",
   "维护者校验和发布",
@@ -224,6 +267,9 @@ if (syntheticBrief.sourceUrl !== "https://example.com/products/focus-lamp") {
 }
 if (syntheticBrief.audioMode !== "sfx-only") {
   fail("synthetic demo brief must use audioMode=sfx-only");
+}
+if (syntheticBrief.renderEngine !== "remotion") {
+  fail("synthetic demo brief must default renderEngine=remotion");
 }
 
 const adIntake = read("references/ad-intake.md");
@@ -271,9 +317,29 @@ for (const phrase of ["Layout Shock", "poster-scale type", "maximum two text gro
 }
 
 const storyboardContract = read("references/storyboard-contract.md");
-for (const phrase of ["layoutMode", "textBudget", "maximum two text groups", "one dominant visual"]) {
+for (const phrase of ["layoutMode", "textBudget", "maximum two text groups", "one dominant visual", "renderEngine", "variables.json", "data-track-index"]) {
   if (!storyboardContract.includes(phrase)) {
     fail(`storyboard-contract.md missing phrase: ${phrase}`);
+  }
+}
+
+const hyperframesOutput = read("references/hyperframes-output.md");
+for (const phrase of [
+  "renderEngine: \"hyperframes\"",
+  "assets/hyperframes-template",
+  "index.html",
+  "variables.json",
+  "data-composition-id",
+  "data-track-index",
+  "data-composition-variables",
+  "window.__hyperframes.getVariables()",
+  "window.__timelines",
+  "npx hyperframes lint",
+  "npx hyperframes inspect",
+  "remotion-to-hyperframes"
+]) {
+  if (!hyperframesOutput.includes(phrase)) {
+    fail(`hyperframes-output.md missing phrase: ${phrase}`);
   }
 }
 
@@ -326,6 +392,12 @@ for (const phrase of [
   "interactionLanguage",
   "sourceLanguage",
   "outputLanguage",
+  "renderEngine",
+  "renderPlan",
+  "renderEngineReason",
+  "renderEngineSelection",
+  "render_engine_choice_required",
+  "render_engine_install_required",
   "languagePlan",
   "interactionPlan",
   "choiceQuestions",
@@ -336,6 +408,8 @@ for (const phrase of [
   "creativeRoute: 选择这个电商商品广告的主要创意路线",
   "--creative-route",
   "--interaction-language",
+  "--render-engine",
+  "--project-dir",
   "Storyboard Traceability"
 ]) {
   if (!briefContract.includes(phrase)) {
@@ -442,6 +516,11 @@ for (const phrase of [
   "interaction-language",
   "source-language",
   "output-language",
+  "render-engine",
+  "selectRenderEngine",
+  "detectProjectStack",
+  "detectLocalRenderEngines",
+  "hyperframes",
   "interactionLanguage",
   "sourceLanguage",
   "outputLanguage",
@@ -460,14 +539,16 @@ for (const phrase of [
   }
 }
 
-const classifierBriefPath = join(tmpdir(), `remotion-ad-validate-${Date.now()}.json`);
+const classifierEnv = { ...process.env, REMOTION_AD_VIDEO_RENDER_ENGINES: "remotion" };
+
+const classifierBriefPath = uniqueTempJson("remotion-ad-validate");
 try {
   execFileSync(process.execPath, [
     join(root, "scripts", "classify-ad-source.mjs"),
     "https://play.google.com/store/apps/details?id=com.zhiliaoapp.musically",
     "--brief-out",
     classifierBriefPath,
-  ], { stdio: "pipe" });
+  ], { stdio: "pipe", env: classifierEnv });
   const classifierBrief = JSON.parse(readFileSync(classifierBriefPath, "utf8"));
   const unanswered = classifierBrief.unansweredQuestions ?? [];
   if (classifierBrief.blockers?.[0] !== "preflight_answers_required") {
@@ -499,11 +580,120 @@ try {
   if (!classifierBrief.interactionLanguage || !classifierBrief.sourceLanguage || !classifierBrief.outputLanguage) {
     fail("classifier brief must include interactionLanguage, sourceLanguage, and outputLanguage");
   }
+  if (classifierBrief.renderEngine !== "remotion") {
+    fail(`classifier brief default renderEngine ${classifierBrief.renderEngine} must be remotion`);
+  }
+  if (classifierBrief.renderEngineSelection?.source !== "local_availability") {
+    fail("classifier brief default render engine must come from local availability when no project stack exists");
+  }
 } finally {
-  rmSync(classifierBriefPath, { force: true });
+  removeTempJson(classifierBriefPath);
 }
 
-const zhInteractionBriefPath = join(tmpdir(), `remotion-ad-zh-interaction-${Date.now()}.json`);
+const projectStackDir = mkdtempSync(join(tmpdir(), "remotion-ad-project-stack-"));
+try {
+  writeFileSync(
+    join(projectStackDir, "package.json"),
+    `${JSON.stringify({ scripts: { render: "remotion render src/index.tsx AdVideo out/video.mp4" }, dependencies: { remotion: "^4.0.0" } }, null, 2)}\n`
+  );
+  const projectStackBriefPath = uniqueTempJson("remotion-ad-project-stack");
+  try {
+    execFileSync(process.execPath, [
+      join(root, "scripts", "classify-ad-source.mjs"),
+      "https://example.com/products/focus-lamp",
+      "--project-dir",
+      projectStackDir,
+      "--preflight-mode",
+      "defaults",
+      "--brief-out",
+      projectStackBriefPath,
+    ], { stdio: "pipe", env: { ...process.env, REMOTION_AD_VIDEO_RENDER_ENGINES: "hyperframes" } });
+    const projectStackBrief = JSON.parse(readFileSync(projectStackBriefPath, "utf8"));
+    if (projectStackBrief.renderEngine !== "remotion") {
+      fail("project stack detection must choose Remotion over local Hyperframes availability");
+    }
+    if (projectStackBrief.renderEngineSelection?.source !== "project") {
+      fail("project stack detection must record source=project");
+    }
+  } finally {
+    removeTempJson(projectStackBriefPath);
+  }
+} finally {
+  rmSync(projectStackDir, { recursive: true, force: true });
+}
+
+const bothEnginesBriefPath = uniqueTempJson("remotion-ad-both-engines");
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--preflight-mode",
+    "defaults",
+    "--brief-out",
+    bothEnginesBriefPath,
+  ], { stdio: "pipe", env: { ...process.env, REMOTION_AD_VIDEO_RENDER_ENGINES: "remotion,hyperframes" } });
+  const bothBrief = JSON.parse(readFileSync(bothEnginesBriefPath, "utf8"));
+  if (bothBrief.renderEngine !== "needs_selection") {
+    fail("both-engine auto detection must block with renderEngine=needs_selection");
+  }
+  if (!bothBrief.blockers?.includes("render_engine_choice_required")) {
+    fail("both-engine auto detection must include render_engine_choice_required");
+  }
+  if (!bothBrief.unansweredQuestions?.some((question) => question.startsWith("renderEngine:"))) {
+    fail("both-engine auto detection must ask a renderEngine question");
+  }
+} finally {
+  removeTempJson(bothEnginesBriefPath);
+}
+
+const noEnginesBriefPath = uniqueTempJson("remotion-ad-no-engines");
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--preflight-mode",
+    "defaults",
+    "--brief-out",
+    noEnginesBriefPath,
+  ], { stdio: "pipe", env: { ...process.env, REMOTION_AD_VIDEO_RENDER_ENGINES: "none" } });
+  const noEngineBrief = JSON.parse(readFileSync(noEnginesBriefPath, "utf8"));
+  if (noEngineBrief.renderEngine !== "install_required") {
+    fail("no-engine auto detection must block with renderEngine=install_required");
+  }
+  if (!noEngineBrief.blockers?.includes("render_engine_install_required")) {
+    fail("no-engine auto detection must include render_engine_install_required");
+  }
+} finally {
+  removeTempJson(noEnginesBriefPath);
+}
+
+const hyperframesBriefPath = uniqueTempJson("remotion-ad-hyperframes");
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--render-engine",
+    "hyperframes",
+    "--preflight-mode",
+    "defaults",
+    "--brief-out",
+    hyperframesBriefPath,
+  ], { stdio: "pipe", env: classifierEnv });
+  const hyperframesBrief = JSON.parse(readFileSync(hyperframesBriefPath, "utf8"));
+  if (hyperframesBrief.renderEngine !== "hyperframes") {
+    fail(`hyperframes classifier brief renderEngine ${hyperframesBrief.renderEngine} must be hyperframes`);
+  }
+  if (hyperframesBrief.renderPlan?.primarySource !== "index.html") {
+    fail("hyperframes classifier brief renderPlan.primarySource must be index.html");
+  }
+  if (!hyperframesBrief.renderPlan?.validationCommands?.some((command) => command.includes("hyperframes inspect"))) {
+    fail("hyperframes classifier brief renderPlan must include hyperframes inspect");
+  }
+} finally {
+  removeTempJson(hyperframesBriefPath);
+}
+
+const zhInteractionBriefPath = uniqueTempJson("remotion-ad-zh-interaction");
 try {
   execFileSync(process.execPath, [
     join(root, "scripts", "classify-ad-source.mjs"),
@@ -516,7 +706,7 @@ try {
     "zh-CN",
     "--brief-out",
     zhInteractionBriefPath,
-  ], { stdio: "pipe" });
+  ], { stdio: "pipe", env: classifierEnv });
   const zhBrief = JSON.parse(readFileSync(zhInteractionBriefPath, "utf8"));
   const unanswered = zhBrief.unansweredQuestions ?? [];
   if (zhBrief.interactionLanguage !== "zh-CN") {
@@ -538,10 +728,10 @@ try {
     fail("zh interaction brief interactionPlan.language must be zh-CN");
   }
 } finally {
-  rmSync(zhInteractionBriefPath, { force: true });
+  removeTempJson(zhInteractionBriefPath);
 }
 
-const zhSourceBriefPath = join(tmpdir(), `remotion-ad-zh-source-${Date.now()}.json`);
+const zhSourceBriefPath = uniqueTempJson("remotion-ad-zh-source");
 try {
   execFileSync(process.execPath, [
     join(root, "scripts", "classify-ad-source.mjs"),
@@ -554,7 +744,7 @@ try {
     "en",
     "--brief-out",
     zhSourceBriefPath,
-  ], { stdio: "pipe" });
+  ], { stdio: "pipe", env: classifierEnv });
   const zhSourceBrief = JSON.parse(readFileSync(zhSourceBriefPath, "utf8"));
   if (zhSourceBrief.sourceLanguage !== "zh-CN") {
     fail(`Chinese source brief sourceLanguage ${zhSourceBrief.sourceLanguage} must be zh-CN`);
@@ -566,10 +756,10 @@ try {
     fail(`Chinese source brief CTA ${zhSourceBrief.cta} must be localized for video output`);
   }
 } finally {
-  rmSync(zhSourceBriefPath, { force: true });
+  removeTempJson(zhSourceBriefPath);
 }
 
-const answeredBriefPath = join(tmpdir(), `remotion-ad-answered-${Date.now()}.json`);
+const answeredBriefPath = uniqueTempJson("remotion-ad-answered");
 try {
   execFileSync(process.execPath, [
     join(root, "scripts", "classify-ad-source.mjs"),
@@ -582,7 +772,7 @@ try {
     "answered",
     "--brief-out",
     answeredBriefPath,
-  ], { stdio: "pipe" });
+  ], { stdio: "pipe", env: classifierEnv });
   const answeredBrief = JSON.parse(readFileSync(answeredBriefPath, "utf8"));
   if (answeredBrief.status !== "answered") {
     fail(`answered classifier brief status ${answeredBrief.status} must be answered`);
@@ -600,7 +790,7 @@ try {
     fail("answered classifier brief must not keep blockers");
   }
 } finally {
-  rmSync(answeredBriefPath, { force: true });
+  removeTempJson(answeredBriefPath);
 }
 
 const ecommerceHarvestScript = readRoot("scripts/harvest-ecommerce-assets.mjs");
@@ -635,6 +825,147 @@ for (const phrase of [
   if (!sourceFiles.includes(phrase)) {
     fail(`template source missing phrase: ${phrase}`);
   }
+}
+for (const phrase of [
+  "platform={props.platform}",
+  "const isLandscape",
+  "const isSquare",
+  "gridTemplateColumns",
+  "contentLayout",
+]) {
+  if (!sourceFiles.includes(phrase)) {
+    fail(`template source missing responsive format phrase: ${phrase}`);
+  }
+}
+
+const hyperframesTemplate = [
+  read("assets/hyperframes-template/index.html"),
+  read("assets/hyperframes-template/variables.json"),
+  read("assets/hyperframes-template/package.json"),
+].join("\n");
+for (const phrase of [
+  "data-composition-id=\"ad-video\"",
+  "data-composition-variables",
+  "data-track-index",
+  "window.__hyperframes.getVariables()",
+  "window.__timelines[\"ad-video\"]",
+  "variables.json",
+  "npx hyperframes lint",
+  "npx hyperframes inspect",
+  "productName",
+  "cta",
+]) {
+  if (!hyperframesTemplate.includes(phrase)) {
+    fail(`hyperframes template missing phrase: ${phrase}`);
+  }
+}
+for (const phrase of [
+  "\"width\"",
+  "\"height\"",
+  "\"layoutMode\"",
+  "variables.width",
+  "variables.height",
+  "setAttribute(\"data-width\"",
+  "setAttribute(\"data-height\"",
+  "--stage-width",
+  "--stage-height",
+]) {
+  if (!hyperframesTemplate.includes(phrase)) {
+    fail(`hyperframes template missing responsive format phrase: ${phrase}`);
+  }
+}
+
+const formatLabelBriefPath = uniqueTempJson("remotion-ad-format-label");
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--format",
+    "square 1:1",
+    "--creative-route",
+    "product close-up",
+    "--preflight-mode",
+    "answered",
+    "--brief-out",
+    formatLabelBriefPath,
+  ], { stdio: "pipe", env: classifierEnv });
+  const formatLabelBrief = JSON.parse(readFileSync(formatLabelBriefPath, "utf8"));
+  if (formatLabelBrief.format?.preset !== "square-1x1") {
+    fail(`format label square 1:1 mapped to ${formatLabelBrief.format?.preset}`);
+  }
+} finally {
+  removeTempJson(formatLabelBriefPath);
+}
+
+const audioAliasBriefPath = uniqueTempJson("remotion-ad-audio-alias");
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--format",
+    "square",
+    "--audio",
+    "sfx",
+    "--creative-route",
+    "product close-up",
+    "--preflight-mode",
+    "answered",
+    "--brief-out",
+    audioAliasBriefPath,
+  ], { stdio: "pipe", env: classifierEnv });
+  const audioAliasBrief = JSON.parse(readFileSync(audioAliasBriefPath, "utf8"));
+  if (audioAliasBrief.audioMode !== "sfx-only") {
+    fail(`audio alias sfx mapped to ${audioAliasBrief.audioMode}`);
+  }
+} finally {
+  removeTempJson(audioAliasBriefPath);
+}
+
+expectFailure(
+  "invalid classifier format",
+  process.execPath,
+  [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--format",
+    "poster",
+  ],
+  "Unsupported --format",
+  { env: classifierEnv }
+);
+expectFailure(
+  "invalid classifier audio",
+  process.execPath,
+  [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--audio",
+    "copyrighted",
+  ],
+  "Unsupported --audio",
+  { env: classifierEnv }
+);
+
+const projectDirBriefDir = mkdtempSync(join(tmpdir(), "remotion-ad-project-dir-brief-"));
+try {
+  execFileSync(process.execPath, [
+    join(root, "scripts", "classify-ad-source.mjs"),
+    "https://example.com/products/focus-lamp",
+    "--project-dir",
+    projectDirBriefDir,
+    "--preflight-mode",
+    "defaults",
+  ], { stdio: "pipe", env: classifierEnv });
+  const defaultBriefPath = join(projectDirBriefDir, "ad-brief.json");
+  try {
+    if (!statSync(defaultBriefPath).isFile()) {
+      fail("classifier must write ad-brief.json inside --project-dir by default");
+    }
+  } catch {
+    fail("classifier must write ad-brief.json inside --project-dir by default");
+  }
+} finally {
+  rmSync(projectDirBriefDir, { recursive: true, force: true });
 }
 
 if (process.argv.includes("--template-runtime")) {

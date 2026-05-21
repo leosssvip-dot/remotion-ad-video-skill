@@ -1,13 +1,13 @@
 ---
 name: remotion-ad-video
-description: Use when turning product links, app store listings, landing pages, or product briefs into advertising videos with Remotion scripts, storyboards, template props, render QA, and handoff assets.
+description: Use when turning product links, app store listings, landing pages, or product briefs into advertising videos with Remotion or Hyperframes projects, storyboards, render-engine props/variables, render QA, and handoff assets.
 ---
 
 # Remotion Ad Video
 
 ## Overview
 
-Use this skill to make performance-oriented ad videos with an AI agent plus Remotion. The agent owns the creative and production workflow; Remotion owns deterministic, reusable, parameterized rendering.
+Use this skill to make performance-oriented ad videos with an AI agent plus a deterministic code renderer. The agent owns the creative and production workflow. Remotion is the default renderer; Hyperframes is supported when the user asks for HTML-based video authoring or an existing Hyperframes project.
 
 ## When To Use
 
@@ -16,7 +16,7 @@ Use for:
 - Product link to 15s ad video by default, or 30s/45s only when the user asks for a longer format.
 - Google Play, App Store, SaaS, or landing page to product explainer ad.
 - Batch variants for TikTok, Reels, Shorts, Meta square, or YouTube landscape.
-- Turning a product brief into a script, storyboard, Remotion props, and render QA checklist.
+- Turning a product brief into a script, storyboard, Remotion props or Hyperframes variables, and render QA checklist.
 
 Do not use for:
 
@@ -34,6 +34,7 @@ Load `references/ad-intake.md` when source quality, claim safety, or asset right
 Load `references/ad-brief-contract.md` for every URL job before storyboard or code. Create or update `ad-brief.json` after source classification and keep preflight answers/defaults there.
 Load `references/asset-harvest.md` for URL-based jobs before writing the storyboard.
 Load `references/fast-test-workflow.md` for skill tests, first-pass iterations, or when the user cares about speed.
+Load `references/hyperframes-output.md` when the user asks for Hyperframes, the target repo already uses Hyperframes, open-source renderer licensing is a priority, or `ad-brief.json` has `renderEngine: "hyperframes"`.
 Load `references/preflight-questionnaire.md` for URL-only jobs before storyboard or code. Ask exactly two required preflight choices first: format and creative route. Only skip questions when the user explicitly asks for no questions, fastest possible defaults, or a benchmark run with inferred defaults. Ask optional follow-ups only after those choices, and only when they materially change the ad.
 Load `references/platform-presets.md` when the user needs to choose vertical, square, or landscape output.
 Load `references/industry-angle-library.md` when the product category is not obviously covered by games or social-feed patterns.
@@ -56,6 +57,7 @@ Required decisions:
 - One primary conversion goal.
 - Usable assets and rights status.
 - Remotion license suitability for the intended commercial use.
+- Render engine: resolve in this order: explicit user/caller choice, existing target project stack, then local renderer availability. If both Remotion and Hyperframes are available, ask which to use. If neither is available, recommend choosing one to install.
 
 Recorded defaults, not required user decisions:
 
@@ -63,7 +65,7 @@ Recorded defaults, not required user decisions:
 
 Minimum URL jobs must attempt to harvest favicon, touch icon, Open Graph image, visible logo or screenshots, and brand colors. Ecommerce product URLs must also attempt a product main image with `scripts/harvest-ecommerce-assets.mjs` before creative work starts; the linked item is the ad subject, and platform/store context stays secondary. Store usable public assets locally in the generated project `public/<brand>/` folder, create or update an asset manifest when practical, and reference assets with `staticFile()`.
 
-Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, passing `--interaction-language <current-user-language>` when known, and write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, language plan, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers, includes `preflight_answers_required`, or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset. Use `interactionPlan.choiceQuestions` for the first preflight step: ask only format and creative route first, in `interactionLanguage`. If the agent supports structured choice UI, present the choices there; otherwise use a text fallback with the same options. Audio defaults to audible synced SFX; ask about audio only when the user requests silent-safe, music, voiceover, or a platform-specific sound plan. Do not front-load the longer open-question list. Use `--preflight-mode defaults` only when the user explicitly approved skipping questions.
+Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, passing `--interaction-language <current-user-language>` when known, `--project-dir <target-project>` when working inside an existing project, and `--render-engine remotion|hyperframes` only when the user explicitly chose one. Otherwise let `--render-engine auto` detect the engine. Write its output to `ad-brief.json` when a project directory exists. The brief is the source of truth for source type, language plan, render engine, render-engine reason, preflight defaults or answers, format, audio mode, blockers, and asset requirements. If `ad-brief.json` has blockers, includes `preflight_answers_required`, `render_engine_choice_required`, `render_engine_install_required`, or `assetPlan.status` is `blocked`/`user_required`, stop and ask for the missing decision or asset. Use `interactionPlan.choiceQuestions` for the first creative preflight step: ask only format and creative route first, in `interactionLanguage`. If the agent supports structured choice UI, present the choices there; otherwise use a text fallback with the same options. Audio defaults to audible synced SFX; ask about audio only when the user requests silent-safe, music, voiceover, or a platform-specific sound plan. Do not front-load the longer open-question list. Use `--preflight-mode defaults` only when the user explicitly approved skipping questions.
 
 ### 2. Strategy
 
@@ -107,14 +109,17 @@ Load `references/audio-caption-system.md` when adding music, sound effects, voic
 
 ### 4. Template
 
-If no project exists, copy `assets/remotion-template/` into the target workspace. If a Remotion project exists, adapt its existing package manager, entrypoint, and component style.
+If no project exists and `renderEngine` is `remotion`, copy `assets/remotion-template/` into the target workspace. If a Remotion project exists, adapt its existing package manager, entrypoint, and component style.
 
-Template rules:
+If `renderEngine` is `hyperframes`, copy `assets/hyperframes-template/` or adapt the existing Hyperframes project. Hyperframes output is native HTML: `index.html` is the composition source, `variables.json` carries approved ad copy and asset paths, and QA uses `npx hyperframes lint`, `inspect`, `preview`, and `render`. Load `references/hyperframes-output.md` before implementation. For a new ad, author native Hyperframes HTML; do not use a Remotion-to-Hyperframes porting workflow unless the user explicitly asks to migrate existing Remotion source.
+
+Remotion template rules:
 
 - Use a Zod schema for input props.
 - Keep scenes data-driven rather than hard-coded.
 - Use Remotion `Composition`, `Sequence`, and `AbsoluteFill`.
 - Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
+- Map the chosen `format` / `platform` into the actual composition dimensions and scene layout. Square and landscape outputs must not reuse the vertical layout unchanged.
 - Prefer real product/app visuals. Use generated placeholders only when clearly marked.
 - Use harvested logo/icon/OG/screenshot assets when a URL was supplied and rights status is not blocked.
 - Add generated synced SFX by default through props. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
@@ -124,14 +129,24 @@ Template rules:
 
 For Remotion implementation details, use the Remotion best-practices skill when available, especially composition, parameter, assets, timing, transitions, audio, and subtitle rules.
 
+Hyperframes template rules:
+
+- Use `data-composition-id`, `data-start`, `data-duration`, `data-width`, and `data-height` on the root composition.
+- Use `data-start`, `data-duration`, and `data-track-index` on every clip.
+- Declare editable fields through `data-composition-variables` and pass values with `variables.json` / `--variables-file`.
+- Include `width`, `height`, and `layoutMode` in `variables.json` and write them back to the composition `data-width` / `data-height` before render.
+- Use `window.__hyperframes.getVariables()` for copy, CTA, colors, and local asset paths.
+- Register a paused GSAP timeline in `window.__timelines`.
+- Keep product/app visuals local and rights-reviewed. Do not rely on remote URLs in final output.
+
 ### 5. Render QA
 
 Load `references/render-qa-checklist.md` before handoff.
 
 Minimum checks:
 
-- Typecheck or build passes.
-- Still frame renders for hook, middle, and CTA sections. For tests and iteration, use the fast lab low-resolution stills before full MP4.
+- Remotion: typecheck/build passes and still frames render for hook, middle, and CTA sections. For tests and iteration, use the fast lab low-resolution stills before full MP4.
+- Hyperframes: `npx hyperframes lint` and `inspect` pass before preview/render.
 - Text does not overflow or overlap.
 - Visuals are present, not blank.
 - Hook, middle, and CTA stills show different visual states.
@@ -147,11 +162,11 @@ For skill tests, default to half-size draft video output and do not rerender ful
 Return:
 
 - Source summary with claim confidence.
-- `ad-brief.json` path or inline summary, including source type, `interactionLanguage`, `sourceLanguage`, `outputLanguage`, preflight answers/defaults, blockers, format, and audio mode.
+- `ad-brief.json` path or inline summary, including source type, `interactionLanguage`, `sourceLanguage`, `outputLanguage`, `renderEngine`, preflight answers/defaults, blockers, format, and audio mode.
 - Preflight assumptions or user answers, including size preset and creative route.
 - Chosen ad angle and target platform.
 - Script and storyboard.
-- Remotion props JSON.
+- Remotion props JSON or Hyperframes `variables.json`.
 - Files changed or template path.
 - Verification evidence.
 - Known rights, license, or asset gaps.

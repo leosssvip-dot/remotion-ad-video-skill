@@ -16,6 +16,7 @@ type SceneProps = {
   brandName: string;
   heroImagePath?: string;
   logoPath?: string;
+  platform: AdVideoProps["platform"];
   primaryColor: string;
   scene: AdVideoProps["scenes"][number];
 };
@@ -66,11 +67,42 @@ const Scene: React.FC<SceneProps> = ({
   brandName,
   heroImagePath,
   logoPath,
+  platform,
   primaryColor,
   scene
 }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const { fps, height, width } = useVideoConfig();
+  const isLandscape = platform.includes("landscape") || width > height;
+  const isSquare = platform.includes("square") || width === height;
+  const padding = isLandscape ? 56 : isSquare ? 60 : 72;
+  const headlineSize = isLandscape ? 64 : isSquare ? 70 : 84;
+  const bodySize = isLandscape ? 30 : isSquare ? 32 : 38;
+  const proofSize = isLandscape ? 25 : isSquare ? 27 : 30;
+  const brandSize = isLandscape ? 27 : isSquare ? 30 : 34;
+  const eyebrowSize = isLandscape ? 22 : isSquare ? 24 : 28;
+  const contentLayout: React.CSSProperties = isLandscape
+    ? {
+        gridTemplateColumns: "0.95fr 1.05fr",
+        gridTemplateRows: "1fr",
+        minHeight: Math.max(520, height - padding * 3)
+      }
+    : {
+        gridTemplateRows: "1fr auto",
+        minHeight: isSquare ? 650 : 980
+      };
+  const visualFrameStyle: React.CSSProperties = {
+    alignItems: "center",
+    border: `3px solid ${primaryColor}`,
+    borderRadius: 8,
+    display: "flex",
+    height: isLandscape ? Math.min(620, height - padding * 4) : "100%",
+    justifyContent: "center",
+    maxHeight: isSquare ? 470 : undefined,
+    minHeight: isLandscape ? 420 : isSquare ? 390 : 560,
+    overflow: "hidden",
+    width: "100%"
+  };
   const sceneFrames = Math.max(1, Math.round(scene.durationSecond * fps));
   const fadeOutStart = Math.max(10, sceneFrames - 16);
   const opacity = interpolate(frame, [0, 10, fadeOutStart, sceneFrames], [0, 1, 1, 0], {
@@ -93,7 +125,7 @@ const Scene: React.FC<SceneProps> = ({
           'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         justifyContent: "space-between",
         opacity,
-        padding: 72,
+        padding,
         transform: `translateY(${y}px)`
       }}
     >
@@ -110,10 +142,10 @@ const Scene: React.FC<SceneProps> = ({
               }}
             />
           ) : null}
-          <strong style={{ fontSize: 34 }}>{brandName}</strong>
+          <strong style={{ fontSize: brandSize }}>{brandName}</strong>
         </div>
         {scene.eyebrow ? (
-          <span style={{ color: primaryColor, fontSize: 28, fontWeight: 700 }}>
+          <span style={{ color: primaryColor, fontSize: eyebrowSize, fontWeight: 700 }}>
             {scene.eyebrow}
           </span>
         ) : null}
@@ -123,23 +155,11 @@ const Scene: React.FC<SceneProps> = ({
         style={{
           alignItems: "center",
           display: "grid",
-          gap: 48,
-          gridTemplateRows: "1fr auto",
-          minHeight: 980
+          gap: isLandscape ? 52 : 48,
+          ...contentLayout
         }}
       >
-        <div
-          style={{
-            alignItems: "center",
-            border: `3px solid ${primaryColor}`,
-            borderRadius: 8,
-            display: "flex",
-            height: "100%",
-            justifyContent: "center",
-            overflow: "hidden",
-            width: "100%"
-          }}
-        >
+        <div style={visualFrameStyle}>
           {visualAsset ? (
             <Img
               src={assetSrc(visualAsset)}
@@ -161,11 +181,11 @@ const Scene: React.FC<SceneProps> = ({
         </div>
 
         <div>
-          <h1 style={{ fontSize: 84, lineHeight: 1.02, margin: 0 }}>
+          <h1 style={{ fontSize: headlineSize, lineHeight: isLandscape ? 0.98 : 1.02, margin: 0 }}>
             {scene.headline}
           </h1>
           {scene.body ? (
-            <p style={{ fontSize: 38, lineHeight: 1.18, margin: "28px 0 0" }}>
+            <p style={{ fontSize: bodySize, lineHeight: 1.18, margin: "28px 0 0" }}>
               {scene.body}
             </p>
           ) : null}
@@ -173,7 +193,7 @@ const Scene: React.FC<SceneProps> = ({
             <p
               style={{
                 color: primaryColor,
-                fontSize: 30,
+                fontSize: proofSize,
                 fontWeight: 800,
                 margin: "24px 0 0"
               }}
@@ -189,7 +209,11 @@ const Scene: React.FC<SceneProps> = ({
 };
 
 export const AdVideo: React.FC<AdVideoProps> = (props) => {
-  const { fps } = useVideoConfig();
+  const { fps, height, width } = useVideoConfig();
+  const isLandscape = props.platform.includes("landscape") || width > height;
+  const isSquare = props.platform.includes("square") || width === height;
+  const footerInset = isLandscape ? 56 : isSquare ? 60 : 72;
+  const footerFontSize = isLandscape ? 18 : isSquare ? 19 : 20;
 
   return (
     <AbsoluteFill style={{ backgroundColor: props.backgroundColor }}>
@@ -206,6 +230,7 @@ export const AdVideo: React.FC<AdVideoProps> = (props) => {
             brandName={props.brandName}
             heroImagePath={props.heroImagePath}
             logoPath={props.logoPath}
+            platform={props.platform}
             primaryColor={props.primaryColor}
             scene={scene}
           />
@@ -217,10 +242,10 @@ export const AdVideo: React.FC<AdVideoProps> = (props) => {
           bottom: 36,
           color: "rgba(255,255,255,0.72)",
           fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-          fontSize: 20,
-          left: 72,
+          fontSize: footerFontSize,
+          left: footerInset,
           position: "absolute",
-          right: 72
+          right: footerInset
         }}
       >
         {props.offer ? `${props.offer} ` : ""}

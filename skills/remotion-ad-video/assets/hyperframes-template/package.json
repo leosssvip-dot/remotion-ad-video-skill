@@ -1,0 +1,17 @@
+{
+  "name": "hyperframes-ad-template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal Hyperframes HTML starter for the remotion-ad-video skill.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "npx hyperframes lint",
+    "inspect": "npx hyperframes inspect --samples 12",
+    "preview": "npx hyperframes preview",
+    "render": "npx hyperframes render --variables-file ./variables.json --quality draft --output renders/ad-draft.mp4",
+    "render:high": "npx hyperframes render --variables-file ./variables.json --quality high --output renders/ad-final.mp4"
+  }
+}

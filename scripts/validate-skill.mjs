@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { validateConcepts, DEFAULT_ARC } from "./validate-creative.mjs";
 
 const root = process.cwd();
 const skillDir = join(root, "skills", "remotion-ad-video");
@@ -9,8 +10,10 @@ const requiredFiles = [
   "SKILL.md",
   "agents/openai.yaml",
   "references/ad-brief-contract.md",
+  "references/ad-exemplars.md",
   "references/ad-intake.md",
   "references/ad-aesthetic-qa.md",
+  "references/concept-contract.md",
   "references/audio-caption-system.md",
   "references/asset-harvest.md",
   "references/creative-direction.md",
@@ -44,7 +47,9 @@ const requiredRootFiles = [
   "scripts/create-open-source-snapshot.mjs",
   "scripts/fast-ad-lab.mjs",
   "scripts/harvest-ecommerce-assets.mjs",
+  "scripts/validate-creative.mjs",
   "examples/synthetic-url-ad/ad-brief.json",
+  "examples/synthetic-url-ad/concepts.json",
   "examples/synthetic-url-ad/src/AdVideo.tsx"
 ];
 
@@ -151,6 +156,12 @@ for (const phrase of [
   "ad-brief.json",
   "classify-ad-source.mjs",
   "source-backed numeric proof",
+  "concepts.json",
+  "concept-contract",
+  "ad-exemplars",
+  "validate-creative.mjs",
+  "insight",
+  "distinctiveness",
 ]) {
   if (!skillMd.includes(phrase)) {
     fail(`SKILL.md missing core phrase: ${phrase}`);
@@ -311,7 +322,7 @@ for (const phrase of ["firstTwoSeconds", "adNotSlides", "categoryNative", "layou
 }
 
 const creativeDirection = read("references/creative-direction.md");
-for (const phrase of ["Layout Shock", "Numeric Proof Motion", "poster-scale type", "maximum two text groups", "one dominant visual", "Dynamic numeric counters", "Thumb-Stopping Layouts"]) {
+for (const phrase of ["Layout Shock", "Numeric Proof Motion", "poster-scale type", "maximum two text groups", "one dominant visual", "Dynamic numeric counters", "Thumb-Stopping Layouts", "Insight First", "Anti-Template Collapse", "forceDefaultReason"]) {
   if (!creativeDirection.includes(phrase)) {
     fail(`creative-direction.md missing phrase: ${phrase}`);
   }
@@ -504,6 +515,37 @@ if (templateAudioCategories.size < 5) {
 }
 if (!templateDefaultProps.scenes?.some((scene) => scene.metric?.to === 4.8)) {
   fail("template default props must include an animated metric example");
+}
+
+// Creative concept gate: keep the concept stage a checkable artifact, not advice.
+const conceptContract = read("references/concept-contract.md");
+for (const phrase of ["concepts.json", "validate-creative.mjs", "chosenId", "structure", "forceDefaultReason", "distinctiveness"]) {
+  if (!conceptContract.includes(phrase)) {
+    fail(`concept-contract.md missing phrase: ${phrase}`);
+  }
+}
+const adExemplars = read("references/ad-exemplars.md");
+for (const phrase of ["Cliche Ban List", "hook mechanic", "Cold-open"]) {
+  if (!adExemplars.includes(phrase)) {
+    fail(`ad-exemplars.md missing phrase: ${phrase}`);
+  }
+}
+
+// The golden synthetic concepts artifact must pass the gate, and a tampered copy
+// (chosen concept forced onto the stock arc) must be rejected.
+const syntheticConcepts = JSON.parse(readRoot("examples/synthetic-url-ad/concepts.json"));
+const goldenResult = validateConcepts(syntheticConcepts);
+if (goldenResult.errors.length) {
+  fail(`synthetic concepts.json must pass the creative gate: ${goldenResult.errors.join("; ")}`);
+}
+const tamperedConcepts = JSON.parse(JSON.stringify(syntheticConcepts));
+const tamperedChosen = tamperedConcepts.concepts.find((concept) => concept.id === tamperedConcepts.chosenId);
+if (tamperedChosen) {
+  tamperedChosen.structure = [...DEFAULT_ARC];
+  delete tamperedChosen.forceDefaultReason;
+}
+if (validateConcepts(tamperedConcepts).errors.length === 0) {
+  fail("creative gate must reject a chosen concept that defaults to the stock arc");
 }
 
 const syntheticDefaultProps = JSON.parse(readRoot("examples/synthetic-url-ad/src/default-props.json"));

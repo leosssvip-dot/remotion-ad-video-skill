@@ -8,8 +8,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "check": "node --check scripts/classify-ad-source.mjs && node --check scripts/create-open-source-snapshot.mjs && node --check scripts/fast-ad-lab.mjs && node --check scripts/harvest-ecommerce-assets.mjs && node --check scripts/validate-skill.mjs",
+    "check": "node --check scripts/classify-ad-source.mjs && node --check scripts/create-open-source-snapshot.mjs && node --check scripts/fast-ad-lab.mjs && node --check scripts/harvest-ecommerce-assets.mjs && node --check scripts/validate-creative.mjs && node --check scripts/validate-skill.mjs",
     "validate": "npm run check && node scripts/validate-skill.mjs --template-runtime",
+    "validate:creative": "node scripts/validate-creative.mjs examples/synthetic-url-ad/concepts.json",
     "snapshot": "node scripts/create-open-source-snapshot.mjs",
     "smoke:classifier": "node scripts/classify-ad-source.mjs \"https://example.com/products/focus-lamp\" --title \"Focus Lamp\" --brief-out /tmp/remotion-ad-video-skill-brief.json"
   },

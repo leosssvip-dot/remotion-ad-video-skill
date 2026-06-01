@@ -21,6 +21,7 @@ const allowlist = [
   "scripts/create-open-source-snapshot.mjs",
   "scripts/fast-ad-lab.mjs",
   "scripts/harvest-ecommerce-assets.mjs",
+  "scripts/validate-creative.mjs",
   "scripts/validate-skill.mjs",
   "skills/remotion-ad-video",
 ];

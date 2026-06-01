@@ -2,6 +2,8 @@
 
 Use this for commercial-quality ads, batch requests, or whenever one concept may be too narrow. Do not implement five full videos by default; first create concise concepts, score them, then build the strongest or user-selected variant.
 
+Record concepts in `concepts.json` per `references/concept-contract.md` and pass `node scripts/validate-creative.mjs <concepts.json>` before the storyboard. Pull mechanics from `references/ad-exemplars.md`.
+
 ## Default Variant Set
 
 Create 3-5 concept cards:
@@ -19,8 +21,10 @@ For games, replace weak concepts with gameplay-loop variants. For social/feed ap
 Each concept should include:
 
 - `angle`: one sentence.
+- `insight`: the one true customer tension or surprising fact the ad weaponizes.
 - `hookLine`: 3-8 words.
 - `firstFrame`: what is visible at frame 0-30.
+- `structure`: ordered scene blocks (>= 3) for this concept's arc, not the stock five scenes.
 - `motionIdea`: the main moving system.
 - `proof`: source-backed or user-supplied evidence.
 - `cta`: one action.
@@ -36,8 +40,9 @@ Score each concept 1-5:
 - `conversion`: is there a clear reason to click/install/buy?
 - `productionFeasibility`: can it be built with available assets in the current turn?
 - `claimSafety`: are claims source-backed and low risk?
+- `distinctiveness`: is the structure and hook mechanic distinct from the stock template and from the other concepts?
 
-Prefer the highest total score. Break ties by choosing the concept with stronger product proof and lower claim risk.
+Prefer the highest total score. Break ties by choosing the concept with stronger product proof and lower claim risk. The chosen concept must score `attention`, `distinctiveness`, and `claimSafety` at least 3; if nothing clears that bar, generate fresh concepts instead of shipping the weakest passable one.
 
 ## Required Pushback
 

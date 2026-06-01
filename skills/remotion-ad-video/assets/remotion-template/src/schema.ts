@@ -9,10 +9,22 @@ export const SceneMetricSchema = z.object({
   decimals: z.number().int().min(0).max(2).optional()
 });
 
+// Scene blocks select a distinct layout + motion treatment so the chosen
+// concept's structure actually renders differently. "standard" is the fallback.
+export const SceneBlockSchema = z.enum([
+  "standard",
+  "cold-open-payoff",
+  "split-before-after",
+  "device-frame",
+  "stat-slam",
+  "cta-card"
+]);
+
 export const SceneSchema = z.object({
   id: z.string(),
   startSecond: z.number().min(0),
   durationSecond: z.number().positive(),
+  block: SceneBlockSchema.optional(),
   eyebrow: z.string().optional(),
   headline: z.string(),
   body: z.string().optional(),

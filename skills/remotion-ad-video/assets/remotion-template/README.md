@@ -16,6 +16,7 @@ Edit `src/default-props.json` or pass another props file to Remotion.
 ## Notes
 
 - The template is intentionally simple and data-driven.
+- Each scene picks a layout via its `block` field: `cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `cta-card`, or `standard` (the fallback). Set varied blocks so the ad's structure renders as distinct layouts and motion instead of one repeated card. Add a new block component in `src/AdVideo.tsx` and to `SceneBlockSchema` in `src/schema.ts` when a concept needs one.
 - Replace placeholder copy and image URLs with approved assets.
 - For harvested assets copied under `public/<brand>/`, use `logoPath`, `heroImagePath`, or per-scene `imagePath` values such as `brand/product.jpg`.
 - The default props include a richer generated SFX palette so draft renders are audible by default without bundling external music.

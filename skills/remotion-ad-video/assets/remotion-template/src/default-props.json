@@ -273,6 +273,7 @@
   "scenes": [
     {
       "id": "hook",
+      "block": "cold-open-payoff",
       "startSecond": 0,
       "durationSecond": 2,
       "eyebrow": "New setup",
@@ -282,6 +283,7 @@
     },
     {
       "id": "pain",
+      "block": "split-before-after",
       "startSecond": 2,
       "durationSecond": 4,
       "eyebrow": "Problem",
@@ -291,6 +293,7 @@
     },
     {
       "id": "demo",
+      "block": "device-frame",
       "startSecond": 6,
       "durationSecond": 5,
       "eyebrow": "Demo",
@@ -300,6 +303,7 @@
     },
     {
       "id": "proof",
+      "block": "stat-slam",
       "startSecond": 11,
       "durationSecond": 2,
       "eyebrow": "Why it wins",
@@ -317,6 +321,7 @@
     },
     {
       "id": "cta",
+      "block": "cta-card",
       "startSecond": 13,
       "durationSecond": 2,
       "eyebrow": "Today",

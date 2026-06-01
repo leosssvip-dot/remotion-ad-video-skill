@@ -84,6 +84,22 @@ Use it to plan an arc that fits the chosen idea: for example
 actual Remotion scenes during storyboard. If two different concepts produce the
 same arc, at least one of them is not a real alternative.
 
+## Template Blocks
+
+The Remotion template renders each scene by its `block` field, so the chosen
+`structure` becomes distinct layouts and motion instead of one repeated card. Map
+your structure onto these built-in blocks (or add a new block component):
+
+- `cold-open-payoff` - full-bleed visual first; headline slams in late.
+- `split-before-after` - kinetic split; dim "before" half vs colored "after" half.
+- `device-frame` - content inside a phone frame; feed/app-native feel.
+- `stat-slam` - a source-backed number dominates the frame (uses scene `metric`).
+- `cta-card` - centered conversion poster with a pulsing CTA button.
+- `standard` - balanced framed-visual + copy layout; the fallback, not the default.
+
+Set each storyboard scene's `block` accordingly. Do not route every scene through
+`standard` - that is the template-collapse the gate exists to prevent.
+
 ## Handoff
 
 - Keep `concepts.json` next to `ad-brief.json` in the project directory.

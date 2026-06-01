@@ -69,7 +69,7 @@ Run `scripts/classify-ad-source.mjs` for URL jobs before creative work, passing 
 
 ### 2. Strategy
 
-Pick one primary ad angle before writing scenes. Load `references/creative-direction.md` before implementation to avoid static slide-deck output.
+Pick one primary ad angle before writing scenes. Load `references/creative-direction.md` before implementation to avoid static slide-deck output. Start from an `insight` (the one true customer tension or surprising approved fact), not from the template.
 
 - Pain-point hook: problem first, product solves it.
 - Demo proof: show the product or app doing the work.
@@ -91,7 +91,13 @@ For simple games, especially app-store listings, the visual idea should usually 
 
 For short-video, creator, or social-feed apps, the visual idea should usually be a feed-native simulation: a phone frame that scrolls or swaps content, creator imagery, UI rails, sound/effect stickers, LIVE or Shop chips when source-supported, and quick cuts that feel like the platform itself rather than a product explainer.
 
-For commercial-quality requests, generate at least three distinct concepts before implementation unless the user asked for one exact direction. Score them with `references/variant-system.md` and implement the strongest concept or the user-selected concept.
+For commercial-quality requests, or whenever the user asks for "more creative" output, write `concepts.json` before implementation unless the user asked for one exact direction. Generate at least three distinct concepts (distinct hook mechanic and `structure`, not just color/copy), score them with `references/variant-system.md`, and follow `references/concept-contract.md`. Pull mechanics from `references/ad-exemplars.md` so the bar is great ads, not the stock template. Then gate it:
+
+```bash
+node scripts/validate-creative.mjs <project-dir>/concepts.json
+```
+
+Do not start the storyboard until the gate passes. The chosen concept must score `attention`, `distinctiveness`, and `claimSafety` at least 3, and its `structure` must not silently default to the stock hook/pain/demo/proof/cta arc unless it records a `forceDefaultReason`. Implement the strongest or user-selected concept, and make the storyboard reflect its `structure`, `firstFrame`, and `motionIdea`.
 
 ### 3. Storyboard
 

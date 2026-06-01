@@ -4,6 +4,34 @@
 
 The first job of an ad is attention. Do not make a slide deck with fades. Build a thumb-stopping hook, a visual metaphor, and a conversion path.
 
+Run divergent concepts before committing. Write `concepts.json` per
+`references/concept-contract.md`, score them, and pass `validate-creative.mjs`
+before the storyboard. Pull mechanics from `references/ad-exemplars.md` so the bar
+is great ads, not the stock template.
+
+## Insight First
+
+Creativity comes from a sharp insight, not from filling a template. Before hooks
+and layouts, name the one true tension the ad weaponizes: a vivid customer pain, a
+surprising approved fact, a distinctive mechanism, or a cultural/format moment.
+Every concept's `insight` field should make a person say "that's true." Generic
+feature lists produce generic ads; a specific insight produces a specific ad.
+
+## Anti-Template Collapse
+
+The stock hook/pain/demo/proof/cta arc is a fallback, not a default. If every ad
+you ship reuses it, the output is template-filler, not creative.
+
+- Let the chosen concept choose the structure. Plan an arc of scene blocks that
+  fits the idea (cold-open payoff, snap-compare, POV ritual, stat slam, gameplay
+  spectacle, feed-native), not the same five scenes every time.
+- Two concepts that produce the same arc are not real alternatives. Make them
+  diverge in hook mechanic and structure, not just color and copy.
+- Do not reuse the default arc unless the concept records a `forceDefaultReason`.
+- Vary the visual system per concept: layout shock, motion language, pacing, and
+  type treatment should follow the idea and the brand's harvested assets, not a
+  fixed look.
+
 ## Hook Patterns
 
 - Chat becomes action: message bubbles transform into completed tasks.

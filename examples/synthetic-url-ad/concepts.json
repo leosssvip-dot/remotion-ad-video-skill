@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0",
+  "sourceUrl": "https://example.com/products/focus-lamp",
+  "productName": "Focus Lamp",
+  "defaultArc": ["hook", "pain", "demo", "proof", "cta"],
+  "concepts": [
+    {
+      "id": "glare-kill",
+      "label": "Glare Kill",
+      "angle": "Open on the exact moment screen glare disappears, then reveal the lamp that did it.",
+      "insight": "Desk workers blame their eyes and their monitor, not their lighting, so they never fix the real cause.",
+      "hookLine": "Watch the glare vanish",
+      "firstFrame": "Tight crop of a glaring monitor; a wipe of clean light sweeps the reflection off the screen.",
+      "structure": ["cold-open-payoff", "cause-reveal", "angle-dim-focus", "cta"],
+      "motionIdea": "A light wipe travels across a screenshot, erasing the glare layer to expose crisp text underneath.",
+      "proof": "synthetic demo claim: glare-reducing desk light",
+      "cta": "Shop the demo",
+      "risk": "Keep the glare-reduction claim framed as a demo, not a measured result.",
+      "scores": {
+        "attention": 5,
+        "nativeFit": 4,
+        "productProof": 4,
+        "conversion": 4,
+        "productionFeasibility": 4,
+        "claimSafety": 5,
+        "distinctiveness": 4
+      }
+    },
+    {
+      "id": "same-desk",
+      "label": "Same Desk, Two Lights",
+      "angle": "Hold one desk in frame and snap between harsh light and the lamp's tuned light.",
+      "insight": "People accept a bad desk setup because they have never seen the same desk look calm.",
+      "hookLine": "Same desk, zero glare",
+      "firstFrame": "A split desk: left half harsh and reflective, right half evenly lit, divider sitting on screen.",
+      "structure": ["split-before-after", "snap-compare", "angle-dim-focus", "cta"],
+      "motionIdea": "A vertical divider slides across the same desk shot, swapping harsh light for tuned light on a beat.",
+      "proof": "synthetic demo claim: glare-reducing desk light",
+      "cta": "Shop the demo",
+      "risk": "Before/after must use the same staged desk so the comparison is honest.",
+      "scores": {
+        "attention": 4,
+        "nativeFit": 4,
+        "productProof": 5,
+        "conversion": 4,
+        "productionFeasibility": 5,
+        "claimSafety": 5,
+        "distinctiveness": 3
+      }
+    },
+    {
+      "id": "one-tap-ritual",
+      "label": "One-Tap Ritual",
+      "angle": "POV of a hand starting a focus session with a single tap that tunes the whole desk.",
+      "insight": "Starting deep work feels like friction; a one-tap light cue makes the start feel effortless.",
+      "hookLine": "One tap, perfect light",
+      "firstFrame": "Top-down POV of a hand reaching for the lamp dial as the desk sits in flat, dull light.",
+      "structure": ["pov-hands", "one-tap-tune", "focus-settle", "cta"],
+      "motionIdea": "On the tap, light blooms from the lamp and the desk eases from cold flat tone into a warm focused pool.",
+      "proof": "synthetic demo claim: glare-reducing desk light",
+      "cta": "Shop the demo",
+      "risk": "Keep it product-forward; the lamp must stay visible inside the POV.",
+      "scores": {
+        "attention": 4,
+        "nativeFit": 5,
+        "productProof": 3,
+        "conversion": 3,
+        "productionFeasibility": 4,
+        "claimSafety": 5,
+        "distinctiveness": 4
+      }
+    }
+  ],
+  "chosenId": "glare-kill",
+  "selectionNote": "Glare Kill has the strongest first-2-seconds interrupt and a distinct cold-open-payoff arc; Same Desk is the runner-up and its split-compare beat can graft into the cause-reveal."
+}

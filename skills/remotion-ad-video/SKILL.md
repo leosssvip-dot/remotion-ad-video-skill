@@ -125,6 +125,7 @@ Remotion template rules:
 
 - Use a Zod schema for input props.
 - Keep scenes data-driven rather than hard-coded.
+- Set each scene's `block` to a scene-block kind (`cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `cta-card`, or `standard`) so the chosen concept's `structure` renders as distinct layouts and motion, not one repeated card. Map the concept's structure scene blocks onto these template blocks; add a new block component instead of forcing every scene through `standard`.
 - Use Remotion `Composition`, `Sequence`, and `AbsoluteFill`.
 - Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
 - Map the chosen `format` / `platform` into the actual composition dimensions and scene layout. Square and landscape outputs must not reuse the vertical layout unchanged.

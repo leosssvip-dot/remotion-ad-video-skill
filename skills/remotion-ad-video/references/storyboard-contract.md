@@ -8,6 +8,7 @@ Each scene should include:
 - `startSecond`: Number.
 - `durationSecond`: Number.
 - `goal`: Hook, pain, demo, proof, offer, or CTA.
+- `block`: Remotion layout for the scene - `cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `cta-card`, or `standard`. Map the chosen concept's `structure` onto these; vary blocks so the ad is not one repeated layout. See `concept-contract.md`.
 - `visual`: Product image, screenshot, generated visual, screen recording, icon, text-only, or placeholder.
 - `eyebrow`: Optional short context label.
 - `headline`: Main on-screen line.

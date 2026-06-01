@@ -14,12 +14,14 @@ import type { AdVideoProps } from "./schema";
 type SceneProps = {
   backgroundColor: string;
   brandName: string;
+  cta: string;
   heroImagePath?: string;
   logoPath?: string;
   platform: AdVideoProps["platform"];
   primaryColor: string;
   scene: AdVideoProps["scenes"][number];
 };
+type SceneBlockKind = NonNullable<AdVideoProps["scenes"][number]["block"]>;
 
 type AudioSpec = NonNullable<AdVideoProps["audio"]>;
 type AudioTrack = AudioSpec["tracks"][number];
@@ -265,7 +267,8 @@ const AnimatedMetric: React.FC<{
   metric: SceneMetric;
   primaryColor: string;
   sceneFrames: number;
-}> = ({ isLandscape, isSquare, metric, primaryColor, sceneFrames }) => {
+  variant?: "card" | "poster";
+}> = ({ isLandscape, isSquare, metric, primaryColor, sceneFrames, variant = "card" }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const from = metric.from ?? 0;
@@ -275,6 +278,37 @@ const AnimatedMetric: React.FC<{
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
+  const valueText = `${metric.prefix ?? ""}${formatMetricValue(value, decimals)}${metric.suffix ?? ""}`;
+
+  if (variant === "poster") {
+    const posterScale = interpolate(frame, [0, countFrames], [0.7, 1], {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp"
+    });
+    const posterSize = isLandscape ? 200 : isSquare ? 240 : 300;
+    const posterLabel = isLandscape ? 28 : isSquare ? 32 : 38;
+    return (
+      <div style={{ alignItems: "center", display: "flex", flexDirection: "column", gap: 8, textAlign: "center" }}>
+        <strong
+          style={{
+            color: primaryColor,
+            fontSize: posterSize,
+            letterSpacing: -4,
+            lineHeight: 0.82,
+            transform: `scale(${posterScale})`
+          }}
+        >
+          {valueText}
+        </strong>
+        {metric.label ? (
+          <span style={{ fontSize: posterLabel, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2 }}>
+            {metric.label}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
   const scale = interpolate(frame, [0, countFrames], [0.84, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
@@ -305,11 +339,7 @@ const AnimatedMetric: React.FC<{
         width: "fit-content"
       }}
     >
-      <strong style={{ fontSize: metricSize, lineHeight: 0.86 }}>
-        {metric.prefix ?? ""}
-        {formatMetricValue(value, decimals)}
-        {metric.suffix ?? ""}
-      </strong>
+      <strong style={{ fontSize: metricSize, lineHeight: 0.86 }}>{valueText}</strong>
       {metric.label ? (
         <span style={{ fontSize: labelSize, fontWeight: 900, lineHeight: 1.1 }}>
           {metric.label}
@@ -319,7 +349,107 @@ const AnimatedMetric: React.FC<{
   );
 };
 
-const Scene: React.FC<SceneProps> = ({
+const FONT_STACK =
+  'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+const visualAssetFor = (scene: SceneProps["scene"], heroImagePath?: string) =>
+  scene.imagePath ?? scene.imageUrl ?? (scene.id === "hook" ? heroImagePath : undefined);
+
+const useSceneLayout = (platform: SceneProps["platform"], scene: SceneProps["scene"]) => {
+  const frame = useCurrentFrame();
+  const { fps, height, width } = useVideoConfig();
+  const isLandscape = platform.includes("landscape") || width > height;
+  const isSquare = platform.includes("square") || width === height;
+  const sceneFrames = Math.max(1, Math.round(scene.durationSecond * fps));
+  const fadeOutStart = Math.max(10, sceneFrames - 16);
+  const opacity = interpolate(frame, [0, 10, fadeOutStart, sceneFrames], [0, 1, 1, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp"
+  });
+  return {
+    frame,
+    fps,
+    height,
+    width,
+    isLandscape,
+    isSquare,
+    sceneFrames,
+    opacity,
+    padding: isLandscape ? 56 : isSquare ? 60 : 72,
+    headlineSize: isLandscape ? 64 : isSquare ? 70 : 84,
+    bodySize: isLandscape ? 30 : isSquare ? 32 : 38,
+    proofSize: isLandscape ? 25 : isSquare ? 27 : 30,
+    brandSize: isLandscape ? 27 : isSquare ? 30 : 34,
+    eyebrowSize: isLandscape ? 22 : isSquare ? 24 : 28
+  };
+};
+
+const BrandHeader: React.FC<{
+  brandName: string;
+  logoPath?: string;
+  eyebrow?: string;
+  primaryColor: string;
+  brandSize: number;
+  eyebrowSize: number;
+}> = ({ brandName, logoPath, eyebrow, primaryColor, brandSize, eyebrowSize }) => (
+  <div
+    style={{
+      alignItems: "center",
+      display: "flex",
+      gap: 24,
+      justifyContent: "space-between",
+      position: "relative",
+      zIndex: 2
+    }}
+  >
+    <div style={{ alignItems: "center", display: "flex", gap: 16, minWidth: 0 }}>
+      {logoPath ? (
+        <Img
+          src={assetSrc(logoPath)}
+          style={{ borderRadius: 8, height: 46, objectFit: "contain", width: 46 }}
+        />
+      ) : null}
+      <strong style={{ fontSize: brandSize }}>{brandName}</strong>
+    </div>
+    {eyebrow ? (
+      <span style={{ color: primaryColor, fontSize: eyebrowSize, fontWeight: 700 }}>{eyebrow}</span>
+    ) : null}
+  </div>
+);
+
+const VisualFill: React.FC<{
+  asset?: string;
+  fallback: string;
+  primaryColor: string;
+  cover?: boolean;
+  fontSize?: number;
+}> = ({ asset, fallback, primaryColor, cover = true, fontSize = 44 }) =>
+  asset ? (
+    <Img
+      src={assetSrc(asset)}
+      style={{ height: "100%", objectFit: cover ? "cover" : "contain", width: "100%" }}
+    />
+  ) : (
+    <span
+      style={{
+        alignItems: "center",
+        color: primaryColor,
+        display: "flex",
+        fontSize,
+        fontWeight: 800,
+        height: "100%",
+        justifyContent: "center",
+        padding: 36,
+        textAlign: "center",
+        width: "100%"
+      }}
+    >
+      {fallback}
+    </span>
+  );
+
+// standard: the original balanced layout (brand header, framed visual, copy column).
+const StandardBlock: React.FC<SceneProps> = ({
   backgroundColor,
   brandName,
   heroImagePath,
@@ -328,80 +458,41 @@ const Scene: React.FC<SceneProps> = ({
   primaryColor,
   scene
 }) => {
-  const frame = useCurrentFrame();
-  const { fps, height, width } = useVideoConfig();
-  const isLandscape = platform.includes("landscape") || width > height;
-  const isSquare = platform.includes("square") || width === height;
-  const padding = isLandscape ? 56 : isSquare ? 60 : 72;
-  const headlineSize = isLandscape ? 64 : isSquare ? 70 : 84;
-  const bodySize = isLandscape ? 30 : isSquare ? 32 : 38;
-  const proofSize = isLandscape ? 25 : isSquare ? 27 : 30;
-  const brandSize = isLandscape ? 27 : isSquare ? 30 : 34;
-  const eyebrowSize = isLandscape ? 22 : isSquare ? 24 : 28;
-  const sceneFrames = Math.max(1, Math.round(scene.durationSecond * fps));
-  const fadeOutStart = Math.max(10, sceneFrames - 16);
-  const opacity = interpolate(frame, [0, 10, fadeOutStart, sceneFrames], [0, 1, 1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const y = interpolate(frame, [0, 18], [36, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const visualScale = interpolate(frame, [0, 18, sceneFrames], [0.88, 1.02, 1.07], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const visualRotate = interpolate(frame, [0, 18], [isLandscape ? -2 : -3, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const headlineScale = interpolate(frame, [0, 14, sceneFrames], [1.08, 1, 1.02], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const contentLayout: React.CSSProperties = isLandscape
-    ? {
-        gridTemplateColumns: "0.95fr 1.05fr",
-        gridTemplateRows: "1fr",
-        minHeight: Math.max(520, height - padding * 3)
-      }
-    : {
-        gridTemplateRows: "1fr auto",
-        minHeight: isSquare ? 650 : 980
-      };
+  const L = useSceneLayout(platform, scene);
+  const visualAsset = visualAssetFor(scene, heroImagePath);
+  const y = interpolate(L.frame, [0, 18], [36, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const visualScale = interpolate(L.frame, [0, 18, L.sceneFrames], [0.88, 1.02, 1.07], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const visualRotate = interpolate(L.frame, [0, 18], [L.isLandscape ? -2 : -3, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const headlineScale = interpolate(L.frame, [0, 14, L.sceneFrames], [1.08, 1, 1.02], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const accentShift = interpolate(L.frame, [0, L.sceneFrames], [-120, 120], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const contentLayout: React.CSSProperties = L.isLandscape
+    ? { gridTemplateColumns: "0.95fr 1.05fr", gridTemplateRows: "1fr", minHeight: Math.max(520, L.height - L.padding * 3) }
+    : { gridTemplateRows: "1fr auto", minHeight: L.isSquare ? 650 : 980 };
   const visualFrameStyle: React.CSSProperties = {
     alignItems: "center",
     border: `3px solid ${primaryColor}`,
     borderRadius: 8,
     display: "flex",
-    height: isLandscape ? Math.min(620, height - padding * 4) : "100%",
+    height: L.isLandscape ? Math.min(620, L.height - L.padding * 4) : "100%",
     justifyContent: "center",
-    maxHeight: isSquare ? 470 : undefined,
-    minHeight: isLandscape ? 420 : isSquare ? 390 : 560,
+    maxHeight: L.isSquare ? 470 : undefined,
+    minHeight: L.isLandscape ? 420 : L.isSquare ? 390 : 560,
     overflow: "hidden",
     boxShadow: `0 28px 96px rgba(0,0,0,0.36), 0 0 0 12px ${primaryColor}22`,
     transform: `rotate(${visualRotate}deg) scale(${visualScale})`,
     width: "100%"
   };
-  const accentShift = interpolate(frame, [0, sceneFrames], [-120, 120], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const visualAsset =
-    scene.imagePath ?? scene.imageUrl ?? (scene.id === "hook" ? heroImagePath : undefined);
 
   return (
     <AbsoluteFill
       style={{
         backgroundColor,
         color: "#fff",
-        fontFamily:
-          'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        fontFamily: FONT_STACK,
         justifyContent: "space-between",
         overflow: "hidden",
-        opacity,
-        padding,
+        opacity: L.opacity,
+        padding: L.padding,
         transform: `translateY(${y}px)`
       }}
     >
@@ -416,125 +507,173 @@ const Scene: React.FC<SceneProps> = ({
           zIndex: 0
         }}
       />
-      <div
-        aria-hidden="true"
-        style={{
-          background: primaryColor,
-          height: isLandscape ? 150 : 210,
-          left: -80,
-          opacity: 0.18,
-          position: "absolute",
-          right: -80,
-          top: isLandscape ? 160 : 270,
-          transform: "rotate(-8deg)",
-          zIndex: 0
-        }}
-      />
-      <div
-        style={{
-          alignItems: "center",
-          display: "flex",
-          gap: 24,
-          justifyContent: "space-between",
-          position: "relative",
-          zIndex: 1
-        }}
-      >
-        <div style={{ alignItems: "center", display: "flex", gap: 16, minWidth: 0 }}>
-          {logoPath ? (
-            <Img
-              src={assetSrc(logoPath)}
-              style={{
-                borderRadius: 8,
-                height: 46,
-                objectFit: "contain",
-                width: 46
-              }}
-            />
-          ) : null}
-          <strong style={{ fontSize: brandSize }}>{brandName}</strong>
-        </div>
-        {scene.eyebrow ? (
-          <span style={{ color: primaryColor, fontSize: eyebrowSize, fontWeight: 700 }}>
-            {scene.eyebrow}
-          </span>
-        ) : null}
-      </div>
-
-      <div
-        style={{
-          alignItems: "center",
-          display: "grid",
-          gap: isLandscape ? 52 : 48,
-          position: "relative",
-          zIndex: 1,
-          ...contentLayout
-        }}
-      >
+      <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
+      <div style={{ alignItems: "center", display: "grid", gap: L.isLandscape ? 52 : 48, position: "relative", zIndex: 1, ...contentLayout }}>
         <div style={visualFrameStyle}>
-          {visualAsset ? (
-            <Img
-              src={assetSrc(visualAsset)}
-              style={{ height: "100%", objectFit: "cover", width: "100%" }}
-            />
-          ) : (
-            <span
-              style={{
-                color: primaryColor,
-                fontSize: 44,
-                fontWeight: 800,
-                padding: 48,
-                textAlign: "center"
-              }}
-            >
-              {scene.visual}
-            </span>
-          )}
+          <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} />
         </div>
-
         <div>
-          <h1
-            style={{
-              fontSize: headlineSize,
-              lineHeight: isLandscape ? 0.98 : 1.02,
-              margin: 0,
-              transform: `scale(${headlineScale})`,
-              transformOrigin: "left center"
-            }}
-          >
-            {scene.headline}
-          </h1>
-          {scene.body ? (
-            <p style={{ fontSize: bodySize, lineHeight: 1.18, margin: "28px 0 0" }}>
-              {scene.body}
-            </p>
-          ) : null}
-          {scene.proof ? (
-            <p
-              style={{
-                color: primaryColor,
-                fontSize: proofSize,
-                fontWeight: 800,
-                margin: "24px 0 0"
-              }}
-            >
-              {scene.proof}
-            </p>
-          ) : null}
-          {scene.metric ? (
-            <AnimatedMetric
-              isLandscape={isLandscape}
-              isSquare={isSquare}
-              metric={scene.metric}
-              primaryColor={primaryColor}
-              sceneFrames={sceneFrames}
-            />
-          ) : null}
+          <h1 style={{ fontSize: L.headlineSize, lineHeight: L.isLandscape ? 0.98 : 1.02, margin: 0, transform: `scale(${headlineScale})`, transformOrigin: "left center" }}>{scene.headline}</h1>
+          {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "28px 0 0" }}>{scene.body}</p> : null}
+          {scene.proof ? <p style={{ color: primaryColor, fontSize: L.proofSize, fontWeight: 800, margin: "24px 0 0" }}>{scene.proof}</p> : null}
+          {scene.metric ? <AnimatedMetric isLandscape={L.isLandscape} isSquare={L.isSquare} metric={scene.metric} primaryColor={primaryColor} sceneFrames={L.sceneFrames} /> : null}
         </div>
       </div>
       <div aria-hidden="true" style={{ height: 48, position: "relative", zIndex: 1 }} />
     </AbsoluteFill>
   );
+};
+
+// cold-open-payoff: full-bleed visual first; headline slams in late.
+const ColdOpenBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene);
+  const visualAsset = visualAssetFor(scene, heroImagePath);
+  const zoom = interpolate(L.frame, [0, L.sceneFrames], [1.12, 1.24], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const textStart = Math.round(L.sceneFrames * 0.34);
+  const textIn = interpolate(L.frame, [textStart, textStart + 12], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const textY = interpolate(L.frame, [textStart, textStart + 12], [60, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return (
+    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: FONT_STACK, overflow: "hidden", opacity: L.opacity }}>
+      <AbsoluteFill style={{ transform: `scale(${zoom})` }}>
+        <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} fontSize={84} />
+      </AbsoluteFill>
+      <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0) 46%, rgba(0,0,0,0.84) 100%)" }} />
+      <div style={{ left: L.padding, position: "absolute", right: L.padding, top: L.padding, zIndex: 2 }}>
+        <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
+      </div>
+      <div style={{ bottom: L.padding + 20, left: L.padding, opacity: textIn, position: "absolute", right: L.padding, transform: `translateY(${textY}px)`, zIndex: 2 }}>
+        <h1 style={{ fontSize: L.headlineSize + 8, lineHeight: 1.0, margin: 0, textShadow: "0 6px 30px rgba(0,0,0,0.5)" }}>{scene.headline}</h1>
+        {scene.proof ? <p style={{ color: primaryColor, fontSize: L.proofSize, fontWeight: 800, margin: "16px 0 0" }}>{scene.proof}</p> : null}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// split-before-after: kinetic split; dim "before" half vs colored "after" half.
+const SplitBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene);
+  const visualAsset = visualAssetFor(scene, heroImagePath);
+  const reveal = interpolate(L.frame, [6, Math.max(14, Math.round(L.sceneFrames * 0.5))], [0.5, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const beforeLabel = "Before";
+  const afterLabel = "After";
+  const panelBase: React.CSSProperties = { alignItems: "center", display: "flex", flex: 1, justifyContent: "center", overflow: "hidden", position: "relative" };
+  return (
+    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: FONT_STACK, overflow: "hidden", opacity: L.opacity }}>
+      <div style={{ display: "flex", flexDirection: L.isLandscape ? "row" : "column", height: "100%", width: "100%" }}>
+        <div style={{ ...panelBase, filter: "grayscale(1) brightness(0.55)" }}>
+          <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor="#888" fontSize={56} />
+          <span style={{ background: "rgba(0,0,0,0.55)", borderRadius: 6, fontSize: L.eyebrowSize, fontWeight: 800, left: 24, letterSpacing: 1, padding: "8px 14px", position: "absolute", textTransform: "uppercase", top: 108 }}>{beforeLabel}</span>
+        </div>
+        <div style={{ ...panelBase, transform: `scale(${reveal})` }}>
+          <div aria-hidden="true" style={{ background: primaryColor, inset: 0, opacity: 0.16, position: "absolute" }} />
+          <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} fontSize={56} />
+          <span style={{ background: primaryColor, borderRadius: 6, bottom: 76, color: "#111", fontSize: L.eyebrowSize, fontWeight: 900, letterSpacing: 1, padding: "8px 14px", position: "absolute", right: 24, textTransform: "uppercase" }}>{afterLabel}</span>
+        </div>
+      </div>
+      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+        <h1 style={{ background: "rgba(0,0,0,0.5)", borderRadius: 10, fontSize: L.headlineSize, lineHeight: 1.0, margin: 0, maxWidth: "82%", padding: "18px 26px", textAlign: "center" }}>{scene.headline}</h1>
+      </AbsoluteFill>
+      <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 3 }}>
+        <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// device-frame: content shown inside a phone frame; feed/app-native feel.
+const DeviceFrameBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene);
+  const visualAsset = visualAssetFor(scene, heroImagePath);
+  const float = interpolate(L.frame % 90, [0, 45, 90], [0, -14, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const rise = interpolate(L.frame, [0, 16], [40, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const deviceH = L.isLandscape ? Math.min(560, L.height - 200) : Math.min(L.height * 0.62, 1080);
+  const deviceW = deviceH * 0.48;
+  return (
+    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: L.isLandscape ? "row" : "column", fontFamily: FONT_STACK, gap: L.isLandscape ? 64 : 36, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding }}>
+      <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 40%, ${primaryColor}33, transparent 60%)`, inset: 0, position: "absolute", zIndex: 0 }} />
+      <div style={{ background: "#0b0b0b", borderRadius: 44, boxShadow: `0 40px 120px rgba(0,0,0,0.5), 0 0 0 10px ${primaryColor}22`, height: deviceH, padding: 14, position: "relative", transform: `translateY(${float + rise}px)`, width: deviceW, zIndex: 1 }}>
+        <div aria-hidden="true" style={{ background: "#0b0b0b", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, height: 26, left: "50%", position: "absolute", top: 14, transform: "translateX(-50%)", width: deviceW * 0.42, zIndex: 2 }} />
+        <div style={{ background: "#151515", borderRadius: 32, height: "100%", overflow: "hidden", width: "100%" }}>
+          <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} fontSize={40} />
+        </div>
+      </div>
+      <div style={{ maxWidth: L.isLandscape ? "42%" : "90%", position: "relative", textAlign: L.isLandscape ? "left" : "center", zIndex: 1 }}>
+        <h1 style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0 }}>{scene.headline}</h1>
+        {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "20px 0 0", opacity: 0.92 }}>{scene.body}</p> : null}
+      </div>
+      <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 2 }}>
+        <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// stat-slam: a source-backed number dominates the frame.
+const StatSlamBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, logoPath, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene);
+  const headlineIn = interpolate(L.frame, [0, 14], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return (
+    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: "column", fontFamily: FONT_STACK, gap: 24, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding }}>
+      <div aria-hidden="true" style={{ background: `repeating-linear-gradient(135deg, transparent 0 60px, ${primaryColor}14 60px 78px)`, inset: 0, position: "absolute", zIndex: 0 }} />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {scene.eyebrow ? <p style={{ color: primaryColor, fontSize: L.eyebrowSize, fontWeight: 800, letterSpacing: 2, margin: 0, textAlign: "center", textTransform: "uppercase" }}>{scene.eyebrow}</p> : null}
+        {scene.metric ? (
+          <AnimatedMetric isLandscape={L.isLandscape} isSquare={L.isSquare} metric={scene.metric} primaryColor={primaryColor} sceneFrames={L.sceneFrames} variant="poster" />
+        ) : (
+          <strong style={{ color: primaryColor, display: "block", fontSize: L.isLandscape ? 160 : 240, letterSpacing: -4, lineHeight: 0.82, textAlign: "center" }}>{scene.visual}</strong>
+        )}
+      </div>
+      <h1 style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0, maxWidth: "84%", opacity: headlineIn, position: "relative", textAlign: "center", zIndex: 1 }}>{scene.headline}</h1>
+      {scene.proof ? <p style={{ fontSize: L.proofSize, fontWeight: 700, margin: 0, opacity: 0.86, position: "relative", textAlign: "center", zIndex: 1 }}>{scene.proof}</p> : null}
+      <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 2 }}>
+        <BrandHeader brandName={brandName} logoPath={logoPath} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// cta-card: centered conversion poster with a pulsing CTA button.
+const CtaCardBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, cta, logoPath, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene);
+  const pop = interpolate(L.frame, [0, 16], [0.8, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const pulse = 1 + 0.04 * Math.sin((L.frame / L.fps) * Math.PI * 2 * 1.4);
+  return (
+    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: "column", fontFamily: FONT_STACK, gap: 30, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding, textAlign: "center" }}>
+      <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 50%, ${primaryColor}3a, transparent 62%)`, inset: 0, position: "absolute", zIndex: 0 }} />
+      <div style={{ alignItems: "center", display: "flex", flexDirection: "column", gap: 18, position: "relative", transform: `scale(${pop})`, zIndex: 1 }}>
+        {logoPath ? <Img src={assetSrc(logoPath)} style={{ borderRadius: 12, height: 72, objectFit: "contain", width: 72 }} /> : null}
+        <h1 style={{ fontSize: L.headlineSize + 6, lineHeight: 1.0, margin: 0, maxWidth: "90%" }}>{scene.headline}</h1>
+        {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.2, margin: 0, opacity: 0.9 }}>{scene.body}</p> : null}
+      </div>
+      <div style={{ background: primaryColor, borderRadius: 999, boxShadow: `0 24px 70px ${primaryColor}66`, color: "#111", fontSize: L.brandSize + 2, fontWeight: 900, padding: "22px 52px", position: "relative", transform: `scale(${pulse})`, zIndex: 1 }}>{cta}</div>
+      {scene.proof ? <p style={{ fontSize: L.proofSize, fontWeight: 700, margin: 0, opacity: 0.82, position: "relative", zIndex: 1 }}>{scene.proof}</p> : null}
+      <strong style={{ bottom: L.padding, fontSize: L.brandSize, position: "absolute", zIndex: 1 }}>{brandName}</strong>
+    </AbsoluteFill>
+  );
+};
+
+// Route each scene to its block; "standard" is the safe fallback.
+const Scene: React.FC<SceneProps> = (props) => {
+  const block: SceneBlockKind = props.scene.block ?? "standard";
+  switch (block) {
+    case "cold-open-payoff":
+      return <ColdOpenBlock {...props} />;
+    case "split-before-after":
+      return <SplitBlock {...props} />;
+    case "device-frame":
+      return <DeviceFrameBlock {...props} />;
+    case "stat-slam":
+      return <StatSlamBlock {...props} />;
+    case "cta-card":
+      return <CtaCardBlock {...props} />;
+    case "standard":
+      return <StandardBlock {...props} />;
+    default: {
+      const exhaustive: never = block;
+      void exhaustive;
+      return <StandardBlock {...props} />;
+    }
+  }
 };
 
 export const AdVideo: React.FC<AdVideoProps> = (props) => {
@@ -557,6 +696,7 @@ export const AdVideo: React.FC<AdVideoProps> = (props) => {
           <Scene
             backgroundColor={props.backgroundColor}
             brandName={props.brandName}
+            cta={props.cta}
             heroImagePath={props.heroImagePath}
             logoPath={props.logoPath}
             platform={props.platform}

@@ -547,6 +547,20 @@ if (!templateDefaultProps.scenes?.some((scene) => scene.metric?.to === 4.8)) {
   fail("template default props must include an animated metric example");
 }
 
+// Scene-block system: the default ad must exercise distinct blocks so the
+// chosen concept's structure renders differently, not one repeated layout.
+const templateSceneBlocks = new Set();
+for (const scene of templateDefaultProps.scenes ?? []) {
+  if (!scene.block) {
+    fail(`template default scene ${scene.id} must declare a block to showcase the scene-block system`);
+  } else {
+    templateSceneBlocks.add(scene.block);
+  }
+}
+if (templateSceneBlocks.size < 4) {
+  fail("template default props must demonstrate at least 4 distinct scene blocks");
+}
+
 // Creative concept gate: keep the concept stage a checkable artifact, not advice.
 const conceptContract = read("references/concept-contract.md");
 for (const phrase of ["concepts.json", "validate-creative.mjs", "chosenId", "structure", "forceDefaultReason", "distinctiveness"]) {
@@ -971,6 +985,12 @@ for (const phrase of [
   "kind",
   "preset",
   "category",
+  "SceneBlockSchema",
+  "cold-open-payoff",
+  "split-before-after",
+  "device-frame",
+  "stat-slam",
+  "cta-card",
 ]) {
   if (!sourceFiles.includes(phrase)) {
     fail(`template source missing phrase: ${phrase}`);

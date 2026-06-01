@@ -162,6 +162,12 @@ const sampleForPreset = (preset: AudioPreset, time: number, index: number, durat
       return (hit(72, time, 8) * 0.5 + sweepTone(420, 980, time, duration) * 0.18 + noise(index) * Math.exp(-time * 22) * 0.16) * envelope;
     case "sfx-soft-chime":
       return (tone(523, time) * Math.exp(-time * 2.8) + tone(784, time) * Math.exp(-time * 3.3) * 0.5 + tone(1046, time) * Math.exp(-time * 4.2) * 0.24) * envelope * 0.32;
+    default: {
+      // Exhaustiveness guard: adding a preset to AudioPresetSchema without a
+      // case here fails to type-check, instead of silently emitting NaN audio.
+      const exhaustive: never = preset;
+      throw new Error(`Unhandled audio preset: ${String(exhaustive)}`);
+    }
   }
 };
 

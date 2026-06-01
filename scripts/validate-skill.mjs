@@ -463,6 +463,14 @@ const requiredAudioPresets = new Set([
   "sfx-bass-drop"
 ]);
 const templateFps = 30;
+// Scene start frames must match how AdVideo.tsx lays out scenes:
+//   <Sequence from={Math.round(scene.startSecond * fps)} ...>
+const templateSceneStartFrames = new Map();
+for (const scene of templateDefaultProps.scenes ?? []) {
+  if (typeof scene.startSecond === "number") {
+    templateSceneStartFrames.set(scene.id, Math.round(scene.startSecond * templateFps));
+  }
+}
 for (const track of templateDefaultProps.audio.tracks) {
   if (track.rightsStatus !== "generated") {
     fail(`template default audio track ${track.id} must use generated rightsStatus`);
@@ -484,6 +492,28 @@ for (const track of templateDefaultProps.audio.tracks) {
   }
   if (!track.sync?.sceneId || !track.sync?.anchor) {
     fail(`template default audio track ${track.id} must include sync.sceneId and sync.anchor`);
+  }
+  // Frame-lock invariant: the absolute startFrame must agree with the
+  // scene-relative sync metadata, so cues stay pinned to their visible event
+  // even if scene durations are retimed later.
+  if (track.sync?.sceneId && Number.isInteger(track.startFrame)) {
+    const sceneStart = templateSceneStartFrames.get(track.sync.sceneId);
+    if (sceneStart === undefined) {
+      fail(`template default audio track ${track.id} references unknown sync.sceneId "${track.sync.sceneId}"`);
+    } else {
+      const offsetFrames = track.sync.offsetFrames ?? 0;
+      const expectedStart = sceneStart + offsetFrames;
+      if (track.startFrame !== expectedStart) {
+        fail(`template default audio track ${track.id} startFrame ${track.startFrame} must equal scene "${track.sync.sceneId}" start ${sceneStart} + sync.offsetFrames ${offsetFrames} (= ${expectedStart})`);
+      }
+      const sceneDurationSecond = (templateDefaultProps.scenes ?? []).find((scene) => scene.id === track.sync.sceneId)?.durationSecond;
+      if (typeof sceneDurationSecond === "number") {
+        const sceneEnd = sceneStart + Math.round(sceneDurationSecond * templateFps);
+        if (track.startFrame < sceneStart || track.startFrame >= sceneEnd) {
+          fail(`template default audio track ${track.id} startFrame ${track.startFrame} falls outside scene "${track.sync.sceneId}" [${sceneStart}, ${sceneEnd})`);
+        }
+      }
+    }
   }
   if (!track.category) {
     fail(`template default audio track ${track.id} must include an audio category`);

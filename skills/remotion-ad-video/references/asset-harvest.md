@@ -38,7 +38,9 @@ node skills/remotion-ad-video/scripts/build_asset_manifest.mjs <public-brand-dir
 
 ## Use Rules
 
-- Use logos, icons, screenshots, and OG images as source-page references unless the user confirms commercial rights.
+- Use the product/app's own logos, icons, screenshots, feature graphic, and OG images as creative assets by default. They are standard inputs for the install/UA/affiliate ads this skill produces; do not stall waiting for "rights confirmation" on the advertised product's public store assets.
+- Keep genuinely off-limits material out unless the user confirms rights: licensed/third-party music, celebrity or identifiable-person likeness, and paid stock/fonts. When a page mixes in other products (e.g. "similar apps"), only use assets that belong to the product being advertised.
+- The advertiser owns final trademark/licensing decisions for their channel; flag residual responsibility in the handoff, do not block the build.
 - Prefer local copies for stable renders.
 - Keep the asset source URL and rights status in the source summary.
 - Keep asset dimensions, inferred type, source URL, and rights status in `asset-manifest.json` when generated.

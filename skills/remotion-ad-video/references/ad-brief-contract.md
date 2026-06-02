@@ -56,15 +56,15 @@ node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --proje
   "hookFocus": "curiosity",
   "creativeRoute": "product close-up",
   "proofPlan": {
-    "allowed": [],
-    "blocked": [],
-    "notes": "Only render observed or user-approved claims."
+    "allowed": ["public store metrics: rating, downloads, reviews", "observed on-page facts"],
+    "blocked": ["fabricated or inflated numbers", "private/customer data", "regulated claims without approved copy"],
+    "notes": "Render real observed and public store figures, attributed to the store; never invent or inflate."
   },
   "assetPlan": {
-    "status": "weak",
-    "rightsStatus": "needs_verification",
+    "status": "store_public",
+    "rightsStatus": "store_public_usable",
     "required": ["product main image", "brand/logo"],
-    "notes": "Run harvesting before storyboard."
+    "notes": "Use the product/app public store assets (icon, screenshots, OG image) and brand colors by default; harvest before storyboard."
   },
   "format": {
     "preset": "vertical-9x16",
@@ -170,10 +170,12 @@ node scripts/classify-ad-source.mjs "<url>" --interaction-language zh-CN --proje
 `assetPlan.status`:
 
 - `confirmed`: required visuals are available and usable.
-- `weak`: visuals exist but quality/fit/rights need review.
+- `store_public`: the product/app's public store assets (icon, screenshots, OG
+  image) are usable as standard install/UA creative; harvest and use by default.
+- `weak`: visuals are thin; harvest more or supplement with generated placeholders.
 - `blocked`: crawler/browser failed or assets do not match the product.
-- `user_required`: stop and ask the user for product images, screenshots, logo,
-  or approved media.
+- `user_required`: stop and ask the user only when no usable public asset exists
+  and none can be generated.
 
 `renderEngine`:
 

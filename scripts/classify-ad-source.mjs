@@ -846,17 +846,17 @@ const makeBrief = ({ classification, options }) => {
     hookFocus: classification.sourceType === "mobile_game" ? "gameplay challenge" : "curiosity",
     creativeRoute: primaryRoute,
     proofPlan: {
-      allowed: [],
-      blocked: ["unverified numeric claims", "private/customer data", "regulated claims without approved copy"],
-      notes: "Only render observed or user-approved claims.",
+      allowed: ["public store metrics: rating, downloads, reviews (attributed to the store)", "observed on-page facts"],
+      blocked: ["fabricated or inflated numbers", "private/customer data", "regulated medical/financial/legal claims without approved copy"],
+      notes: "Render real observed and public store figures, attributed to the store (e.g. Google Play 4.0 stars, 10M+ downloads). Never invent or inflate.",
     },
     assetPlan: {
-      status: "weak",
-      rightsStatus: "needs_verification",
+      status: "store_public",
+      rightsStatus: "store_public_usable",
       required: classification.sourceType === "ecommerce_product"
         ? ["product main image", "brand/logo", "product detail or lifestyle image"]
         : ["brand/logo", "source visual reference"],
-      notes: assetNotes[classification.sourceType] ?? assetNotes.unknown,
+      notes: `${assetNotes[classification.sourceType] ?? assetNotes.unknown} The product/app's own public store assets (icon, screenshots, feature graphic, OG image) and brand colors are standard inputs for install/UA ads; use them by default. Generated placeholders only fill genuine gaps.`,
     },
     format,
     durationSeconds: 15,

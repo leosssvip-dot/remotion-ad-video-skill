@@ -20,9 +20,16 @@ Use for:
 
 Do not use for:
 
-- Unlicensed reuse of third-party images, reviews, logos, music, voices, or screenshots.
 - Long-form editorial videos where ad conversion is not the goal.
-- Claims that need legal, medical, financial, or regulated proof unless the user supplies approved copy.
+- Genuinely off-limits assets: licensed/third-party music, celebrity or identifiable-person likeness, or paid stock/fonts you do not have rights to.
+- Regulated medical, financial, legal, or earnings claims unless the user supplies approved copy.
+
+Asset and claim policy (default to pragmatic, not restrictive):
+
+- This skill makes ad creative for advertisers running paid campaigns (performance/UA/affiliate/agency), not the product's internal staff. Treat the product or app's own public assets as standard creative inputs: store icon, screenshots, feature graphic, Open Graph image, logo, and brand colors. Harvest and use them by default. Do not stall the job waiting for "rights confirmation" on public store assets.
+- Public store metrics — rating, downloads, review count — are usable. Use the real numbers, attributed to the store (e.g. "Google Play 4.0★, 10M+ downloads"). Never fabricate or inflate a number.
+- The advertiser owns final trademark, comparative-claim, and licensing decisions for their channel. Flag any residual responsibility in the handoff; do not gate the build on it.
+- Generated placeholders are a fallback for genuine gaps (e.g. you cannot reliably isolate the right screenshots), not the default. Prefer real harvested assets.
 
 ## Core Workflow
 
@@ -79,7 +86,7 @@ Pick one primary ad angle before writing scenes. Load `references/creative-direc
 - Gameplay spectacle: imitate the high-energy core loop for simple games instead of explaining features.
 - Feed-native spectacle: imitate fast swipe, creator clips, live/shop overlays, comment/like rails, and sound-reactive cuts for social or short-video apps.
 
-Every claim must be tagged as `observed`, `user_supplied`, `inferred`, or `blocked`. Do not render `blocked` claims.
+Tag claims as `observed` (on-page facts plus public store metrics like rating, downloads, and review count), `user_supplied`, `inferred`, or `blocked`. Render `observed` and `user_supplied` freely — including real public store numbers attributed to the store. Do not render `inferred` or `blocked` numbers, and never fabricate or inflate a figure.
 
 Every real commercial sample needs a thumb-stopping visual idea, not just copy. Examples: chat bubbles becoming completed tasks, before/after workflow collapse, a product screenshot exploding into features, or a terminal command triggering visible automation.
 
@@ -129,8 +136,8 @@ Remotion template rules:
 - Use Remotion `Composition`, `Sequence`, and `AbsoluteFill`.
 - Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
 - Map the chosen `format` / `platform` into the actual composition dimensions and scene layout. Square and landscape outputs must not reuse the vertical layout unchanged.
-- Prefer real product/app visuals. Use generated placeholders only when clearly marked.
-- Use harvested logo/icon/OG/screenshot assets when a URL was supplied and rights status is not blocked.
+- Prefer the harvested real product/app/store assets (icon, screenshots, feature graphic, OG image, brand colors). Use generated placeholders only to fill genuine gaps, clearly marked.
+- Use the app/product's public store assets by default when a URL was supplied; they are standard inputs for install/UA ads. Store them under `public/<brand>/` and reference with `staticFile()`.
 - Support animated metric/counter props for ratings, discounts, prices, savings, review counts, and game/app scores when those numbers are source-backed.
 - Add generated synced SFX by default through props. Use a varied generated SFX palette with frame-locked `startFrame`, category, scene/anchor sync metadata, and visible-event cue descriptions, not one repeated click. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
 - Support `music-sfx` with a generated, licensed, or user-supplied music bed plus picture-locked SFX when the user requests music. Keep normal URL jobs on default `sfx-only`.
@@ -190,7 +197,8 @@ Return:
 - Shipping a PPT-like sequence of text cards with fades.
 - Ignoring available logo, favicon, OG image, screenshots, or brand colors from the source URL.
 - Treating a game listing like a SaaS explainer instead of showing high-energy play.
-- Rendering product claims inferred from marketing copy as facts.
-- Using remote assets without confirming commercial rights.
+- Rendering inferred or fabricated numbers as facts, or inflating real ones.
+- Over-blocking: defaulting to bland generated placeholders or vague copy when the source's real public store assets (icon, screenshots) and public ratings/downloads were available to use.
+- Referencing remote URLs in the final render instead of localizing assets under `public/<brand>/`.
 - Overloading the screen with text that works in chat but not in video.
 - Ignoring Remotion commercial license requirements.

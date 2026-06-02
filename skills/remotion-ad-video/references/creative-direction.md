@@ -32,6 +32,42 @@ you ship reuses it, the output is template-filler, not creative.
   type treatment should follow the idea and the brand's harvested assets, not a
   fixed look.
 
+## Bold By Default — Exaggeration & Spectacle
+
+A tasteful, reasonable, presentation-safe ad loses the scroll. The default
+emotional register for this skill is loud, dramatized, and a little too much.
+"Would a brand manager call this restrained?" should be a *no*. Push every idea
+one notch past comfortable before you build it.
+
+What "exaggerate" means here:
+
+- Dramatize the *feeling*, not the facts. Blow up the pain to absurd scale, make
+  the relief euphoric, make the speed look impossible, make the transformation
+  total. Every numeric and factual claim stays honest and source-backed — the
+  exaggeration lives in the visual and emotional register, never in the numbers.
+- Spectacle moves: surreal scale (a phone the size of a building, a single
+  feature filling the sky), impossible physics (gravity flips, time freezes,
+  the UI shatters into a thousand shards), world-bending (the product warps the
+  room around it), and maximal kinetic energy (whip pans, snap zooms, hits on
+  every beat).
+- Hyperbolic before/after: the "before" world is a comic disaster, the "after"
+  snaps to perfect on a single beat. Lean into the contrast hard.
+- One outrageous idea, executed at full volume. Bold is not busy — a single
+  surreal mechanic carried through the whole spot beats five timid flourishes.
+  If you can describe the ad without a "wait, what?" moment, it is not bold yet.
+
+Anti-tameness checklist — revise before storyboard if any is true:
+
+- The boldest description of the ad is still "clean," "modern," or "sleek."
+- A competitor could run the same spot by swapping the logo.
+- The hook is a statement, not a spectacle, surprise, or pattern break.
+- Nothing on screen is dramatically oversized, distorted, or physically impossible.
+- The energy is even throughout instead of building to a peak.
+
+The creative gate enforces this: the chosen concept must score `boldness` >= 4
+(plus `attention` >= 4 and `distinctiveness` >= 4). A merely-acceptable idea
+does not pass. See `references/ad-exemplars.md` for spectacle mechanics to reach for.
+
 ## Hook Patterns
 
 - Chat becomes action: message bubbles transform into completed tasks.
@@ -103,3 +139,5 @@ Before handoff, ask:
 - Does the CTA feel like an action, not a footer note?
 - Does the motion feel native to the product category, not just animated presentation slides?
 - Does the layout feel bold enough for a paid ad rather than a product explainer?
+- Is there at least one "wait, what?" spectacle moment — surreal scale, impossible physics, or a dramatized payoff — rather than a tasteful, restrained execution?
+- Does the voiceover carry energy and dynamics, or does it read like a flat description?

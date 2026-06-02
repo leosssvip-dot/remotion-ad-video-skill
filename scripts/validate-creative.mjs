@@ -22,8 +22,20 @@ export const SCORE_DIMENSIONS = [
   "conversion",
   "productionFeasibility",
   "claimSafety",
-  "distinctiveness"
+  "distinctiveness",
+  "boldness"
 ];
+
+// Bold-by-default ship gate. A shipped ad has to stop the scroll, stand apart
+// from the stock template, and be dramatized hard - a "3 is fine" concept is
+// template-filler, not an ad. claimSafety stays at >=3: honesty is a floor, not
+// a creative lever, and boldness is never an excuse to inflate a claim.
+export const CHOSEN_MINIMUMS = {
+  attention: 4,
+  distinctiveness: 4,
+  boldness: 4,
+  claimSafety: 3
+};
 
 // Tired ad-copy openers that signal template-filler instead of an idea.
 export const CLICHE_PATTERNS = [
@@ -79,7 +91,7 @@ export function validateConcepts(data, opts = {}) {
   const warnings = [];
   const minConcepts = opts.minConcepts ?? 3;
   const maxConcepts = opts.maxConcepts ?? 6;
-  const minTotal = opts.minTotal ?? 24;
+  const minTotal = opts.minTotal ?? 28;
 
   if (!data || typeof data !== "object") {
     return { errors: ["concepts artifact must be a JSON object"], warnings };
@@ -188,10 +200,10 @@ export function validateConcepts(data, opts = {}) {
   }
 
   const scores = chosen.scores ?? {};
-  for (const dimension of ["attention", "distinctiveness", "claimSafety"]) {
+  for (const [dimension, minimum] of Object.entries(CHOSEN_MINIMUMS)) {
     const value = scores[dimension];
-    if (Number.isInteger(value) && value < 3) {
-      errors.push(`chosen concept "${chosen.id}" scores ${dimension}=${value} (<3); pick or revise a stronger concept`);
+    if (Number.isInteger(value) && value < minimum) {
+      errors.push(`chosen concept "${chosen.id}" scores ${dimension}=${value} (<${minimum}); pick or revise a bolder concept`);
     }
   }
   const total = SCORE_DIMENSIONS.reduce(

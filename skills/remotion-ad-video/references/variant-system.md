@@ -41,8 +41,9 @@ Score each concept 1-5:
 - `productionFeasibility`: can it be built with available assets in the current turn?
 - `claimSafety`: are claims source-backed and low risk?
 - `distinctiveness`: is the structure and hook mechanic distinct from the stock template and from the other concepts?
+- `boldness`: how exaggerated, dramatized, and visually loud is it? A tasteful, restrained, presentation-safe idea scores low here on purpose. Boldness rates the creative register, never the truth of a claim.
 
-Prefer the highest total score. Break ties by choosing the concept with stronger product proof and lower claim risk. The chosen concept must score `attention`, `distinctiveness`, and `claimSafety` at least 3; if nothing clears that bar, generate fresh concepts instead of shipping the weakest passable one.
+Prefer the highest total score. Break ties by choosing the concept with stronger product proof and lower claim risk. The chosen concept must score `attention`, `distinctiveness`, and `boldness` at least 4, with `claimSafety` at least 3; if nothing clears that bar, generate bolder concepts instead of shipping the weakest passable one.
 
 ## Required Pushback
 

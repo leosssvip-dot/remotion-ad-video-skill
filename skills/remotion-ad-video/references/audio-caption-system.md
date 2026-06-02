@@ -8,10 +8,19 @@ Prefer three separate layers:
 
 - `musicBed`: beat or loop that defines cut timing.
 - `sfx`: whoosh, pop, snap, coin, click, glitch, riser, impact, or UI sound.
-- `voiceover`: optional short narration for clarity or offer.
+- `voiceover`: scripted narration that drives the hook, benefit, and spoken CTA.
 
-Do not use copyrighted music, voices, or celebrity likenesses unless the user supplies rights-cleared assets.
-Default URL ads should use `sfx-only` with short generated interaction sounds unless the user selects `silent-safe`. Audio is a default implementation detail, not a required preflight or QA gate.
+Do not use copyrighted music, voices, or celebrity likenesses unless the user supplies rights-cleared assets. A generated TTS voice is allowed: mark it `rightsStatus: generated`.
+
+## Audio Posture By Job Type
+
+The soundscape scales with the ambition of the job, not a single global default:
+
+- Quick URL jobs, fast tests, and first-pass iterations: `sfx-only` with short generated interaction sounds (or `silent-safe` if the user asks). Keep it cheap and fast.
+- Commercial-quality requests, batch variants, or any "make it more creative / bolder" ask: default to a full soundscape — `music-sfx` plus a scripted `voiceover` — not bare `sfx-only`. A bold ad with no voice and a single repeated click sounds thin. Plan the music bed, dense SFX, and voiceover together.
+- Always honor an explicit user audio choice over these defaults.
+
+Audio is a default implementation detail, not a required preflight or QA gate. Do not interrogate the user about audio; pick the posture from the job type and proceed.
 
 ## Music Bed Decision
 
@@ -20,6 +29,55 @@ Default URL ads should use `sfx-only` with short generated interaction sounds un
 - A music bed must be generated, licensed, or user-supplied. Never imply commercial reuse of platform music or trending songs from the source page.
 - When using generated music, prefer a short loopable bed with a stable BPM so cuts and SFX can land on beat.
 - When using user-supplied or licensed music, record source, license status, and allowed usage in the asset manifest or handoff.
+
+## Voiceover Scriptcraft
+
+When the job uses voiceover, treat it as a performance, not a flat readout of the
+on-screen text. A rich voiceover is what makes an ad feel alive.
+
+- Write a `voiceover` script with explicit beats, not one run-on sentence. A 15s
+  spot usually has 3-5 spoken beats: a spoken hook, one or two benefit/proof
+  beats, and a landed CTA. Give each beat its own line.
+- The spoken hook should NOT just read the on-screen headline. Let voice and text
+  play off each other — voice asks, text answers; voice teases, text reveals.
+- Vary the delivery across beats. Annotate each line with a short `delivery` note:
+  energy (whisper -> shout), pace (slow burn -> rapid-fire), and tone (deadpan,
+  hyped, conspiratorial, urgent, warm). Flat, even narration is the failure mode.
+- Use punchy fragments and concrete verbs over full grammatical sentences.
+  "Glare? Gone. One tap." beats "This lamp will reduce the glare on your screen."
+- Build to a peak. The energy should rise into the CTA so the spoken close lands
+  the action ("Tap to try it." / "Get it free."), not trail off.
+- Keep it tight: roughly 30-40 spoken words for 15s so the voice has room to
+  breathe and hit beats; never wall-to-wall talk. Leave gaps for SFX and music
+  to punch through.
+- Match `outputLanguage` from `ad-brief.json`. Write the voiceover in the video's
+  language, and caption it exactly if captions are on.
+- A generated TTS voice is fine (`rightsStatus: generated`). Pick a voice persona
+  that fits the brand energy and note it in the track. Never imitate a real,
+  identifiable, or celebrity voice without cleared rights.
+- Each `voiceover` track maps to its beat with `sync.sceneId` / `sync.anchor` and
+  `startFrame` like any other cue, so lines land on the picture.
+
+Voiceover beat example:
+
+```json
+{
+  "kind": "voiceover",
+  "rightsStatus": "generated",
+  "persona": "hyped, fast, confident",
+  "lines": [
+    { "text": "Still squinting at your screen?", "delivery": "conspiratorial, slow", "sync": { "sceneId": "hook", "anchor": "scene-start" } },
+    { "text": "One tap. Glare gone.", "delivery": "snap, punchy", "sync": { "sceneId": "demo", "anchor": "visual-lock" } },
+    { "text": "Your desk, finally calm.", "delivery": "warm, settling", "sync": { "sceneId": "benefit", "anchor": "headline-enter" } },
+    { "text": "Tap to try it free.", "delivery": "rising, urgent CTA", "sync": { "sceneId": "cta", "anchor": "cta-land" } }
+  ]
+}
+```
+
+The `lines` array above is the voiceover *script*. In the Remotion template each
+spoken beat renders as its own audio track carrying the generated clip via `src`
+or `preset` plus its `startFrame`/`sync`; the template audio schema strips unknown
+fields, so do not expect a raw `lines` array in props to produce sound.
 
 ## Sync Discipline
 
@@ -78,6 +136,7 @@ Pick sounds by visual event and audio category. A 15s ad should usually use at l
 - Each SFX track should include an `event` that names the visible trigger.
 - Each final SFX track should include exact `startFrame`; include `durationFrames` for clipped hits and `sync.sceneId` / `sync.anchor` for reviewable cue timing.
 - Each audio track must include `rightsStatus`: `user_supplied`, `licensed`, `generated`, `public_reference`, or `needs_verification`.
+- A `voiceover` track may carry multiple `lines`, each with its own `text`, `delivery` note, and `sync`, or be split into one track per spoken beat. Either way, every spoken beat needs picture-locked `sync`. Record a `persona` for the voice. A generated TTS voiceover uses `rightsStatus: generated`.
 - For silent-safe drafts, set `audio.enabled` to `false` and keep on-screen copy readable without sound.
 
 ## Timing
@@ -85,7 +144,7 @@ Pick sounds by visual event and audio category. A 15s ad should usually use at l
 - Align scene cuts, sticker pops, score bursts, and CTA pulses to beat moments.
 - In 15s ads, use audio events roughly every 0.5-1.5 seconds.
 - Reserve the biggest impact sound for the hook payoff or CTA.
-- Keep voiceover under 35 spoken words for 15s.
+- Keep voiceover to roughly 30-40 spoken words for 15s across 3-5 beats; leave breathing gaps so SFX and music land. See `Voiceover Scriptcraft`.
 
 ## Captions
 

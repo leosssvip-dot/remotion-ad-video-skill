@@ -23,7 +23,8 @@
         "conversion": 4,
         "productionFeasibility": 4,
         "claimSafety": 5,
-        "distinctiveness": 4
+        "distinctiveness": 4,
+        "boldness": 4
       }
     },
     {
@@ -45,7 +46,8 @@
         "conversion": 4,
         "productionFeasibility": 5,
         "claimSafety": 5,
-        "distinctiveness": 3
+        "distinctiveness": 3,
+        "boldness": 3
       }
     },
     {
@@ -67,7 +69,8 @@
         "conversion": 3,
         "productionFeasibility": 4,
         "claimSafety": 5,
-        "distinctiveness": 4
+        "distinctiveness": 4,
+        "boldness": 4
       }
     }
   ],

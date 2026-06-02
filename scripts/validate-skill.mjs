@@ -162,6 +162,9 @@ for (const phrase of [
   "validate-creative.mjs",
   "insight",
   "distinctiveness",
+  "boldness",
+  "spectacle",
+  "full soundscape",
 ]) {
   if (!skillMd.includes(phrase)) {
     fail(`SKILL.md missing core phrase: ${phrase}`);
@@ -315,14 +318,14 @@ for (const phrase of ["Default Variant Set", "Hook Shock", "Scoring", "claimSafe
 }
 
 const aestheticQa = read("references/ad-aesthetic-qa.md");
-for (const phrase of ["firstTwoSeconds", "adNotSlides", "categoryNative", "layoutShock", "textDensity", "numericMotion", "poster-scale", "Revision Moves"]) {
+for (const phrase of ["firstTwoSeconds", "adNotSlides", "categoryNative", "layoutShock", "textDensity", "numericMotion", "poster-scale", "Revision Moves", "boldness", "voiceoverEnergy", "spectacle"]) {
   if (!aestheticQa.includes(phrase)) {
     fail(`ad-aesthetic-qa.md missing phrase: ${phrase}`);
   }
 }
 
 const creativeDirection = read("references/creative-direction.md");
-for (const phrase of ["Layout Shock", "Numeric Proof Motion", "poster-scale type", "maximum two text groups", "one dominant visual", "Dynamic numeric counters", "Thumb-Stopping Layouts", "Insight First", "Anti-Template Collapse", "forceDefaultReason"]) {
+for (const phrase of ["Layout Shock", "Numeric Proof Motion", "poster-scale type", "maximum two text groups", "one dominant visual", "Dynamic numeric counters", "Thumb-Stopping Layouts", "Insight First", "Anti-Template Collapse", "forceDefaultReason", "Bold By Default", "Anti-tameness", "surreal scale", "impossible physics"]) {
   if (!creativeDirection.includes(phrase)) {
     fail(`creative-direction.md missing phrase: ${phrase}`);
   }
@@ -452,6 +455,13 @@ for (const phrase of ["Frame-Locked Cue Sheet", "startFrame", "durationFrames", 
     fail(`audio-caption-system.md missing precise audio phrase: ${phrase}`);
   }
 }
+// Richer voiceover (配音) is a first-class layer for commercial-quality jobs, not
+// a flat optional readout. Enforce the scriptcraft + per-job-type posture doctrine.
+for (const phrase of ["Voiceover Scriptcraft", "Audio Posture By Job Type", "full soundscape", "delivery", "persona", "rightsStatus: generated", "spoken hook"]) {
+  if (!audioSystem.includes(phrase)) {
+    fail(`audio-caption-system.md missing voiceover phrase: ${phrase}`);
+  }
+}
 
 const templateDefaultProps = JSON.parse(read("assets/remotion-template/src/default-props.json"));
 if (templateDefaultProps.audio?.mode !== "sfx-only") {
@@ -569,7 +579,7 @@ for (const phrase of ["concepts.json", "validate-creative.mjs", "chosenId", "str
   }
 }
 const adExemplars = read("references/ad-exemplars.md");
-for (const phrase of ["Cliche Ban List", "hook mechanic", "Cold-open"]) {
+for (const phrase of ["Cliche Ban List", "hook mechanic", "Cold-open", "Spectacle / Exaggeration Mechanics", "Surreal scale", "Impossible physics", "Hyperbolic before/after"]) {
   if (!adExemplars.includes(phrase)) {
     fail(`ad-exemplars.md missing phrase: ${phrase}`);
   }
@@ -590,6 +600,25 @@ if (tamperedChosen) {
 }
 if (validateConcepts(tamperedConcepts).errors.length === 0) {
   fail("creative gate must reject a chosen concept that defaults to the stock arc");
+}
+
+// Bold-by-default gate: every concept must carry a boldness score, and a chosen
+// concept that is merely acceptable (a 3 on attention, distinctiveness, or
+// boldness) must be rejected so the skill stops shipping tasteful, restrained ads.
+const missingBoldness = JSON.parse(JSON.stringify(syntheticConcepts));
+for (const concept of missingBoldness.concepts) {
+  delete concept.scores.boldness;
+}
+if (validateConcepts(missingBoldness).errors.length === 0) {
+  fail("creative gate must require a boldness score on every concept");
+}
+for (const dimension of ["attention", "distinctiveness", "boldness"]) {
+  const tameConcepts = JSON.parse(JSON.stringify(syntheticConcepts));
+  const tameChosen = tameConcepts.concepts.find((concept) => concept.id === tameConcepts.chosenId);
+  tameChosen.scores[dimension] = 3;
+  if (!validateConcepts(tameConcepts).errors.some((error) => new RegExp(`${dimension}=3 \\(<4\\)`).test(error))) {
+    fail(`creative gate must reject a chosen concept with ${dimension}=3 (tame, below the bold-by-default bar)`);
+  }
 }
 
 // CJK hooklines carry no spaces, so the gate must count them by character, not by

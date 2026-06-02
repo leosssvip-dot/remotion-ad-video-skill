@@ -47,7 +47,8 @@ node scripts/validate-creative.mjs examples/<brand>-ad/concepts.json
         "conversion": 4,
         "productionFeasibility": 4,
         "claimSafety": 5,
-        "distinctiveness": 4
+        "distinctiveness": 4,
+        "boldness": 5
       }
     }
   ],
@@ -62,14 +63,18 @@ The validator enforces the parts that can be checked mechanically:
 
 - 3-6 concepts, each with a unique `id` and a unique `hookLine`.
 - Every concept declares `angle`, `insight`, `hookLine` (3-8 words), `firstFrame`,
-  `structure` (>= 3 scene blocks), `motionIdea`, `proof`, `cta`, and all seven
+  `structure` (>= 3 scene blocks), `motionIdea`, `proof`, `cta`, and all eight
   `scores` as integers 1-5.
+- `scores` includes `boldness`: how exaggerated, dramatized, and visually loud the
+  concept is. A tasteful, reasonable, "presentation-safe" idea scores low here on
+  purpose. Boldness rates the creative register, never the truth of a claim.
 - Concepts must not all share one `structure`; they must be genuine alternatives.
 - `hookLine`, `angle`, and `label` must avoid banned cliche copy (see
   `ad-exemplars.md`).
 - `chosenId` must reference a real concept and carry a `selectionNote`.
-- The chosen concept must score `attention`, `distinctiveness`, and `claimSafety`
-  >= 3.
+- The chosen concept must score `attention` >= 4, `distinctiveness` >= 4, and
+  `boldness` >= 4, with `claimSafety` >= 3. A merely-acceptable 3 on attention,
+  distinctiveness, or boldness no longer ships - pick or revise a bolder concept.
 - The chosen concept's `structure` must not equal `defaultArc` unless it sets a
   `forceDefaultReason`. The stock hook/pain/demo/proof/cta arc is a fallback, not
   a default.

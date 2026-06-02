@@ -10,6 +10,8 @@ Score 1-5 and revise anything below 3:
 - `adNotSlides`: every beat has motion, payoff, or a meaningful cut.
 - `categoryNative`: visuals imitate the product category or platform behavior.
 - `layoutShock`: composition has an attention-grabbing layout move, such as poster-scale type, aggressive crop, kinetic split, oversized product, or asymmetric reveal.
+- `boldness`: at least one exaggerated, dramatized, or physically-impossible spectacle moment — surreal scale, gravity/time break, world-bend, or hyperbolic before/after — not a tasteful, restrained execution. A "clean and modern" spot scores low here on purpose.
+- `voiceoverEnergy`: when voiceover is present, it carries a punchy spoken hook, varied pace/tone across beats, and a landed spoken CTA — not a flat, even description. (Score n/a only for intentionally silent or sfx-only spots.)
 - `assetPresence`: logo/icon/screenshot/product visual appears early and repeatedly.
 - `paceDensity`: meaningful change every 0.5-1.5 seconds for 15s short-form.
 - `textDensity`: most scenes use maximum two text groups, with one clear hierarchy winner and enough negative space.
@@ -23,6 +25,7 @@ Score 1-5 and revise anything below 3:
 Revise if any still:
 
 - Could be mistaken for a presentation slide.
+- Reads as tasteful and restrained, with no exaggerated or impossible spectacle beat.
 - Shows only text over a generic background.
 - Uses many similar-size text labels instead of poster-scale hierarchy.
 - Has no one dominant visual to anchor the frame.

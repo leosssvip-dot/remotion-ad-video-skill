@@ -68,7 +68,7 @@ Required decisions:
 
 Recorded defaults, not required user decisions:
 
-- Audio mode defaults to `sfx-only`; ask only if the user requests silent-safe, music, voiceover, or a platform-specific sound plan.
+- Audio mode defaults to `sfx-only` for quick URL jobs, fast tests, and first-pass iterations. Commercial-quality, batch, or "make it more creative" requests default to a full soundscape — `music-sfx` plus a scripted voiceover — without asking. A bold ad with no voice and one repeated click sounds thin. Still ask only if the user requests silent-safe, a specific music plan, or a platform-specific sound plan.
 
 Minimum URL jobs must attempt to harvest favicon, touch icon, Open Graph image, visible logo or screenshots, and brand colors. Ecommerce product URLs must also attempt a product main image with `scripts/harvest-ecommerce-assets.mjs` before creative work starts; the linked item is the ad subject, and platform/store context stays secondary. Store usable public assets locally in the generated project `public/<brand>/` folder, create or update an asset manifest when practical, and reference assets with `staticFile()`.
 
@@ -92,6 +92,8 @@ Every real commercial sample needs a thumb-stopping visual idea, not just copy. 
 
 Every concept also needs a bold layout idea before storyboard or code: poster-scale type, one dominant visual, asymmetric composition, aggressive crop, oversized product/app frame, kinetic split screen, or a staged reveal. Avoid neat centered slide layouts unless the contrast or motion makes them feel like an ad.
 
+Default to bold. A tasteful, restrained, presentation-safe ad loses the scroll. Push each concept past comfortable: dramatize the feeling with at least one spectacle move (surreal scale, impossible physics, world-bend, or hyperbolic before/after) so there is a "wait, what?" beat. Exaggeration lives in the visual and emotional register only — every numeric and factual claim stays honest and source-backed. Load `references/creative-direction.md` (Bold By Default) and `references/ad-exemplars.md` (Spectacle / Exaggeration Mechanics) for the mechanics.
+
 When source-backed numeric proof exists, plan it as motion instead of static copy: ratings count up, discounts snap from 0 to the final percent, prices or savings roll into place, download/review counts tick upward, and scores burst like a game HUD. Use the exact approved number as the final value and never animate unsupported or inflated claims.
 
 For simple games, especially app-store listings, the visual idea should usually be a gameplay-style simulation: falling pieces, swaps, merges, collisions, score pops, explosions, level-up moments, near-fail rescues, or reward cascades. Static screenshots alone are proof assets, not the ad.
@@ -104,7 +106,7 @@ For commercial-quality requests, or whenever the user asks for "more creative" o
 node scripts/validate-creative.mjs <project-dir>/concepts.json
 ```
 
-Do not start the storyboard until the gate passes. The chosen concept must score `attention`, `distinctiveness`, and `claimSafety` at least 3, and its `structure` must not silently default to the stock hook/pain/demo/proof/cta arc unless it records a `forceDefaultReason`. Implement the strongest or user-selected concept, and make the storyboard reflect its `structure`, `firstFrame`, and `motionIdea`.
+Do not start the storyboard until the gate passes. The chosen concept must score `attention`, `distinctiveness`, and `boldness` at least 4, with `claimSafety` at least 3, and its `structure` must not silently default to the stock hook/pain/demo/proof/cta arc unless it records a `forceDefaultReason`. A merely-acceptable 3 on attention, distinctiveness, or boldness does not ship — pick or revise a bolder concept. Score `boldness` for how exaggerated and dramatized the idea is, never for how truthful a claim is. Implement the strongest or user-selected concept, and make the storyboard reflect its `structure`, `firstFrame`, and `motionIdea`.
 
 ### 3. Storyboard
 
@@ -140,8 +142,9 @@ Remotion template rules:
 - Use the app/product's public store assets by default when a URL was supplied; they are standard inputs for install/UA ads. Store them under `public/<brand>/` and reference with `staticFile()`.
 - Support animated metric/counter props for ratings, discounts, prices, savings, review counts, and game/app scores when those numbers are source-backed.
 - Add generated synced SFX by default through props. Use a varied generated SFX palette with frame-locked `startFrame`, category, scene/anchor sync metadata, and visible-event cue descriptions, not one repeated click. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
-- Support `music-sfx` with a generated, licensed, or user-supplied music bed plus picture-locked SFX when the user requests music. Keep normal URL jobs on default `sfx-only`.
-- Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis.
+- Support `music-sfx` with a generated, licensed, or user-supplied music bed plus picture-locked SFX when the user requests music. Keep quick URL jobs and fast tests on default `sfx-only`.
+- For commercial-quality, batch, or "more creative" requests, default to a full soundscape: music bed + dense SFX + a scripted `voiceover`. Write the voiceover as 3-5 spoken beats with varied delivery (energy, pace, tone) per `references/audio-caption-system.md` (Voiceover Scriptcraft), in `outputLanguage`. A generated TTS voice uses `rightsStatus: generated`.
+- Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis. For bold/commercial-quality concepts, include at least one spectacle move (surreal scale, impossible physics, world-bend, or hyperbolic before/after) so the spot has a "wait, what?" beat.
 - For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.
 - Keep typography readable at mobile sizes; do not rely on dense body text.
 

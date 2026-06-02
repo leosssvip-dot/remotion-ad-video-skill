@@ -49,11 +49,37 @@ mechanic to the real product; never reuse another brand's specific copy or claim
   Animate the value (count, snap, roll, meter-fill) toward the exact approved
   figure; never inflate.
 
+## Spectacle / Exaggeration Mechanics
+
+Reach for these to push a concept past "tasteful" into bold. Dramatize the
+*feeling* — every factual or numeric claim still stays honest and source-backed.
+
+- **Surreal scale** - blow one element up past physical sense: a phone the size
+  of a skyscraper, a single feature filling the sky, the product as a planet.
+  `["surreal-scale-hook", "earn-the-scale", "proof", "cta"]`.
+- **Impossible physics** - gravity flips, time freezes mid-air, the UI shatters
+  into shards, liquid runs upward, the room folds. The product is the cause.
+  `["impossible-physics", "cause-reveal", "payoff", "cta"]`.
+- **World-bending** - the product warps the world around it: the room recolors,
+  the street reshapes, the feed bends toward the user. `["world-bend", "ripple", "benefit", "cta"]`.
+- **Hyperbolic before/after** - the "before" world is a comic disaster (chaos,
+  clutter, doom-spiral), then it snaps to perfect on a single beat. Lean the
+  contrast to the extreme. `["disaster-before", "snap-fix", "after-bliss", "cta"]`.
+- **Maximal kinetic burst** - whip pans, snap zooms, match cuts, and an impact on
+  every beat so the spot feels overclocked. `["kinetic-cold-open", "escalation", "drop", "cta"]`.
+- **Dramatized stakes** - exaggerate the consequence of *not* using the product
+  to absurd, funny, or epic scale, then the product rescues the moment.
+  `["stakes-blowup", "rescue", "relief", "cta"]`.
+
+Rule: one outrageous mechanic carried at full volume beats five timid flourishes.
+If the spot has no "wait, what?" beat, it is not bold enough yet.
+
 ## Hook Mechanics To Reach For
 
 Pattern interrupt, bold approved stat, a question the viewer wants answered,
 visual surprise, the after-state first, a negative hook ("stop doing X"), an
-unexpected use, a satisfying loop, format-native imitation.
+unexpected use, a satisfying loop, format-native imitation, surreal scale,
+impossible physics, hyperbolic before/after.
 
 ## Cliche Ban List
 

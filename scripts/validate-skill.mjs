@@ -592,6 +592,28 @@ if (validateConcepts(tamperedConcepts).errors.length === 0) {
   fail("creative gate must reject a chosen concept that defaults to the stock arc");
 }
 
+// CJK hooklines carry no spaces, so the gate must count them by character, not by
+// space-delimited word. A natural 4-14 character Chinese hook must pass the gate,
+// and an over-long one must still be rejected.
+const cjkConcepts = JSON.parse(JSON.stringify(syntheticConcepts));
+const cjkHooks = ["看完再决定买不买", "同一张桌子两种光", "一秒点亮专注时刻"];
+cjkConcepts.concepts.forEach((concept, index) => {
+  concept.hookLine = cjkHooks[index % cjkHooks.length];
+});
+const cjkResult = validateConcepts(cjkConcepts);
+if (cjkResult.errors.length) {
+  fail(`Chinese-hookline concepts must pass the creative gate: ${cjkResult.errors.join("; ")}`);
+}
+
+const longCjkConcepts = JSON.parse(JSON.stringify(cjkConcepts));
+const longCjkChosen = longCjkConcepts.concepts.find((concept) => concept.id === longCjkConcepts.chosenId);
+if (longCjkChosen) {
+  longCjkChosen.hookLine = "这是一句被故意写得非常非常冗长的中文广告钩子语句用来触发字数上限";
+}
+if (!validateConcepts(longCjkConcepts).errors.some((error) => /hookLine must be 4-14 characters/.test(error))) {
+  fail("creative gate must reject an over-long Chinese hookLine");
+}
+
 const syntheticDefaultProps = JSON.parse(readRoot("examples/synthetic-url-ad/src/default-props.json"));
 if (syntheticDefaultProps.audio?.mode !== "sfx-only") {
   fail("synthetic demo default props must use audio.mode=sfx-only");

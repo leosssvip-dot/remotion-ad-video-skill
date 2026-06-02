@@ -41,7 +41,33 @@ export const CLICHE_PATTERNS = [
   /\bworld[\s-]?class\b/i
 ];
 
-const wordCount = (value) => String(value).trim().split(/\s+/).filter(Boolean).length;
+// CJK scripts (Chinese/Japanese/Korean) are written without spaces, so the
+// Latin space-delimited word count collapses a natural line like "买之前先搜小红书"
+// to a single "word" and fails the 3-8 gate. Measure CJK hooklines by character
+// instead: count each CJK character as one unit plus any space-delimited Latin
+// runs (e.g. "AI", "Pro", "2x"), and apply a CJK-appropriate range. Latin
+// hooklines keep the original space-delimited behavior.
+const CJK_CHAR = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/u;
+const CJK_CHAR_GLOBAL = new RegExp(CJK_CHAR.source, "gu");
+
+export const HOOK_LINE_LIMITS = {
+  latin: { min: 3, max: 8, unit: "words" },
+  cjk: { min: 4, max: 14, unit: "characters" }
+};
+
+export function hookLineLength(value) {
+  const text = String(value).trim();
+  const cjkMatches = text.match(CJK_CHAR_GLOBAL) ?? [];
+  if (cjkMatches.length === 0) {
+    return { mode: "latin", units: text.split(/\s+/).filter(Boolean).length };
+  }
+  // Strip the CJK characters (each already counted) and treat any remaining
+  // runs as Latin units, so mixed-script hooks like "AI 助手 Pro" still measure
+  // sanely instead of being scored as one giant token.
+  const latinTokens = text.replace(CJK_CHAR_GLOBAL, " ").split(/\s+/).filter(Boolean);
+  return { mode: "cjk", units: cjkMatches.length + latinTokens.length };
+}
+
 const arcEqual = (a, b) =>
   Array.isArray(a) &&
   Array.isArray(b) &&
@@ -99,9 +125,10 @@ export function validateConcepts(data, opts = {}) {
     }
 
     if (concept.hookLine) {
-      const words = wordCount(concept.hookLine);
-      if (words < 3 || words > 8) {
-        errors.push(`${where} hookLine must be 3-8 words (found ${words})`);
+      const { mode, units } = hookLineLength(concept.hookLine);
+      const { min, max, unit } = HOOK_LINE_LIMITS[mode];
+      if (units < min || units > max) {
+        errors.push(`${where} hookLine must be ${min}-${max} ${unit} (found ${units})`);
       }
       const key = String(concept.hookLine).trim().toLowerCase();
       hookCounts.set(key, (hookCounts.get(key) ?? 0) + 1);

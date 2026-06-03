@@ -9,6 +9,7 @@ Remotion 是 React/TS 路线，Hyperframes 是 HTML/CSS/GSAP 路线。Skill 会�
 这是一个通用的 agent skill：任何能读文件、跑 Node 脚本的 coding agent 都能用。
 
 ## 演示视频
+https://github.com/user-attachments/assets/98b0fb8f-e05f-4743-a4d2-ca0b01c1e2d0
 
 https://github.com/user-attachments/assets/56fd55e5-af66-4737-b12b-88034d1fad52
 

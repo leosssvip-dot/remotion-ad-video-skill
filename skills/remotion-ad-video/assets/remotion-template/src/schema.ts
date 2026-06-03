@@ -17,7 +17,8 @@ export const SceneBlockSchema = z.enum([
   "split-before-after",
   "device-frame",
   "stat-slam",
-  "cta-card"
+  "cta-card",
+  "hero-morph"
 ]);
 
 export const SceneSchema = z.object({

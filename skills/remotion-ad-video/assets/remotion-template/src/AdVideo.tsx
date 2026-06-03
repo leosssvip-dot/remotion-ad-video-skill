@@ -10,6 +10,10 @@ import {
   useVideoConfig
 } from "remotion";
 import type { AdVideoProps } from "./schema";
+import { eases } from "./motion";
+import { Burst } from "./Burst";
+import { FlipMove } from "./FlipMove";
+import { KineticText } from "./KineticText";
 
 type SceneProps = {
   backgroundColor: string;
@@ -275,6 +279,7 @@ const AnimatedMetric: React.FC<{
   const decimals = metric.decimals ?? (Number.isInteger(metric.to) && Number.isInteger(from) ? 0 : 1);
   const countFrames = Math.max(1, Math.min(sceneFrames - 1, Math.round(fps * 1.15)));
   const value = interpolate(frame, [0, countFrames], [from, metric.to], {
+    easing: eases.expoOut,
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
@@ -282,6 +287,7 @@ const AnimatedMetric: React.FC<{
 
   if (variant === "poster") {
     const posterScale = interpolate(frame, [0, countFrames], [0.7, 1], {
+      easing: eases.backOut,
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp"
     });
@@ -310,10 +316,12 @@ const AnimatedMetric: React.FC<{
   }
 
   const scale = interpolate(frame, [0, countFrames], [0.84, 1], {
+    easing: eases.backOut,
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
   const rotate = interpolate(frame, [0, countFrames], [-4, -1], {
+    easing: eases.power3Out,
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
@@ -611,7 +619,6 @@ const DeviceFrameBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, he
 // stat-slam: a source-backed number dominates the frame.
 const StatSlamBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, logoPath, platform, primaryColor, scene }) => {
   const L = useSceneLayout(platform, scene);
-  const headlineIn = interpolate(L.frame, [0, 14], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return (
     <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: "column", fontFamily: FONT_STACK, gap: 24, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding }}>
       <div aria-hidden="true" style={{ background: `repeating-linear-gradient(135deg, transparent 0 60px, ${primaryColor}14 60px 78px)`, inset: 0, position: "absolute", zIndex: 0 }} />
@@ -623,7 +630,18 @@ const StatSlamBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, logoP
           <strong style={{ color: primaryColor, display: "block", fontSize: L.isLandscape ? 160 : 240, letterSpacing: -4, lineHeight: 0.82, textAlign: "center" }}>{scene.visual}</strong>
         )}
       </div>
-      <h1 style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0, maxWidth: "84%", opacity: headlineIn, position: "relative", textAlign: "center", zIndex: 1 }}>{scene.headline}</h1>
+      <KineticText
+        as="h1"
+        text={scene.headline}
+        split="words"
+        from="center"
+        startFrame={2}
+        perItem={2}
+        duration={14}
+        y={30}
+        ease="power3Out"
+        style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0, maxWidth: "84%", position: "relative", textAlign: "center", zIndex: 1 }}
+      />
       {scene.proof ? <p style={{ fontSize: L.proofSize, fontWeight: 700, margin: 0, opacity: 0.86, position: "relative", textAlign: "center", zIndex: 1 }}>{scene.proof}</p> : null}
       <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 2 }}>
         <BrandHeader brandName={brandName} logoPath={logoPath} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
@@ -640,9 +658,20 @@ const CtaCardBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, cta, l
   return (
     <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: "column", fontFamily: FONT_STACK, gap: 30, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding, textAlign: "center" }}>
       <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 50%, ${primaryColor}3a, transparent 62%)`, inset: 0, position: "absolute", zIndex: 0 }} />
+      <Burst start={4} preset="confetti" colors={[primaryColor, "#ffffff", primaryColor]} origin={{ x: "50%", y: "46%" }} zIndex={0} />
       <div style={{ alignItems: "center", display: "flex", flexDirection: "column", gap: 18, position: "relative", transform: `scale(${pop})`, zIndex: 1 }}>
         {logoPath ? <Img src={assetSrc(logoPath)} style={{ borderRadius: 12, height: 72, objectFit: "contain", width: 72 }} /> : null}
-        <h1 style={{ fontSize: L.headlineSize + 6, lineHeight: 1.0, margin: 0, maxWidth: "90%" }}>{scene.headline}</h1>
+        <KineticText
+          as="h1"
+          text={scene.headline}
+          split="words"
+          startFrame={2}
+          perItem={2}
+          duration={13}
+          y={34}
+          ease="power3Out"
+          style={{ fontSize: L.headlineSize + 6, lineHeight: 1.0, margin: 0, maxWidth: "90%" }}
+        />
         {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.2, margin: 0, opacity: 0.9 }}>{scene.body}</p> : null}
       </div>
       <div style={{ background: primaryColor, borderRadius: 999, boxShadow: `0 24px 70px ${primaryColor}66`, color: "#111", fontSize: L.brandSize + 2, fontWeight: 900, padding: "22px 52px", position: "relative", transform: `scale(${pulse})`, zIndex: 1 }}>{cta}</div>
@@ -652,10 +681,51 @@ const CtaCardBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, cta, l
   );
 };
 
+// hero-morph: the visual flies in from a thumbnail and expands to fill the hero
+// frame (GSAP Flip shared-element morph); the headline then resolves over it.
+const HeroMorphBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene);
+  const visualAsset = visualAssetFor(scene, heroImagePath);
+  const pad = L.padding;
+  const heroW = L.width - pad * 2;
+  const heroTop = Math.round(L.height * (L.isLandscape ? 0.16 : 0.17));
+  const heroH = Math.round(L.height * (L.isLandscape ? 0.5 : 0.45));
+  const to = { x: pad, y: heroTop, width: heroW, height: heroH };
+  const thumb = Math.round(Math.min(heroW, heroH) * 0.3);
+  const from = { x: Math.round(L.width / 2 - thumb / 2), y: Math.round(L.height * 0.62), width: thumb, height: thumb, rotation: -8 };
+  const headlineTop = heroTop + heroH + 30;
+  return (
+    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: FONT_STACK, overflow: "hidden", opacity: L.opacity }}>
+      <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 32%, ${primaryColor}26, transparent 60%)`, inset: 0, position: "absolute", zIndex: 0 }} />
+      <FlipMove
+        from={from}
+        to={to}
+        start={2}
+        duration={20}
+        ease="power3InOut"
+        fade
+        style={{ border: `3px solid ${primaryColor}`, borderRadius: 8, overflow: "hidden", boxShadow: `0 28px 96px rgba(0,0,0,0.4), 0 0 0 12px ${primaryColor}22`, zIndex: 1 }}
+      >
+        <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} />
+      </FlipMove>
+      <div style={{ left: pad, position: "absolute", right: pad, top: headlineTop, zIndex: 2 }}>
+        <KineticText as="h1" text={scene.headline} split="words" from="start" startFrame={20} perItem={2} duration={13} y={28} ease="power3Out" style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0 }} />
+        {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "18px 0 0", opacity: 0.9 }}>{scene.body}</p> : null}
+        {scene.proof ? <p style={{ color: primaryColor, fontSize: L.proofSize, fontWeight: 800, margin: "16px 0 0" }}>{scene.proof}</p> : null}
+      </div>
+      <div style={{ left: pad, position: "absolute", right: pad, top: Math.round(pad * 0.5), zIndex: 3 }}>
+        <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 // Route each scene to its block; "standard" is the safe fallback.
 const Scene: React.FC<SceneProps> = (props) => {
   const block: SceneBlockKind = props.scene.block ?? "standard";
   switch (block) {
+    case "hero-morph":
+      return <HeroMorphBlock {...props} />;
     case "cold-open-payoff":
       return <ColdOpenBlock {...props} />;
     case "split-before-after":

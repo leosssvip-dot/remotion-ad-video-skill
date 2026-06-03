@@ -48,6 +48,7 @@ Load `references/industry-angle-library.md` when the product category is not obv
 Load `references/game-ad-patterns.md` for casual games, mobile games, app-store game listings, puzzle games, hypercasual games, or simple gameplay loops.
 Load `references/social-feed-ad-patterns.md` for short-video, social, creator, UGC, live shopping, community, or content-feed apps.
 Load `references/variant-system.md` when the user wants options, batch ads, or a commercial-quality ad rather than a single sample.
+Load `references/motion-language.md` before implementing motion in either engine; it is the ease, stagger, and kinetic-typography vocabulary (Remotion `src/motion.ts` + `KineticText`, or GSAP for Hyperframes) that keeps motion from defaulting to flat linear interpolation.
 
 Language policy:
 
@@ -134,7 +135,7 @@ Remotion template rules:
 
 - Use a Zod schema for input props.
 - Keep scenes data-driven rather than hard-coded.
-- Set each scene's `block` to a scene-block kind (`cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `cta-card`, or `standard`) so the chosen concept's `structure` renders as distinct layouts and motion, not one repeated card. Map the concept's structure scene blocks onto these template blocks; add a new block component instead of forcing every scene through `standard`.
+- Set each scene's `block` to a scene-block kind (`cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `cta-card`, `hero-morph`, or `standard`) so the chosen concept's `structure` renders as distinct layouts and motion, not one repeated card. Map the concept's structure scene blocks onto these template blocks; add a new block component instead of forcing every scene through `standard`.
 - Use Remotion `Composition`, `Sequence`, and `AbsoluteFill`.
 - Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
 - Map the chosen `format` / `platform` into the actual composition dimensions and scene layout. Square and landscape outputs must not reuse the vertical layout unchanged.
@@ -145,6 +146,7 @@ Remotion template rules:
 - Support `music-sfx` with a generated, licensed, or user-supplied music bed plus picture-locked SFX when the user requests music. Keep quick URL jobs and fast tests on default `sfx-only`.
 - For commercial-quality, batch, or "more creative" requests, default to a full soundscape: music bed + dense SFX + a scripted `voiceover`. Write the voiceover as 3-5 spoken beats with varied delivery (energy, pace, tone) per `references/audio-caption-system.md` (Voiceover Scriptcraft), in `outputLanguage`. A generated TTS voice uses `rightsStatus: generated`.
 - Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis. For bold/commercial-quality concepts, include at least one spectacle move (surreal scale, impossible physics, world-bend, or hyperbolic before/after) so the spot has a "wait, what?" beat.
+- Animate with the vocabulary in `references/motion-language.md`, not bare linear `interpolate`. Use `src/motion.ts` eases (`power3Out` entrances, `expoOut` count-ups, `backOut`/`springPop` pops) and `staggerDelay` for multi-element reveals, and reveal headlines/CTAs with `KineticText` (split words/chars) instead of fading whole text blocks. For shared-element reveals (screenshot→hero, before→after) use `FlipMove` (the `hero-morph` block is a ready example); for reward/spectacle/game beats (confetti, coins, score pops, explosions) use `Burst`.
 - For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.
 - Keep typography readable at mobile sizes; do not rely on dense body text.
 
@@ -157,7 +159,7 @@ Hyperframes template rules:
 - Declare editable fields through `data-composition-variables` and pass values with `variables.json` / `--variables-file`.
 - Include `width`, `height`, and `layoutMode` in `variables.json` and write them back to the composition `data-width` / `data-height` before render.
 - Use `window.__hyperframes.getVariables()` for copy, CTA, colors, and local asset paths.
-- Register a paused GSAP timeline in `window.__timelines`.
+- Register a paused GSAP timeline in `window.__timelines`. Build it with the ease/stagger vocabulary in `references/motion-language.md` (this path uses GSAP directly): `power3.out` entrances, `expo.out`/`power3.out` count-ups, `back.out(1.7)` pops, and `stagger` for multi-element reveals.
 - Keep product/app visuals local and rights-reviewed. Do not rely on remote URLs in final output.
 
 ### 5. Render QA
@@ -198,6 +200,7 @@ Return:
 - Making a generic product video instead of an ad with a conversion goal.
 - Starting Remotion code before deciding hook, proof, and CTA.
 - Shipping a PPT-like sequence of text cards with fades.
+- Animating everything with flat linear `interpolate` (no easing, no stagger, whole-block text fades) so motion feels cheap — use the ease/stagger/kinetic-typography vocabulary in `references/motion-language.md`.
 - Ignoring available logo, favicon, OG image, screenshots, or brand colors from the source URL.
 - Treating a game listing like a SaaS explainer instead of showing high-energy play.
 - Rendering inferred or fabricated numbers as facts, or inflating real ones.

@@ -45,7 +45,7 @@ Minimum for 15s game ads:
 - CTA pulse: button/icon with a reason to install.
 - Tempo: a meaningful visual change every 0.5-1.5 seconds.
 
-Prefer `useCurrentFrame()`, `spring()`, `interpolate()`, and deterministic arrays for pieces, particles, boards, cards, and score pops.
+Prefer `useCurrentFrame()`, `spring()`, `interpolate()`, and deterministic arrays for pieces, particles, boards, cards, and score pops. See `references/motion-language.md`: use `Burst` (confetti/coins/sparks/debris) for reward cascades, score pops, and explosions, and the `eases`/`staggerDelay` vocabulary so gameplay motion is springy, not linear.
 
 ## 15s Storyboard Pattern
 

@@ -58,11 +58,13 @@ Use this when the product category is not already covered by game or social-feed
 - Proof: templates, export formats, collaboration, rating, creator quote.
 - Avoid: showing only final art without the creation interaction.
 
-## Default Pattern
+## Fallback Content Checklist
 
-If no category fits, use:
+If no category fits, make sure the ad *contains* these five ingredients - this
+is a content checklist, **not** a scene structure; the scene order still comes
+from the chosen concept's `structure` (see `concept-contract.md`):
 
-1. Problem or desire in the first 2 seconds.
+1. Problem or desire surfaced in the first 2 seconds.
 2. Product visible immediately.
 3. One concrete product behavior.
 4. One source-backed proof point.

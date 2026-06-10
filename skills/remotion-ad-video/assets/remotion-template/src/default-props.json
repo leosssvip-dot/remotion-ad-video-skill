@@ -6,9 +6,60 @@
   "durationSeconds": 15,
   "primaryColor": "#7CFF6B",
   "backgroundColor": "#151515",
+  "fontPreset": "condensed-impact",
   "cta": "Shop now",
   "offer": "Launch offer available today.",
   "disclaimer": "Replace all placeholder claims and visuals before commercial use.",
+  "captions": [
+    {
+      "text": "Your desk deserves better light",
+      "startFrame": 14,
+      "endFrame": 56,
+      "words": [
+        { "w": "Your", "atFrame": 14 },
+        { "w": "desk", "atFrame": 20 },
+        { "w": "deserves", "atFrame": 28 },
+        { "w": "BETTER", "atFrame": 38, "emphasis": true },
+        { "w": "light", "atFrame": 46 }
+      ]
+    },
+    {
+      "text": "Stop fighting the glare",
+      "startFrame": 72,
+      "endFrame": 168,
+      "words": [
+        { "w": "Stop", "atFrame": 72 },
+        { "w": "fighting", "atFrame": 80 },
+        { "w": "the", "atFrame": 90 },
+        { "w": "GLARE", "atFrame": 96, "emphasis": true }
+      ]
+    },
+    {
+      "text": "Angle, dim, and focus in seconds",
+      "startFrame": 196,
+      "endFrame": 320,
+      "words": [
+        { "w": "Angle,", "atFrame": 196 },
+        { "w": "dim,", "atFrame": 208 },
+        { "w": "and", "atFrame": 220 },
+        { "w": "focus", "atFrame": 228 },
+        { "w": "in", "atFrame": 240 },
+        { "w": "SECONDS", "atFrame": 248, "emphasis": true }
+      ]
+    },
+    {
+      "text": "Rated 4.8 by real users",
+      "startFrame": 338,
+      "endFrame": 386,
+      "words": [
+        { "w": "Rated", "atFrame": 338 },
+        { "w": "4.8", "atFrame": 346, "emphasis": true },
+        { "w": "by", "atFrame": 356 },
+        { "w": "real", "atFrame": 362 },
+        { "w": "users", "atFrame": 368 }
+      ]
+    }
+  ],
   "audio": {
     "enabled": true,
     "mode": "sfx-only",
@@ -106,11 +157,11 @@
         "sync": {
           "sceneId": "pain",
           "anchor": "visual-lock",
-          "offsetFrames": 42
+          "offsetFrames": 60
         },
         "preset": "sfx-pack-open",
-        "startFrame": 102,
-        "startSecond": 3.4,
+        "startFrame": 120,
+        "startSecond": 4,
         "durationFrames": 13,
         "volume": 0.5,
         "rightsStatus": "generated"
@@ -208,11 +259,11 @@
         "sync": {
           "sceneId": "proof",
           "anchor": "metric-count",
-          "offsetFrames": 21
+          "offsetFrames": 35
         },
         "preset": "sfx-sparkle",
-        "startFrame": 351,
-        "startSecond": 11.7,
+        "startFrame": 365,
+        "startSecond": 12.167,
         "durationFrames": 18,
         "volume": 0.42,
         "rightsStatus": "generated"
@@ -225,11 +276,11 @@
         "sync": {
           "sceneId": "cta",
           "anchor": "cta-land",
-          "offsetFrames": 1
+          "offsetFrames": 12
         },
         "preset": "sfx-bass-drop",
-        "startFrame": 391,
-        "startSecond": 13.033,
+        "startFrame": 402,
+        "startSecond": 13.4,
         "durationFrames": 23,
         "volume": 0.54,
         "rightsStatus": "generated"
@@ -276,6 +327,11 @@
       "block": "cold-open-payoff",
       "startSecond": 0,
       "durationSecond": 2,
+      "transitionOut": "whip-left",
+      "impact": {
+        "atFrame": 47,
+        "strength": "heavy"
+      },
       "eyebrow": "New setup",
       "headline": "Desk lighting that works harder",
       "body": "Show the product in the first frame.",
@@ -286,6 +342,11 @@
       "block": "split-before-after",
       "startSecond": 2,
       "durationSecond": 4,
+      "transitionOut": "zoom-punch",
+      "impact": {
+        "atFrame": 84,
+        "strength": "light"
+      },
       "eyebrow": "Problem",
       "headline": "Stop fighting screen glare",
       "body": "Turn the customer pain into one clear visual.",
@@ -296,6 +357,11 @@
       "block": "device-frame",
       "startSecond": 6,
       "durationSecond": 5,
+      "transitionOut": "whip-up",
+      "impact": {
+        "atFrame": 90,
+        "strength": "light"
+      },
       "eyebrow": "Demo",
       "headline": "Angle, dim, and focus in seconds",
       "body": "Use product screenshots, clips, or approved generated visuals.",
@@ -306,6 +372,8 @@
       "block": "stat-slam",
       "startSecond": 11,
       "durationSecond": 2,
+      "transitionOut": "luma-wipe",
+      "colorMode": "inverted",
       "eyebrow": "Why it wins",
       "headline": "Built for long work sessions",
       "body": "Only render proof the user supplied or the source confirmed.",

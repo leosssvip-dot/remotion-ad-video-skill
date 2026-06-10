@@ -7,9 +7,11 @@ artifact captures *what idea we are betting on*.
 
 ## When To Create It
 
-- Create `concepts.json` after `ad-brief.json` and before any storyboard or code.
-- For commercial-quality, batch, or "make it more creative" requests, this artifact
-  is required, not optional.
+- Create `concepts.json` after `ad-brief.json` and before any storyboard or code —
+  for **every** job, not only commercial-quality requests. Fast tests and quick URL
+  jobs may use a lean version (3 concepts, one-line fields), but they do not skip
+  the gate: lower resolution is allowed, lower creativity is not. Skip only when
+  the user dictated one exact direction.
 - Validate it before building:
 
 ```bash
@@ -37,6 +39,8 @@ node scripts/validate-creative.mjs examples/<brand>-ad/concepts.json
       "firstFrame": "What is visible at frame 0-30.",
       "structure": ["cold-open-payoff", "cause-reveal", "angle-dim-focus", "cta"],
       "motionIdea": "The main moving system.",
+      "signatureMoment": "The one frame only this product could own - a competitor could not swap their logo in. Reference the product's own element, interaction, or claim.",
+      "spectacleMove": "surreal-scale",
       "proof": "Source-backed or user-supplied evidence only.",
       "cta": "One action.",
       "risk": "Rights, claim, or production concern.",
@@ -63,8 +67,16 @@ The validator enforces the parts that can be checked mechanically:
 
 - 3-6 concepts, each with a unique `id` and a unique `hookLine`.
 - Every concept declares `angle`, `insight`, `hookLine` (3-8 words), `firstFrame`,
-  `structure` (>= 3 scene blocks), `motionIdea`, `proof`, `cta`, and all eight
-  `scores` as integers 1-5.
+  `structure` (>= 3 scene blocks), `motionIdea`, `signatureMoment`,
+  `spectacleMove`, `proof`, `cta`, and all eight `scores` as integers 1-5.
+- `signatureMoment` is one sentence describing the frame only this product could
+  own — if a competitor could swap their logo in, it fails the spirit of the
+  field (validator floor: >= 10 chars after trim; the spirit is checked by you,
+  not the machine). `spectacleMove` must be one of: `surreal-scale`,
+  `impossible-physics`, `world-bend`, `hyperbolic-before-after`,
+  `maximal-kinetic-burst`, `dramatized-stakes`, `ui-comes-alive`, `time-break` —
+  the tokens match the mechanics in `ad-exemplars.md` (Spectacle / Exaggeration
+  Mechanics); the "wait, what?" beat is a checkable field, not a vibe.
 - `scores` includes `boldness`: how exaggerated, dramatized, and visually loud the
   concept is. A tasteful, reasonable, "presentation-safe" idea scores low here on
   purpose. Boldness rates the creative register, never the truth of a claim.
@@ -99,6 +111,9 @@ your structure onto these built-in blocks (or add a new block component):
 - `split-before-after` - kinetic split; dim "before" half vs colored "after" half.
 - `device-frame` - content inside a phone frame; feed/app-native feel.
 - `stat-slam` - a source-backed number dominates the frame (uses scene `metric`).
+- `hero-morph` - the visual flies in from a thumbnail and arcs into the hero frame (FlipMove shared-element morph).
+- `ui-takeover` - a fake push notification drops in, gets pressed, and expands into the hero — the system-UI hook.
+- `charge-reveal` - progress-bar psychology: rush to 88%, squeeze to 99%, hold, slam to 100% with the payoff line.
 - `cta-card` - centered conversion poster with a pulsing CTA button.
 - `standard` - balanced framed-visual + copy layout; the fallback, not the default.
 

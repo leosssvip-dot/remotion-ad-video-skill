@@ -109,7 +109,10 @@ animate the product behavior instead and keep the proof claim out of the render.
 
 ## Motion Requirements
 
-Use Remotion `useCurrentFrame()`, `spring()`, and `interpolate()` for:
+Use the `src/motion.ts` vocabulary (`tween`, `springPop`, `staggerDelay`, eases)
+and `KineticText` rather than bare linear `interpolate` — see
+`references/motion-language.md`. Apply them (they wrap Remotion's
+`useCurrentFrame()`, `spring()`, and `interpolate()`) for:
 
 - Logo or product reveal.
 - Staggered task/card entrances.

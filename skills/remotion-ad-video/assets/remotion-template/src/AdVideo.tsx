@@ -10,20 +10,39 @@ import {
   useVideoConfig
 } from "remotion";
 import type { AdVideoProps } from "./schema";
-import { eases } from "./motion";
+import { cameraDrift, decayShake, eases, springPop, squashLand, tween } from "./motion";
 import { Burst } from "./Burst";
+import { CaptionTrack } from "./CaptionTrack";
+import { ChargeBar, chargeTimings } from "./ChargeBar";
+import { FakeNotification, NOTIFICATION_HEIGHT } from "./FakeOS";
+import { Grain, Sheen, Vignette } from "./Finish";
 import { FlipMove } from "./FlipMove";
+import { getFontStacks } from "./Fonts";
+import { ImpactFlash } from "./Impact";
 import { KineticText } from "./KineticText";
+import { LumaWipe, SceneTransition, TRANSITION_TIMING, type TransitionKind } from "./SceneTransition";
 
 type SceneProps = {
   backgroundColor: string;
   brandName: string;
   cta: string;
+  // typography from props.fontPreset: display for headlines, body for the rest
+  fonts: { display: string; body: string };
+  // karaoke captions own the lower third and ARE the support copy — blocks
+  // skip their scene.body line to avoid two competing text layers
+  hasCaptions: boolean;
   heroImagePath?: string;
+  // frames this scene's Sequence started before its nominal start (whip lead).
+  // Blocks keep their beats on the nominal timeline so audio cues stay aligned.
+  lead: number;
   logoPath?: string;
+  // resolved per-scene palette: on "inverted" scenes the accent floods the
+  // background and the text flips dark (AdVideo resolves these from colorMode)
+  onAccent: string;
   platform: AdVideoProps["platform"];
   primaryColor: string;
   scene: AdVideoProps["scenes"][number];
+  textColor: string;
 };
 type SceneBlockKind = NonNullable<AdVideoProps["scenes"][number]["block"]>;
 
@@ -34,6 +53,26 @@ type SceneMetric = NonNullable<AdVideoProps["scenes"][number]["metric"]>;
 
 const assetSrc = (src: string) =>
   /^(https?:|data:)/i.test(src) ? src : staticFile(src);
+
+// Relative luminance of a hex color (linear approximation, good enough for
+// picking a readable text color). Non-hex strings count as dark so the
+// light-text default applies.
+const relativeLuminance = (color: string): number => {
+  const hex = color.replace("#", "");
+  const full =
+    hex.length === 3
+      ? hex
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : hex;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) {
+    return 0;
+  }
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const isBright = (color: string): boolean => relativeLuminance(color) > 0.45;
 
 const sampleRate = 22050;
 const audioPresetCache = new Map<string, string>();
@@ -270,10 +309,13 @@ const AnimatedMetric: React.FC<{
   isSquare: boolean;
   metric: SceneMetric;
   primaryColor: string;
+  onAccent?: string; // text color on top of the accent-colored card
+  borderColor?: string; // card border — pass the scene textColor
   sceneFrames: number;
+  delay?: number; // shift the count onto the nominal scene timeline (pass L.lead)
   variant?: "card" | "poster";
-}> = ({ isLandscape, isSquare, metric, primaryColor, sceneFrames, variant = "card" }) => {
-  const frame = useCurrentFrame();
+}> = ({ isLandscape, isSquare, metric, primaryColor, onAccent = "#111", borderColor = "#fff", sceneFrames, delay = 0, variant = "card" }) => {
+  const frame = useCurrentFrame() - delay;
   const { fps } = useVideoConfig();
   const from = metric.from ?? 0;
   const decimals = metric.decimals ?? (Number.isInteger(metric.to) && Number.isInteger(from) ? 0 : 1);
@@ -284,6 +326,12 @@ const AnimatedMetric: React.FC<{
     extrapolateRight: "clamp"
   });
   const valueText = `${metric.prefix ?? ""}${formatMetricValue(value, decimals)}${metric.suffix ?? ""}`;
+  // landing punch: the count locking on its final value is a physical event,
+  // not the end of an interpolation — pop past 1 and settle back
+  const landPunch =
+    frame < countFrames
+      ? 1
+      : tween(frame, { start: countFrames, duration: 8, from: variant === "poster" ? 1.16 : 1.12, to: 1, ease: "backOut" });
 
   if (variant === "poster") {
     const posterScale = interpolate(frame, [0, countFrames], [0.7, 1], {
@@ -301,7 +349,7 @@ const AnimatedMetric: React.FC<{
             fontSize: posterSize,
             letterSpacing: -4,
             lineHeight: 0.82,
-            transform: `scale(${posterScale})`
+            transform: `scale(${posterScale * landPunch})`
           }}
         >
           {valueText}
@@ -333,16 +381,16 @@ const AnimatedMetric: React.FC<{
       style={{
         alignItems: "flex-start",
         background: primaryColor,
-        border: "5px solid #fff",
+        border: `5px solid ${borderColor}`,
         borderRadius: 8,
         boxShadow: "0 24px 70px rgba(0,0,0,0.42)",
-        color: "#111",
+        color: onAccent,
         display: "inline-flex",
         flexDirection: "column",
         gap: 2,
         marginTop: isLandscape ? 24 : 28,
         padding: isLandscape ? "16px 22px" : "20px 26px",
-        transform: `rotate(${rotate}deg) scale(${scale})`,
+        transform: `rotate(${rotate}deg) scale(${scale * landPunch})`,
         transformOrigin: "left center",
         width: "fit-content"
       }}
@@ -357,32 +405,33 @@ const AnimatedMetric: React.FC<{
   );
 };
 
-const FONT_STACK =
-  'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-
 const visualAssetFor = (scene: SceneProps["scene"], heroImagePath?: string) =>
   scene.imagePath ?? scene.imageUrl ?? (scene.id === "hook" ? heroImagePath : undefined);
 
-const useSceneLayout = (platform: SceneProps["platform"], scene: SceneProps["scene"]) => {
-  const frame = useCurrentFrame();
+// Scene-level enter/exit is owned by <SceneTransition>; blocks only choreograph
+// their own internal beats. No per-scene opacity envelope — the old global
+// fade-to-background was the single biggest source of slide-deck feel.
+// `lead` shifts the local clock so frame 0 = the nominal scene start even when
+// the Sequence began early for a whip window (beats clamp to their frame-0
+// state during the slide-in, and audio cues authored on the nominal timeline
+// stay in sync). Components that read useCurrentFrame() themselves
+// (KineticText, FlipMove, Burst, ImpactFlash, AnimatedMetric) must add
+// `L.lead` to their start props instead.
+const useSceneLayout = (platform: SceneProps["platform"], scene: SceneProps["scene"], lead = 0) => {
+  const frame = useCurrentFrame() - lead;
   const { fps, height, width } = useVideoConfig();
   const isLandscape = platform.includes("landscape") || width > height;
   const isSquare = platform.includes("square") || width === height;
   const sceneFrames = Math.max(1, Math.round(scene.durationSecond * fps));
-  const fadeOutStart = Math.max(10, sceneFrames - 16);
-  const opacity = interpolate(frame, [0, 10, fadeOutStart, sceneFrames], [0, 1, 1, 0], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
   return {
     frame,
+    lead,
     fps,
     height,
     width,
     isLandscape,
     isSquare,
     sceneFrames,
-    opacity,
     padding: isLandscape ? 56 : isSquare ? 60 : 72,
     headlineSize: isLandscape ? 64 : isSquare ? 70 : 84,
     bodySize: isLandscape ? 30 : isSquare ? 32 : 38,
@@ -460,19 +509,38 @@ const VisualFill: React.FC<{
 const StandardBlock: React.FC<SceneProps> = ({
   backgroundColor,
   brandName,
+  fonts,
+  hasCaptions,
   heroImagePath,
+  lead,
   logoPath,
+  onAccent,
   platform,
   primaryColor,
-  scene
+  scene,
+  textColor
 }) => {
-  const L = useSceneLayout(platform, scene);
+  const L = useSceneLayout(platform, scene, lead);
   const visualAsset = visualAssetFor(scene, heroImagePath);
-  const y = interpolate(L.frame, [0, 18], [36, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const visualScale = interpolate(L.frame, [0, 18, L.sceneFrames], [0.88, 1.02, 1.07], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const visualRotate = interpolate(L.frame, [0, 18], [L.isLandscape ? -2 : -3, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const headlineScale = interpolate(L.frame, [0, 14, L.sceneFrames], [1.08, 1, 1.02], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const y = tween(L.frame, { duration: 16, from: 36, to: 0, ease: "power3Out" });
+  // decisive entrance with overshoot, then a slow scene-length drift so the
+  // frame never fully stops
+  const visualScale =
+    tween(L.frame, { duration: 16, from: 0.86, to: 1.02, ease: "backOutSoft" }) +
+    tween(L.frame, { start: 16, duration: Math.max(1, L.sceneFrames - 16), from: 0, to: 0.05, ease: "sineInOut" });
+  const visualRotate = tween(L.frame, { duration: 16, from: L.isLandscape ? -2 : -3, to: 0, ease: "power3Out" });
+  const headlineScale = tween(L.frame, { duration: 14, from: 1.08, to: 1, ease: "power3Out" });
   const accentShift = interpolate(L.frame, [0, L.sceneFrames], [-120, 120], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  // second beat at ~58%: proof/metric snaps in with a pop instead of sitting
+  // there from frame 0 — long scenes keep a reason to watch. Without either,
+  // the visual itself takes the beat with a punch-in.
+  const secondBeat = Math.round(L.sceneFrames * 0.58);
+  const proofPop = springPop(L.frame, L.fps, { start: secondBeat, damping: 11 });
+  const bodyIn = tween(L.frame, { start: 10, duration: 12, ease: "power2Out" });
+  const visualPunch =
+    scene.proof || scene.metric
+      ? 0
+      : 0.05 * tween(L.frame, { start: secondBeat, duration: 10, ease: "power2InOut" });
   const contentLayout: React.CSSProperties = L.isLandscape
     ? { gridTemplateColumns: "0.95fr 1.05fr", gridTemplateRows: "1fr", minHeight: Math.max(520, L.height - L.padding * 3) }
     : { gridTemplateRows: "1fr auto", minHeight: L.isSquare ? 650 : 980 };
@@ -487,7 +555,7 @@ const StandardBlock: React.FC<SceneProps> = ({
     minHeight: L.isLandscape ? 420 : L.isSquare ? 390 : 560,
     overflow: "hidden",
     boxShadow: `0 28px 96px rgba(0,0,0,0.36), 0 0 0 12px ${primaryColor}22`,
-    transform: `rotate(${visualRotate}deg) scale(${visualScale})`,
+    transform: `rotate(${visualRotate}deg) scale(${visualScale + visualPunch})`,
     width: "100%"
   };
 
@@ -495,11 +563,10 @@ const StandardBlock: React.FC<SceneProps> = ({
     <AbsoluteFill
       style={{
         backgroundColor,
-        color: "#fff",
-        fontFamily: FONT_STACK,
+        color: textColor,
+        fontFamily: fonts.body,
         justifyContent: "space-between",
         overflow: "hidden",
-        opacity: L.opacity,
         padding: L.padding,
         transform: `translateY(${y}px)`
       }}
@@ -517,14 +584,44 @@ const StandardBlock: React.FC<SceneProps> = ({
       />
       <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
       <div style={{ alignItems: "center", display: "grid", gap: L.isLandscape ? 52 : 48, position: "relative", zIndex: 1, ...contentLayout }}>
-        <div style={visualFrameStyle}>
+        <div style={{ ...visualFrameStyle, position: "relative" }}>
           <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} />
+          <Sheen start={20 + L.lead} duration={16} opacity={0.35} />
         </div>
         <div>
-          <h1 style={{ fontSize: L.headlineSize, lineHeight: L.isLandscape ? 0.98 : 1.02, margin: 0, transform: `scale(${headlineScale})`, transformOrigin: "left center" }}>{scene.headline}</h1>
-          {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "28px 0 0" }}>{scene.body}</p> : null}
-          {scene.proof ? <p style={{ color: primaryColor, fontSize: L.proofSize, fontWeight: 800, margin: "24px 0 0" }}>{scene.proof}</p> : null}
-          {scene.metric ? <AnimatedMetric isLandscape={L.isLandscape} isSquare={L.isSquare} metric={scene.metric} primaryColor={primaryColor} sceneFrames={L.sceneFrames} /> : null}
+          <KineticText
+            as="h1"
+            text={scene.headline}
+            split="words"
+            from="start"
+            startFrame={3 + L.lead}
+            perItem={2}
+            duration={14}
+            y={32}
+            ease="power3Out"
+            style={{ fontFamily: fonts.display, fontSize: L.headlineSize, lineHeight: L.isLandscape ? 0.98 : 1.02, margin: 0, transform: `scale(${headlineScale})`, transformOrigin: "left center" }}
+          />
+          {scene.body && !hasCaptions ? (
+            <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "28px 0 0", opacity: bodyIn, transform: `translateY(${(1 - bodyIn) * 18}px)` }}>
+              {scene.body}
+            </p>
+          ) : null}
+          {scene.proof ? (
+            <p
+              style={{
+                color: primaryColor,
+                fontSize: L.proofSize,
+                fontWeight: 800,
+                margin: "24px 0 0",
+                opacity: Math.min(1, proofPop * 1.4),
+                transform: `scale(${0.7 + 0.3 * proofPop})`,
+                transformOrigin: "left center"
+              }}
+            >
+              {scene.proof}
+            </p>
+          ) : null}
+          {scene.metric ? <AnimatedMetric isLandscape={L.isLandscape} isSquare={L.isSquare} metric={scene.metric} primaryColor={primaryColor} onAccent={onAccent} borderColor={textColor} sceneFrames={L.sceneFrames} delay={L.lead} /> : null}
         </div>
       </div>
       <div aria-hidden="true" style={{ height: 48, position: "relative", zIndex: 1 }} />
@@ -533,15 +630,23 @@ const StandardBlock: React.FC<SceneProps> = ({
 };
 
 // cold-open-payoff: full-bleed visual first; headline slams in late.
-const ColdOpenBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
-  const L = useSceneLayout(platform, scene);
+const ColdOpenBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, fonts, heroImagePath, lead, logoPath, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene, lead);
   const visualAsset = visualAssetFor(scene, heroImagePath);
-  const zoom = interpolate(L.frame, [0, L.sceneFrames], [1.12, 1.24], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  // crash-in: fast push that settles, then keeps creeping for the whole scene;
+  // without a proof line, a zoom kick at ~70% takes the second beat instead
+  const zoomKick = scene.proof
+    ? 0
+    : 0.05 * tween(L.frame, { start: Math.round(L.sceneFrames * 0.7), duration: 8, ease: "power2InOut" });
+  const zoom =
+    tween(L.frame, { duration: 12, from: 1.3, to: 1.16, ease: "power3Out" }) +
+    tween(L.frame, { start: 12, duration: Math.max(1, L.sceneFrames - 12), from: 0, to: 0.1, ease: "sineInOut" }) +
+    zoomKick;
   const textStart = Math.round(L.sceneFrames * 0.34);
-  const textIn = interpolate(L.frame, [textStart, textStart + 12], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const textY = interpolate(L.frame, [textStart, textStart + 12], [60, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const textY = tween(L.frame, { start: textStart, duration: 12, from: 60, to: 0, ease: "power3Out" });
+  const proofPop = springPop(L.frame, L.fps, { start: textStart + 10, damping: 11 });
   return (
-    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: FONT_STACK, overflow: "hidden", opacity: L.opacity }}>
+    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: fonts.body, overflow: "hidden" }}>
       <AbsoluteFill style={{ transform: `scale(${zoom})` }}>
         <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} fontSize={84} />
       </AbsoluteFill>
@@ -549,24 +654,53 @@ const ColdOpenBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroI
       <div style={{ left: L.padding, position: "absolute", right: L.padding, top: L.padding, zIndex: 2 }}>
         <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
       </div>
-      <div style={{ bottom: L.padding + 20, left: L.padding, opacity: textIn, position: "absolute", right: L.padding, transform: `translateY(${textY}px)`, zIndex: 2 }}>
-        <h1 style={{ fontSize: L.headlineSize + 8, lineHeight: 1.0, margin: 0, textShadow: "0 6px 30px rgba(0,0,0,0.5)" }}>{scene.headline}</h1>
-        {scene.proof ? <p style={{ color: primaryColor, fontSize: L.proofSize, fontWeight: 800, margin: "16px 0 0" }}>{scene.proof}</p> : null}
+      <div style={{ bottom: L.padding + 20, left: L.padding, position: "absolute", right: L.padding, transform: `translateY(${textY}px)`, zIndex: 2 }}>
+        <KineticText
+          as="h1"
+          text={scene.headline}
+          split="words"
+          from="center"
+          enter="clip"
+          startFrame={textStart + L.lead}
+          perItem={2}
+          duration={12}
+          y={44}
+          ease="power4Out"
+          style={{ fontFamily: fonts.display, fontSize: L.headlineSize + 8, lineHeight: 1.0, margin: 0, textShadow: "0 6px 30px rgba(0,0,0,0.5)" }}
+        />
+        {scene.proof ? (
+          <p
+            style={{
+              color: primaryColor,
+              fontSize: L.proofSize,
+              fontWeight: 800,
+              margin: "16px 0 0",
+              opacity: Math.min(1, proofPop * 1.4),
+              transform: `scale(${0.75 + 0.25 * proofPop})`,
+              transformOrigin: "left center"
+            }}
+          >
+            {scene.proof}
+          </p>
+        ) : null}
       </div>
     </AbsoluteFill>
   );
 };
 
 // split-before-after: kinetic split; dim "before" half vs colored "after" half.
-const SplitBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
-  const L = useSceneLayout(platform, scene);
+const SplitBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, fonts, heroImagePath, lead, logoPath, onAccent, platform, primaryColor, scene }) => {
+  const L = useSceneLayout(platform, scene, lead);
   const visualAsset = visualAssetFor(scene, heroImagePath);
-  const reveal = interpolate(L.frame, [6, Math.max(14, Math.round(L.sceneFrames * 0.5))], [0.5, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const revealEnd = Math.max(14, Math.round(L.sceneFrames * 0.5));
+  const reveal = tween(L.frame, { start: 6, duration: revealEnd - 6, from: 0.5, to: 1, ease: "power3InOut" });
+  // second beat: the "after" label snaps in right as the reveal lands
+  const afterPop = springPop(L.frame, L.fps, { start: revealEnd, damping: 10 });
   const beforeLabel = "Before";
   const afterLabel = "After";
   const panelBase: React.CSSProperties = { alignItems: "center", display: "flex", flex: 1, justifyContent: "center", overflow: "hidden", position: "relative" };
   return (
-    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: FONT_STACK, overflow: "hidden", opacity: L.opacity }}>
+    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: fonts.body, overflow: "hidden" }}>
       <div style={{ display: "flex", flexDirection: L.isLandscape ? "row" : "column", height: "100%", width: "100%" }}>
         <div style={{ ...panelBase, filter: "grayscale(1) brightness(0.55)" }}>
           <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor="#888" fontSize={56} />
@@ -575,11 +709,40 @@ const SplitBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImag
         <div style={{ ...panelBase, transform: `scale(${reveal})` }}>
           <div aria-hidden="true" style={{ background: primaryColor, inset: 0, opacity: 0.16, position: "absolute" }} />
           <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} fontSize={56} />
-          <span style={{ background: primaryColor, borderRadius: 6, bottom: 76, color: "#111", fontSize: L.eyebrowSize, fontWeight: 900, letterSpacing: 1, padding: "8px 14px", position: "absolute", right: 24, textTransform: "uppercase" }}>{afterLabel}</span>
+          <span
+            style={{
+              background: primaryColor,
+              borderRadius: 6,
+              bottom: 76,
+              color: onAccent,
+              fontSize: L.eyebrowSize,
+              fontWeight: 900,
+              letterSpacing: 1,
+              padding: "8px 14px",
+              position: "absolute",
+              right: 24,
+              textTransform: "uppercase",
+              opacity: Math.min(1, afterPop * 1.5),
+              transform: `scale(${0.5 + 0.55 * afterPop}) rotate(${(1 - Math.min(1, afterPop)) * -8}deg)`
+            }}
+          >
+            {afterLabel}
+          </span>
         </div>
       </div>
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-        <h1 style={{ background: "rgba(0,0,0,0.5)", borderRadius: 10, fontSize: L.headlineSize, lineHeight: 1.0, margin: 0, maxWidth: "82%", padding: "18px 26px", textAlign: "center" }}>{scene.headline}</h1>
+        <KineticText
+          as="h1"
+          text={scene.headline}
+          split="words"
+          from="center"
+          startFrame={4 + L.lead}
+          perItem={2}
+          duration={13}
+          y={30}
+          ease="power3Out"
+          style={{ background: "rgba(0,0,0,0.5)", borderRadius: 10, color: "#fff", fontFamily: fonts.display, fontSize: L.headlineSize, lineHeight: 1.0, margin: 0, maxWidth: "82%", padding: "18px 26px", textAlign: "center" }}
+        />
       </AbsoluteFill>
       <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 3 }}>
         <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
@@ -589,25 +752,48 @@ const SplitBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImag
 };
 
 // device-frame: content shown inside a phone frame; feed/app-native feel.
-const DeviceFrameBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
-  const L = useSceneLayout(platform, scene);
+const DeviceFrameBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, fonts, hasCaptions, heroImagePath, lead, logoPath, platform, primaryColor, scene, textColor }) => {
+  const L = useSceneLayout(platform, scene, lead);
   const visualAsset = visualAssetFor(scene, heroImagePath);
-  const float = interpolate(L.frame % 90, [0, 45, 90], [0, -14, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const rise = interpolate(L.frame, [0, 16], [40, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  // smooth idle float (3s period) instead of the old triangle wave
+  const float = Math.sin((L.frame / L.fps) * Math.PI * 2 * 0.33) * -10;
+  const rise = tween(L.frame, { duration: 16, from: 40, to: 0, ease: "power3Out" });
+  const riseScale = tween(L.frame, { duration: 16, from: 0.92, to: 1, ease: "backOutSoft" });
+  // mid beat at ~30%: the screen content "switches pages" — jump right and
+  // slide back in, the visual event a swipe SFX can anchor to
+  const swipeBeat = Math.round(L.sceneFrames * 0.3);
+  const screenSwipe =
+    L.frame < swipeBeat ? 0 : tween(L.frame, { start: swipeBeat, duration: 10, from: 30, to: 0, ease: "power3Out" });
+  // second beat at ~55%: punch into the screen content so the demo re-engages
+  const screenPunch = 1 + 0.12 * tween(L.frame, { start: Math.round(L.sceneFrames * 0.55), duration: 10, ease: "backOut" });
+  const bodyIn = tween(L.frame, { start: 12, duration: 12, ease: "power2Out" });
   const deviceH = L.isLandscape ? Math.min(560, L.height - 200) : Math.min(L.height * 0.62, 1080);
   const deviceW = deviceH * 0.48;
   return (
-    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: L.isLandscape ? "row" : "column", fontFamily: FONT_STACK, gap: L.isLandscape ? 64 : 36, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding }}>
+    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: textColor, display: "flex", flexDirection: L.isLandscape ? "row" : "column", fontFamily: fonts.body, gap: L.isLandscape ? 64 : 36, justifyContent: "center", overflow: "hidden", padding: L.padding }}>
       <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 40%, ${primaryColor}33, transparent 60%)`, inset: 0, position: "absolute", zIndex: 0 }} />
-      <div style={{ background: "#0b0b0b", borderRadius: 44, boxShadow: `0 40px 120px rgba(0,0,0,0.5), 0 0 0 10px ${primaryColor}22`, height: deviceH, padding: 14, position: "relative", transform: `translateY(${float + rise}px)`, width: deviceW, zIndex: 1 }}>
+      <div style={{ background: "#0b0b0b", borderRadius: 44, boxShadow: `0 40px 120px rgba(0,0,0,0.5), 0 0 0 10px ${primaryColor}22`, height: deviceH, padding: 14, position: "relative", transform: `translateY(${float + rise}px) scale(${riseScale})`, width: deviceW, zIndex: 1 }}>
         <div aria-hidden="true" style={{ background: "#0b0b0b", borderBottomLeftRadius: 12, borderBottomRightRadius: 12, height: 26, left: "50%", position: "absolute", top: 14, transform: "translateX(-50%)", width: deviceW * 0.42, zIndex: 2 }} />
         <div style={{ background: "#151515", borderRadius: 32, height: "100%", overflow: "hidden", width: "100%" }}>
-          <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} fontSize={40} />
+          <div style={{ height: "100%", transform: `translateX(${screenSwipe}%) scale(${screenPunch})`, width: "100%" }}>
+            <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={isBright(primaryColor) ? primaryColor : "#f2f2f2"} fontSize={40} />
+          </div>
         </div>
       </div>
       <div style={{ maxWidth: L.isLandscape ? "42%" : "90%", position: "relative", textAlign: L.isLandscape ? "left" : "center", zIndex: 1 }}>
-        <h1 style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0 }}>{scene.headline}</h1>
-        {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "20px 0 0", opacity: 0.92 }}>{scene.body}</p> : null}
+        <KineticText
+          as="h1"
+          text={scene.headline}
+          split="words"
+          from="start"
+          startFrame={4 + L.lead}
+          perItem={2}
+          duration={14}
+          y={30}
+          ease="power3Out"
+          style={{ fontFamily: fonts.display, fontSize: L.headlineSize, lineHeight: 1.02, margin: 0 }}
+        />
+        {scene.body && !hasCaptions ? <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "20px 0 0", opacity: 0.92 * bodyIn, transform: `translateY(${(1 - bodyIn) * 16}px)` }}>{scene.body}</p> : null}
       </div>
       <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 2 }}>
         <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
@@ -617,17 +803,26 @@ const DeviceFrameBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, he
 };
 
 // stat-slam: a source-backed number dominates the frame.
-const StatSlamBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, logoPath, platform, primaryColor, scene }) => {
-  const L = useSceneLayout(platform, scene);
+const StatSlamBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, fonts, lead, logoPath, onAccent, platform, primaryColor, scene, textColor }) => {
+  const L = useSceneLayout(platform, scene, lead);
+  // the number locking on its final value is the beat of this block: shake the
+  // whole frame and flash for 1 frame, matching AnimatedMetric's count window
+  const landFrame = scene.metric
+    ? Math.max(1, Math.min(L.sceneFrames - 1, Math.round(L.fps * 1.15)))
+    : 10;
+  const shake = decayShake(L.frame, { start: landFrame, durationFrames: 9, amplitude: 9, rotationDeg: 0.5, seed: 3 });
+  // echo beat: the proof line rises right after the number locks
+  const proofIn = tween(L.frame, { start: landFrame + 6, duration: 12, ease: "power2Out" });
   return (
-    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: "column", fontFamily: FONT_STACK, gap: 24, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding }}>
+    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: textColor, display: "flex", flexDirection: "column", fontFamily: fonts.body, gap: 24, justifyContent: "center", overflow: "hidden", padding: L.padding, transform: `translate(${shake.x}px, ${shake.y}px) rotate(${shake.rot}deg)` }}>
+      <ImpactFlash start={landFrame + L.lead} peak={0.32} hold={1} fade={4} />
       <div aria-hidden="true" style={{ background: `repeating-linear-gradient(135deg, transparent 0 60px, ${primaryColor}14 60px 78px)`, inset: 0, position: "absolute", zIndex: 0 }} />
       <div style={{ position: "relative", zIndex: 1 }}>
         {scene.eyebrow ? <p style={{ color: primaryColor, fontSize: L.eyebrowSize, fontWeight: 800, letterSpacing: 2, margin: 0, textAlign: "center", textTransform: "uppercase" }}>{scene.eyebrow}</p> : null}
         {scene.metric ? (
-          <AnimatedMetric isLandscape={L.isLandscape} isSquare={L.isSquare} metric={scene.metric} primaryColor={primaryColor} sceneFrames={L.sceneFrames} variant="poster" />
+          <AnimatedMetric isLandscape={L.isLandscape} isSquare={L.isSquare} metric={scene.metric} primaryColor={primaryColor} onAccent={onAccent} sceneFrames={L.sceneFrames} delay={L.lead} variant="poster" />
         ) : (
-          <strong style={{ color: primaryColor, display: "block", fontSize: L.isLandscape ? 160 : 240, letterSpacing: -4, lineHeight: 0.82, textAlign: "center" }}>{scene.visual}</strong>
+          <strong style={{ color: primaryColor, display: "block", fontFamily: fonts.display, fontSize: L.isLandscape ? 160 : 240, letterSpacing: -4, lineHeight: 0.82, textAlign: "center" }}>{scene.visual}</strong>
         )}
       </div>
       <KineticText
@@ -635,14 +830,18 @@ const StatSlamBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, logoP
         text={scene.headline}
         split="words"
         from="center"
-        startFrame={2}
+        enter="slam"
+        startFrame={2 + L.lead}
         perItem={2}
-        duration={14}
-        y={30}
-        ease="power3Out"
-        style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0, maxWidth: "84%", position: "relative", textAlign: "center", zIndex: 1 }}
+        duration={10}
+        ease="power3In"
+        style={{ fontFamily: fonts.display, fontSize: L.headlineSize, lineHeight: 1.02, margin: 0, maxWidth: "84%", position: "relative", textAlign: "center", zIndex: 1 }}
       />
-      {scene.proof ? <p style={{ fontSize: L.proofSize, fontWeight: 700, margin: 0, opacity: 0.86, position: "relative", textAlign: "center", zIndex: 1 }}>{scene.proof}</p> : null}
+      {scene.proof ? (
+        <p style={{ fontSize: L.proofSize, fontWeight: 700, margin: 0, opacity: 0.86 * proofIn, position: "relative", textAlign: "center", transform: `translateY(${(1 - proofIn) * 14}px)`, zIndex: 1 }}>
+          {scene.proof}
+        </p>
+      ) : null}
       <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 2 }}>
         <BrandHeader brandName={brandName} logoPath={logoPath} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
       </div>
@@ -651,30 +850,43 @@ const StatSlamBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, logoP
 };
 
 // cta-card: centered conversion poster with a pulsing CTA button.
-const CtaCardBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, cta, logoPath, platform, primaryColor, scene }) => {
-  const L = useSceneLayout(platform, scene);
-  const pop = interpolate(L.frame, [0, 16], [0.8, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const pulse = 1 + 0.04 * Math.sin((L.frame / L.fps) * Math.PI * 2 * 1.4);
+const CtaCardBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, cta, fonts, hasCaptions, lead, logoPath, onAccent, platform, primaryColor, scene, textColor }) => {
+  const L = useSceneLayout(platform, scene, lead);
+  const pop = tween(L.frame, { duration: 14, from: 0.84, to: 1, ease: "backOutSoft" });
+  // CTA button: wind down for 4 frames, then hand the full range to the spring
+  // so its overshoot actually crosses 1 (peak ≈1.10, rest 1.0), squash on
+  // landing, keep a pulse loop — energy gathered, spent, absorbed, sustained
+  const btnWind = tween(L.frame, { duration: 4, from: 0.62, to: 0.56, ease: "power2In" });
+  const btnPop = springPop(L.frame, L.fps, { start: 4, damping: 10, stiffness: 230 });
+  const btnBase = L.frame < 4 ? btnWind : 0.56 + 0.44 * btnPop;
+  const btnSquash = squashLand(L.frame, { land: 12, intensity: 0.14, hold: 2, recover: 8 });
+  const pulse = 1 + 0.04 * Math.sin(Math.max(0, L.frame - 22) / L.fps * Math.PI * 2 * 1.4);
+  const btnScaleX = btnBase * btnSquash.scaleX * pulse;
+  const btnScaleY = btnBase * btnSquash.scaleY * pulse;
   return (
-    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: "#fff", display: "flex", flexDirection: "column", fontFamily: FONT_STACK, gap: 30, justifyContent: "center", overflow: "hidden", opacity: L.opacity, padding: L.padding, textAlign: "center" }}>
+    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: textColor, display: "flex", flexDirection: "column", fontFamily: fonts.body, gap: 30, justifyContent: "center", overflow: "hidden", padding: L.padding, textAlign: "center" }}>
       <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 50%, ${primaryColor}3a, transparent 62%)`, inset: 0, position: "absolute", zIndex: 0 }} />
-      <Burst start={4} preset="confetti" colors={[primaryColor, "#ffffff", primaryColor]} origin={{ x: "50%", y: "46%" }} zIndex={0} />
+      <ImpactFlash start={12 + L.lead} peak={0.28} hold={1} fade={4} />
+      <Burst start={12 + L.lead} preset="confetti" colors={[primaryColor, textColor, primaryColor]} origin={{ x: "50%", y: "46%" }} zIndex={0} />
       <div style={{ alignItems: "center", display: "flex", flexDirection: "column", gap: 18, position: "relative", transform: `scale(${pop})`, zIndex: 1 }}>
         {logoPath ? <Img src={assetSrc(logoPath)} style={{ borderRadius: 12, height: 72, objectFit: "contain", width: 72 }} /> : null}
         <KineticText
           as="h1"
           text={scene.headline}
           split="words"
-          startFrame={2}
+          startFrame={2 + L.lead}
           perItem={2}
           duration={13}
           y={34}
           ease="power3Out"
-          style={{ fontSize: L.headlineSize + 6, lineHeight: 1.0, margin: 0, maxWidth: "90%" }}
+          style={{ fontFamily: fonts.display, fontSize: L.headlineSize + 6, lineHeight: 1.0, margin: 0, maxWidth: "90%" }}
         />
-        {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.2, margin: 0, opacity: 0.9 }}>{scene.body}</p> : null}
+        {scene.body && !hasCaptions ? <p style={{ fontSize: L.bodySize, lineHeight: 1.2, margin: 0, opacity: 0.9 }}>{scene.body}</p> : null}
       </div>
-      <div style={{ background: primaryColor, borderRadius: 999, boxShadow: `0 24px 70px ${primaryColor}66`, color: "#111", fontSize: L.brandSize + 2, fontWeight: 900, padding: "22px 52px", position: "relative", transform: `scale(${pulse})`, zIndex: 1 }}>{cta}</div>
+      <div style={{ background: primaryColor, borderRadius: 999, boxShadow: `0 24px 70px ${primaryColor}66`, color: onAccent, fontSize: L.brandSize + 2, fontWeight: 900, overflow: "hidden", padding: "22px 52px", position: "relative", transform: `scale(${btnScaleX}, ${btnScaleY})`, transformOrigin: "50% 100%", zIndex: 1 }}>
+        {cta}
+        <Sheen start={24 + L.lead} duration={14} period={75} opacity={0.55} />
+      </div>
       {scene.proof ? <p style={{ fontSize: L.proofSize, fontWeight: 700, margin: 0, opacity: 0.82, position: "relative", zIndex: 1 }}>{scene.proof}</p> : null}
       <strong style={{ bottom: L.padding, fontSize: L.brandSize, position: "absolute", zIndex: 1 }}>{brandName}</strong>
     </AbsoluteFill>
@@ -683,8 +895,8 @@ const CtaCardBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, cta, l
 
 // hero-morph: the visual flies in from a thumbnail and expands to fill the hero
 // frame (GSAP Flip shared-element morph); the headline then resolves over it.
-const HeroMorphBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, heroImagePath, logoPath, platform, primaryColor, scene }) => {
-  const L = useSceneLayout(platform, scene);
+const HeroMorphBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, fonts, hasCaptions, heroImagePath, lead, logoPath, platform, primaryColor, scene, textColor }) => {
+  const L = useSceneLayout(platform, scene, lead);
   const visualAsset = visualAssetFor(scene, heroImagePath);
   const pad = L.padding;
   const heroW = L.width - pad * 2;
@@ -694,28 +906,218 @@ const HeroMorphBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, hero
   const thumb = Math.round(Math.min(heroW, heroH) * 0.3);
   const from = { x: Math.round(L.width / 2 - thumb / 2), y: Math.round(L.height * 0.62), width: thumb, height: thumb, rotation: -8 };
   const headlineTop = heroTop + heroH + 30;
+  // the morph arriving at the hero rect is a landing: small shake sells the
+  // mass, then copy and proof follow as separate beats (land → body → proof)
+  const morphLand = 22;
+  const shake = decayShake(L.frame, { start: morphLand, durationFrames: 8, amplitude: 6, rotationDeg: 0.35, seed: 5 });
+  const bodyIn = tween(L.frame, { start: morphLand + 4, duration: 12, ease: "power2Out" });
+  const proofPop = springPop(L.frame, L.fps, { start: morphLand + 14, damping: 11 });
   return (
-    <AbsoluteFill style={{ backgroundColor, color: "#fff", fontFamily: FONT_STACK, overflow: "hidden", opacity: L.opacity }}>
+    <AbsoluteFill style={{ backgroundColor, color: textColor, fontFamily: fonts.body, overflow: "hidden", transform: `translate(${shake.x}px, ${shake.y}px) rotate(${shake.rot}deg)` }}>
       <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 32%, ${primaryColor}26, transparent 60%)`, inset: 0, position: "absolute", zIndex: 0 }} />
       <FlipMove
         from={from}
         to={to}
-        start={2}
+        start={2 + L.lead}
         duration={20}
         ease="power3InOut"
+        arc={130}
         fade
         style={{ border: `3px solid ${primaryColor}`, borderRadius: 8, overflow: "hidden", boxShadow: `0 28px 96px rgba(0,0,0,0.4), 0 0 0 12px ${primaryColor}22`, zIndex: 1 }}
       >
         <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} />
       </FlipMove>
       <div style={{ left: pad, position: "absolute", right: pad, top: headlineTop, zIndex: 2 }}>
-        <KineticText as="h1" text={scene.headline} split="words" from="start" startFrame={20} perItem={2} duration={13} y={28} ease="power3Out" style={{ fontSize: L.headlineSize, lineHeight: 1.02, margin: 0 }} />
-        {scene.body ? <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "18px 0 0", opacity: 0.9 }}>{scene.body}</p> : null}
-        {scene.proof ? <p style={{ color: primaryColor, fontSize: L.proofSize, fontWeight: 800, margin: "16px 0 0" }}>{scene.proof}</p> : null}
+        <KineticText as="h1" text={scene.headline} split="words" from="start" startFrame={20 + L.lead} perItem={2} duration={13} y={28} ease="power3Out" style={{ fontFamily: fonts.display, fontSize: L.headlineSize, lineHeight: 1.02, margin: 0 }} />
+        {scene.body && !hasCaptions ? (
+          <p style={{ fontSize: L.bodySize, lineHeight: 1.18, margin: "18px 0 0", opacity: 0.9 * bodyIn, transform: `translateY(${(1 - bodyIn) * 16}px)` }}>{scene.body}</p>
+        ) : null}
+        {scene.proof ? (
+          <p
+            style={{
+              color: primaryColor,
+              fontSize: L.proofSize,
+              fontWeight: 800,
+              margin: "16px 0 0",
+              opacity: Math.min(1, proofPop * 1.4),
+              transform: `scale(${0.75 + 0.25 * proofPop})`,
+              transformOrigin: "left center"
+            }}
+          >
+            {scene.proof}
+          </p>
+        ) : null}
       </div>
       <div style={{ left: pad, position: "absolute", right: pad, top: Math.round(pad * 0.5), zIndex: 3 }}>
         <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
       </div>
+    </AbsoluteFill>
+  );
+};
+
+// ui-takeover: a fake push notification drops in, hovers, gets pressed, and
+// expands into the full-bleed hero — the system-UI hook. The viewer's muscle
+// memory does the first second of work.
+const UiTakeoverBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, fonts, hasCaptions, heroImagePath, lead, logoPath, platform, primaryColor, scene, textColor }) => {
+  const L = useSceneLayout(platform, scene, lead);
+  const visualAsset = visualAssetFor(scene, heroImagePath);
+  const appName = scene.eyebrow ?? brandName;
+
+  // system notifications hug the screen edge much tighter than scene padding
+  const bannerPad = 24;
+  const bannerW = L.width - bannerPad * 2;
+  const bannerTop = Math.round(L.height * 0.1);
+  const bannerRect = { x: bannerPad, y: bannerTop, width: bannerW, height: NOTIFICATION_HEIGHT };
+  const fullRect = { x: 0, y: 0, width: L.width, height: L.height };
+
+  // beats: drop (0) → hover (the reading window) → press → expand → headline.
+  // The expansion is clamped so the headline + proof always fit before the
+  // scene ends (>=44 frames of tail); the press needs >=1.5s of reading time —
+  // give this block at least 3s, ideally 4s.
+  const expandStart = Math.min(
+    Math.max(Math.round(L.sceneFrames * 0.45), Math.round(L.fps * 1.5)) + 4,
+    Math.max(8, L.sceneFrames - 44)
+  );
+  const pressFrame = expandStart - 4;
+  const expandLand = expandStart + 18;
+
+  const drop = springPop(L.frame, L.fps, { start: 2, damping: 13, stiffness: 160 });
+  // the hover bob dies when the banner is pressed — a held thing stops moving
+  const hoverDecay = 1 - tween(L.frame, { start: pressFrame, duration: 4, ease: "power2Out" });
+  const hover = Math.sin((L.frame / L.fps) * Math.PI * 2 * 0.45) * 3 * hoverDecay;
+  const press = tween(L.frame, { start: pressFrame, duration: 3, from: 1, to: 0.96, ease: "power2In" });
+  const expandP = tween(L.frame, { start: expandStart, duration: 18, ease: "power3InOut" });
+  // elliptical corner compensation: the un-rounding corner radius must be
+  // divided by the (non-uniform) flip scale or it collapses on the first frame
+  const inv = 1 - expandP;
+  const sxEff = (bannerRect.width / fullRect.width) * inv + expandP;
+  const syEff = (bannerRect.height / fullRect.height) * inv + expandP;
+  const cornerPx = 48 * inv;
+  const shake = decayShake(L.frame, { start: expandLand, durationFrames: 8, amplitude: 7, rotationDeg: 0.4, seed: 9 });
+  const proofPop = springPop(L.frame, L.fps, { start: expandLand + 12, damping: 11 });
+
+  return (
+    <AbsoluteFill style={{ backgroundColor, color: textColor, fontFamily: fonts.body, overflow: "hidden", transform: `translate(${shake.x}px, ${shake.y}px) rotate(${shake.rot}deg)` }}>
+      {/* ambient lock-screen glow */}
+      <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 18%, ${primaryColor}1f, transparent 55%)`, inset: 0, position: "absolute" }} />
+      {/* the notification */}
+      <div
+        style={{
+          left: bannerPad,
+          position: "absolute",
+          top: bannerTop,
+          transform: `translateY(${(1 - drop) * -(bannerTop + NOTIFICATION_HEIGHT + 40) + hover}px) scale(${press})`,
+          transformOrigin: "50% 0%",
+          width: bannerW,
+          zIndex: 1
+        }}
+      >
+        <FakeNotification
+          appName={appName}
+          title={scene.headline}
+          body={scene.body}
+          iconSrc={logoPath ? assetSrc(logoPath) : undefined}
+          width={bannerW}
+          pressed={L.frame >= pressFrame}
+        />
+      </div>
+      {/* press feedback + expansion into the hero */}
+      <ImpactFlash start={expandStart + lead} peak={0.18} hold={1} fade={3} />
+      {expandP > 0 ? (
+        <FlipMove
+          from={bannerRect}
+          to={fullRect}
+          start={expandStart + lead}
+          duration={18}
+          ease="power3InOut"
+          fade
+          style={{ borderRadius: `${cornerPx / Math.max(0.01, sxEff)}px / ${cornerPx / Math.max(0.01, syEff)}px`, overflow: "hidden", zIndex: 2 }}
+        >
+          <AbsoluteFill>
+            <VisualFill asset={visualAsset} fallback={scene.visual} primaryColor={primaryColor} fontSize={84} />
+            <AbsoluteFill style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.8) 100%)" }} />
+            <div style={{ bottom: L.padding + 20, left: L.padding, position: "absolute", right: L.padding }}>
+              <KineticText
+                as="h1"
+                text={scene.headline}
+                split="words"
+                from="center"
+                enter="clip"
+                startFrame={expandLand + lead}
+                perItem={2}
+                duration={12}
+                y={44}
+                ease="power4Out"
+                style={{ color: "#fff", fontFamily: fonts.display, fontSize: L.headlineSize + 8, lineHeight: 1.0, margin: 0, textShadow: "0 6px 30px rgba(0,0,0,0.5)" }}
+              />
+              {scene.proof && !hasCaptions ? (
+                <p style={{ color: primaryColor, fontSize: L.proofSize, fontWeight: 800, margin: "16px 0 0", opacity: Math.min(1, proofPop * 1.4), transform: `scale(${0.75 + 0.25 * proofPop})`, transformOrigin: "left center" }}>
+                  {scene.proof}
+                </p>
+              ) : null}
+            </div>
+          </AbsoluteFill>
+        </FlipMove>
+      ) : null}
+    </AbsoluteFill>
+  );
+};
+
+// charge-reveal: the ChargeBar progress beat (rush → squeeze → hold → slam).
+const ChargeRevealBlock: React.FC<SceneProps> = ({ backgroundColor, brandName, fonts, lead, logoPath, platform, primaryColor, scene, textColor }) => {
+  const L = useSceneLayout(platform, scene, lead);
+  const { slamFrame } = chargeTimings(L.sceneFrames);
+  return (
+    <AbsoluteFill style={{ alignItems: "center", backgroundColor, color: textColor, display: "flex", flexDirection: "column", fontFamily: fonts.body, justifyContent: "center", overflow: "hidden", padding: L.padding }}>
+      <div aria-hidden="true" style={{ background: `radial-gradient(circle at 50% 50%, ${primaryColor}26, transparent 60%)`, inset: 0, position: "absolute", zIndex: 0 }} />
+      {/* full-frame slam flash at the block root: covers everything and does
+          not travel with the bar's shake */}
+      <ImpactFlash start={slamFrame + L.lead} peak={0.45} hold={2} fade={5} />
+      <ChargeBar
+        chargingLabel={scene.body ?? scene.visual}
+        completeLabel={scene.headline}
+        accent={primaryColor}
+        textColor={textColor}
+        fontDisplay={fonts.display}
+        sceneFrames={L.sceneFrames}
+        lead={L.lead}
+      />
+      <div style={{ left: L.padding, position: "absolute", right: L.padding, top: Math.round(L.padding * 0.5), zIndex: 2 }}>
+        <BrandHeader brandName={brandName} logoPath={logoPath} eyebrow={scene.eyebrow} primaryColor={primaryColor} brandSize={L.brandSize} eyebrowSize={L.eyebrowSize} />
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// CameraLayer — one camera per scene: handheld micro-drift + a scene-long slow
+// push (no frame is ever fully static), plus the storyboard-declared impact
+// shake. Wraps every block so the whole frame reacts, not just one element.
+const CameraLayer: React.FC<{
+  nominalFrames: number;
+  seed: number;
+  lead: number; // frames this Sequence started before the nominal scene start
+  impact?: AdVideoProps["scenes"][number]["impact"];
+  children: React.ReactNode;
+}> = ({ nominalFrames, seed, lead, impact, children }) => {
+  const frame = useCurrentFrame();
+  const cam = cameraDrift(frame, nominalFrames, { seed });
+  const heavy = impact?.strength !== "light";
+  const shake = impact
+    ? decayShake(frame, {
+        start: impact.atFrame + lead,
+        durationFrames: heavy ? 13 : 8,
+        amplitude: heavy ? 18 : 7,
+        rotationDeg: heavy ? 1 : 0.4,
+        seed
+      })
+    : { x: 0, y: 0, rot: 0 };
+  return (
+    <AbsoluteFill
+      style={{
+        transform: `translate(${cam.x + shake.x}px, ${cam.y + shake.y}px) rotate(${shake.rot}deg) scale(${cam.scale})`
+      }}
+    >
+      {children}
     </AbsoluteFill>
   );
 };
@@ -736,6 +1138,10 @@ const Scene: React.FC<SceneProps> = (props) => {
       return <StatSlamBlock {...props} />;
     case "cta-card":
       return <CtaCardBlock {...props} />;
+    case "ui-takeover":
+      return <UiTakeoverBlock {...props} />;
+    case "charge-reveal":
+      return <ChargeRevealBlock {...props} />;
     case "standard":
       return <StandardBlock {...props} />;
     default: {
@@ -747,39 +1153,159 @@ const Scene: React.FC<SceneProps> = (props) => {
 };
 
 export const AdVideo: React.FC<AdVideoProps> = (props) => {
+  const frame = useCurrentFrame();
   const { fps, height, width } = useVideoConfig();
   const isLandscape = props.platform.includes("landscape") || width > height;
   const isSquare = props.platform.includes("square") || width === height;
   const footerInset = isLandscape ? 56 : isSquare ? 60 : 72;
   const footerFontSize = isLandscape ? 18 : isSquare ? 19 : 20;
+  const fonts = getFontStacks(props.fontPreset);
+  // the footer (offer + disclaimer) must stay readable when an inverted scene
+  // floods the screen with a bright color — follow the current scene's bg
+  const footerScene =
+    props.scenes.find(
+      (s) =>
+        frame >= Math.round(s.startSecond * fps) &&
+        frame < Math.round((s.startSecond + s.durationSecond) * fps)
+    ) ?? props.scenes[props.scenes.length - 1];
+  const footerBg = footerScene.colorMode === "inverted" ? props.primaryColor : props.backgroundColor;
+  const footerColor = isBright(footerBg) ? "rgba(16,16,16,0.78)" : "rgba(255,255,255,0.72)";
 
   return (
     <AbsoluteFill style={{ backgroundColor: props.backgroundColor }}>
       <AudioLayer audio={props.audio} />
 
-      {props.scenes.map((scene) => (
-        <Sequence
-          key={scene.id}
-          from={Math.round(scene.startSecond * fps)}
-          durationInFrames={Math.round(scene.durationSecond * fps)}
-        >
-          <Scene
-            backgroundColor={props.backgroundColor}
-            brandName={props.brandName}
-            cta={props.cta}
-            heroImagePath={props.heroImagePath}
-            logoPath={props.logoPath}
-            platform={props.platform}
-            primaryColor={props.primaryColor}
-            scene={scene}
-          />
-        </Sequence>
-      ))}
+      {props.scenes.map((scene, index) => {
+        const prev = index > 0 ? props.scenes[index - 1] : undefined;
+        const next = props.scenes[index + 1];
+        const isLast = index === props.scenes.length - 1;
+        // entrance is derived from the previous scene's transitionOut so both
+        // sides of a boundary move as one gesture; default handoff is a cut
+        const enterKind: TransitionKind | undefined = prev ? (prev.transitionOut ?? "cut") : undefined;
+        const exitKind: TransitionKind | undefined = isLast ? undefined : (scene.transitionOut ?? "cut");
+        const nominalFrom = Math.round(scene.startSecond * fps);
+        // anchor the scene's end on the next scene's rounded start when the
+        // scenes are contiguous, so both sides of a boundary round identically
+        // (round(start)+round(duration) can differ from round(next.start) by 1)
+        const naturalEnd = Math.round((scene.startSecond + scene.durationSecond) * fps);
+        const nextFrom = next ? Math.round(next.startSecond * fps) : naturalEnd;
+        const sceneEnd = next && Math.abs(naturalEnd - nextFrom) <= 1 ? nextFrom : naturalEnd;
+        const nominalFrames = Math.max(1, sceneEnd - nominalFrom);
+        // whip transitions need both scenes alive during the shared window:
+        // start this Sequence `lead` frames early, extend it `tail` frames late
+        const lead = Math.min(enterKind ? TRANSITION_TIMING[enterKind].lead : 0, nominalFrom);
+        const tail = exitKind ? TRANSITION_TIMING[exitKind].tail : 0;
+        // stat-slam, charge-reveal, and ui-takeover fire their own landing
+        // flash/shake; suppress the scene-level flash so a storyboard impact
+        // on those blocks does not double-expose
+        const blockKind = scene.block ?? "standard";
+        const wantsSceneFlash =
+          Boolean(scene.impact) && !["stat-slam", "charge-reveal", "ui-takeover"].includes(blockKind);
+        // "inverted" floods the scene with the accent color; text colors are
+        // picked by actual background luminance so dark brand colors stay
+        // readable instead of assuming the primary is bright
+        const inverted = scene.colorMode === "inverted";
+        const sceneBg = inverted ? props.primaryColor : props.backgroundColor;
+        const sceneAccent = inverted ? props.backgroundColor : props.primaryColor;
+        const textColor = isBright(sceneBg) ? "#101010" : "#ffffff";
+        const onAccent = isBright(sceneAccent) ? "#111111" : "#f2f2f2";
+        return (
+          <Sequence key={scene.id} from={nominalFrom - lead} durationInFrames={nominalFrames + lead + tail}>
+            <SceneTransition enter={enterKind} exit={exitKind} enterLead={lead} nominalFrames={nominalFrames}>
+              <CameraLayer nominalFrames={nominalFrames} seed={index} lead={lead} impact={scene.impact}>
+                <Scene
+                  backgroundColor={sceneBg}
+                  brandName={props.brandName}
+                  cta={props.cta}
+                  fonts={fonts}
+                  hasCaptions={Boolean(props.captions && props.captions.length > 0)}
+                  heroImagePath={props.heroImagePath}
+                  lead={lead}
+                  logoPath={props.logoPath}
+                  onAccent={onAccent}
+                  platform={props.platform}
+                  primaryColor={sceneAccent}
+                  scene={scene}
+                  textColor={textColor}
+                />
+                {scene.celebrate ? (
+                  <Burst
+                    start={
+                      (scene.celebrate.startFrame ??
+                        // charge-reveal's payoff is the slam, not the 40% mark
+                        // (which lands mid-crawl and breaks the squeeze)
+                        (blockKind === "charge-reveal"
+                          ? chargeTimings(nominalFrames).slamFrame
+                          : Math.round(nominalFrames * 0.4))) + lead
+                    }
+                    preset={scene.celebrate.preset}
+                    colors={[sceneAccent, textColor, sceneAccent]}
+                    origin={{ x: "50%", y: "44%" }}
+                    zIndex={4}
+                  />
+                ) : null}
+              </CameraLayer>
+              {/* the flash sits outside the camera so it covers the real frame
+                  even while the shake displaces the scene */}
+              {wantsSceneFlash && scene.impact ? (
+                <ImpactFlash
+                  start={scene.impact.atFrame + lead}
+                  peak={scene.impact.strength === "light" ? 0.3 : 0.7}
+                  hold={scene.impact.strength === "light" ? 1 : 2}
+                />
+              ) : null}
+            </SceneTransition>
+          </Sequence>
+        );
+      })}
+
+      {/* luma-wipe overlay panels: the cut hides while the panel covers the screen */}
+      {props.scenes.map((scene, index) => {
+        const next = props.scenes[index + 1];
+        if (!next || scene.transitionOut !== "luma-wipe") {
+          return null;
+        }
+        const boundary = Math.round(next.startSecond * fps);
+        const from = Math.max(0, boundary - 6);
+        // an inverted scene is already flooded with the primary color — sweep
+        // the background color instead so the panel reads against it
+        const panelColor = scene.colorMode === "inverted" ? props.backgroundColor : props.primaryColor;
+        return (
+          <Sequence key={`wipe-${scene.id}`} from={from} durationInFrames={13}>
+            <LumaWipe color={panelColor} startOffset={6 - (boundary - from)} />
+          </Sequence>
+        );
+      })}
+
+      {/* karaoke captions: the voiceover's visual carrier, above all scenes.
+          On inverted scenes the accent floods the screen, so the caption
+          accent swaps to the background color for contrast. */}
+      {props.captions && props.captions.length > 0 ? (
+        <CaptionTrack
+          captions={props.captions}
+          accentColor={props.primaryColor}
+          accentSwaps={props.scenes
+            .filter((scene) => scene.colorMode === "inverted")
+            .map((scene) => ({
+              // ±4 frames: cover the whip lead-in and boundary rounding — both
+              // ends sit inside transition windows where the early/late swap
+              // is invisible
+              from: Math.max(0, Math.round(scene.startSecond * fps) - 4),
+              to: Math.round((scene.startSecond + scene.durationSecond) * fps) + 4,
+              color: props.backgroundColor
+            }))}
+          fontFamily={fonts.display}
+        />
+      ) : null}
+
+      {/* film finish: grain + vignette unify every layer into one medium */}
+      {props.finish?.vignette === false ? null : <Vignette />}
+      {props.finish?.grain === false ? null : <Grain />}
 
       <div
         style={{
           bottom: 36,
-          color: "rgba(255,255,255,0.72)",
+          color: footerColor,
           fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
           fontSize: footerFontSize,
           left: footerInset,

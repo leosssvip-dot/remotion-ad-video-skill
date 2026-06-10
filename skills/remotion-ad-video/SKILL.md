@@ -93,7 +93,7 @@ Every real commercial sample needs a thumb-stopping visual idea, not just copy. 
 
 Every concept also needs a bold layout idea before storyboard or code: poster-scale type, one dominant visual, asymmetric composition, aggressive crop, oversized product/app frame, kinetic split screen, or a staged reveal. Avoid neat centered slide layouts unless the contrast or motion makes them feel like an ad.
 
-Default to bold. A tasteful, restrained, presentation-safe ad loses the scroll. Push each concept past comfortable: dramatize the feeling with at least one spectacle move (surreal scale, impossible physics, world-bend, or hyperbolic before/after) so there is a "wait, what?" beat. Exaggeration lives in the visual and emotional register only — every numeric and factual claim stays honest and source-backed. Load `references/creative-direction.md` (Bold By Default) and `references/ad-exemplars.md` (Spectacle / Exaggeration Mechanics) for the mechanics.
+Default to bold. A tasteful, restrained, presentation-safe ad loses the scroll. Push each concept past comfortable: dramatize the feeling with at least one spectacle move (surreal-scale, impossible-physics, world-bend, hyperbolic-before-after, maximal-kinetic-burst, dramatized-stakes, ui-comes-alive, or time-break — the `spectacleMove` enum) so there is a "wait, what?" beat. Exaggeration lives in the visual and emotional register only — every numeric and factual claim stays honest and source-backed. Load `references/creative-direction.md` (Bold By Default) and `references/ad-exemplars.md` (Spectacle / Exaggeration Mechanics) for the mechanics.
 
 When source-backed numeric proof exists, plan it as motion instead of static copy: ratings count up, discounts snap from 0 to the final percent, prices or savings roll into place, download/review counts tick upward, and scores burst like a game HUD. Use the exact approved number as the final value and never animate unsupported or inflated claims.
 
@@ -101,7 +101,7 @@ For simple games, especially app-store listings, the visual idea should usually 
 
 For short-video, creator, or social-feed apps, the visual idea should usually be a feed-native simulation: a phone frame that scrolls or swaps content, creator imagery, UI rails, sound/effect stickers, LIVE or Shop chips when source-supported, and quick cuts that feel like the platform itself rather than a product explainer.
 
-For commercial-quality requests, or whenever the user asks for "more creative" output, write `concepts.json` before implementation unless the user asked for one exact direction. Generate at least three distinct concepts (distinct hook mechanic and `structure`, not just color/copy), score them with `references/variant-system.md`, and follow `references/concept-contract.md`. Pull mechanics from `references/ad-exemplars.md` so the bar is great ads, not the stock template. Then gate it:
+Write `concepts.json` before implementation for **every** job, unless the user dictated one exact direction. Fast tests and quick URL jobs use a lean version (3 concepts, one-line fields) — lower resolution is allowed, lower creativity is not; the old "only for commercial-quality" carve-out is exactly how default jobs shipped template-filler. Generate at least three distinct concepts (distinct hook mechanic and `structure`, not just color/copy), each with a `signatureMoment` (the frame only this product could own) and a `spectacleMove`, score them with `references/variant-system.md`, and follow `references/concept-contract.md`. Pull mechanics from `references/ad-exemplars.md` so the bar is great ads, not the stock template. Then gate it:
 
 ```bash
 node scripts/validate-creative.mjs <project-dir>/concepts.json
@@ -114,12 +114,12 @@ Do not start the storyboard until the gate passes. The chosen concept must score
 Create a timed storyboard before code. Load `references/storyboard-contract.md` for the scene contract.
 Use `outputLanguage` from `ad-brief.json` for all video-facing copy unless the user explicitly asks for another language.
 
-Default 15s structure:
+There is no default structure — derive the scene list from the chosen concept's `structure` (see `references/storyboard-contract.md`, Mapping rules). Hard beat budgets that always apply for 15s:
 
-- 0-2s: Thumb-stopping hook with product visible.
-- 2-6s: Demo, payoff, or proof without stopping motion.
-- 6-11s: Main benefit, differentiator, or second payoff.
-- 11-15s: CTA, offer, and disclaimer.
+- The hook must land inside the first 2 seconds, with the product visible.
+- The CTA gets at least 2.5 seconds and holds (no `transitionOut` on the final scene).
+- Everything between hook and CTA belongs to the concept — non-linear shapes (CTA-early echo, triple escalation, countdown inversion, single take) are legal; see `references/ad-exemplars.md` (Structure-Diverse Shapes).
+- No scene runs longer than 2.5 seconds without a secondary beat (impact, metric tick, re-entrance, transition wind-up).
 
 Keep each beat to one visual idea. Avoid paragraphs in video text; prefer short lines that fit mobile. In most scenes, use one headline plus one support line at most; make the dominant word or number much larger instead of spreading many equal-size text blocks. If a scene uses a source-backed numeric claim, include a `metric` plan with `from`, `to`, `prefix`/`suffix`, `decimals`, and a short label so the renderer can animate the value. For games, use fast kinetic shots; cuts are fine, but each shot should contain gameplay, product motion, character/world action, or a visual payoff rather than a static information card.
 For social or short-video apps, cuts are expected. Each shot should feel like a feed moment, creator clip, notification, sound cue, live/shop moment, or action prompt instead of a static feature card.
@@ -127,7 +127,7 @@ Load `references/audio-caption-system.md` when adding music, sound effects, voic
 
 ### 4. Template
 
-If no project exists and `renderEngine` is `remotion`, copy `assets/remotion-template/` into the target workspace. If a Remotion project exists, adapt its existing package manager, entrypoint, and component style.
+If no project exists and `renderEngine` is `remotion`, copy `assets/remotion-template/` into the target workspace. If a Remotion project exists, adapt its existing package manager, entrypoint, and component style — and install `@remotion/google-fonts` if missing; the template imports it even when `fontPreset` stays on the no-network default.
 
 If `renderEngine` is `hyperframes`, copy `assets/hyperframes-template/` or adapt the existing Hyperframes project. Hyperframes output is native HTML: `index.html` is the composition source, `variables.json` carries approved ad copy and asset paths, and QA uses `npx hyperframes lint`, `inspect`, `preview`, and `render`. Load `references/hyperframes-output.md` before implementation. For a new ad, author native Hyperframes HTML; do not use a Remotion-to-Hyperframes porting workflow unless the user explicitly asks to migrate existing Remotion source.
 
@@ -135,7 +135,7 @@ Remotion template rules:
 
 - Use a Zod schema for input props.
 - Keep scenes data-driven rather than hard-coded.
-- Set each scene's `block` to a scene-block kind (`cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `cta-card`, `hero-morph`, or `standard`) so the chosen concept's `structure` renders as distinct layouts and motion, not one repeated card. Map the concept's structure scene blocks onto these template blocks; add a new block component instead of forcing every scene through `standard`.
+- Set each scene's `block` to a scene-block kind (`cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `hero-morph`, `ui-takeover`, `charge-reveal`, `cta-card`, or `standard`) so the chosen concept's `structure` renders as distinct layouts and motion, not one repeated card. Map the concept's structure scene blocks onto these template blocks; add a new block component instead of forcing every scene through `standard`. `ui-takeover` (fake notification expands into the hero) and `charge-reveal` (progress-bar squeeze→slam) are purpose-built hook blocks — reach for them before inventing a weaker opener.
 - Use Remotion `Composition`, `Sequence`, and `AbsoluteFill`.
 - Parameterize platform, dimensions, duration, brand colors, CTA, offer, disclaimer, and scenes.
 - Map the chosen `format` / `platform` into the actual composition dimensions and scene layout. Square and landscape outputs must not reuse the vertical layout unchanged.
@@ -145,8 +145,13 @@ Remotion template rules:
 - Add generated synced SFX by default through props. Use a varied generated SFX palette with frame-locked `startFrame`, category, scene/anchor sync metadata, and visible-event cue descriptions, not one repeated click. Treat audio as a default implementation detail, not a required preflight or QA gate. Only plan or verify special audio when the user asks for silent-safe, music, voiceover, or platform-specific sound.
 - Support `music-sfx` with a generated, licensed, or user-supplied music bed plus picture-locked SFX when the user requests music. Keep quick URL jobs and fast tests on default `sfx-only`.
 - For commercial-quality, batch, or "more creative" requests, default to a full soundscape: music bed + dense SFX + a scripted `voiceover`. Write the voiceover as 3-5 spoken beats with varied delivery (energy, pace, tone) per `references/audio-caption-system.md` (Voiceover Scriptcraft), in `outputLanguage`. A generated TTS voice uses `rightsStatus: generated`.
-- Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis. For bold/commercial-quality concepts, include at least one spectacle move (surreal scale, impossible physics, world-bend, or hyperbolic before/after) so the spot has a "wait, what?" beat.
+- Add at least three motion systems: kinetic hook, animated product/asset reveal, and CTA emphasis. Include the concept's declared `spectacleMove` as a real on-screen beat (see `references/ad-exemplars.md` for the mechanics) so the spot has its "wait, what?" moment.
 - Animate with the vocabulary in `references/motion-language.md`, not bare linear `interpolate`. Use `src/motion.ts` eases (`power3Out` entrances, `expoOut` count-ups, `backOut`/`springPop` pops) and `staggerDelay` for multi-element reveals, and reveal headlines/CTAs with `KineticText` (split words/chars) instead of fading whole text blocks. For shared-element reveals (screenshot→hero, before→after) use `FlipMove` (the `hero-morph` block is a ready example); for reward/spectacle/game beats (confetti, coins, score pops, explosions) use `Burst`.
+- Give every scene boundary a directional handoff via `scene.transitionOut` (`whip-left`/`whip-right`/`whip-up`, `zoom-punch`, `luma-wipe`, or a deliberate `cut`). Never ship an all-`fade` spot, never repeat the same kind on consecutive boundaries, and align an SFX (`sfx-whoosh`, `sfx-impact`, `sfx-swipe`) to each boundary frame. Leave the final scene without a transition so the CTA holds.
+- Make at least one landing physical per spot: a `scene.impact: { atFrame, strength }` beat (flash + camera shake) or a block's built-in slam (metric lock, CTA spring), synced to `sfx-impact`/`sfx-sub-boom` on the same frame. Use `scene.celebrate: { preset }` to fire a `Burst` payoff from props when a reward beat needs it.
+- Pick a `fontPreset` that matches the brand register (`bold-geometric`, `condensed-impact`, `editorial-serif`, `rounded-friendly`, `mono-tech`) instead of shipping the default `clean-sans` Inter look; non-default presets load via `@remotion/google-fonts` (network needed once per render). Give exactly one scene (usually `stat-slam` or `cta-card`) `colorMode: "inverted"` so the spot has a color beat.
+- When the audio plan includes a voiceover, also fill `props.captions` with word-synced karaoke captions (same timestamps as the voiceover track, `emphasis: true` on numbers and power words) — most feeds play muted, and an uncaptioned voiceover effectively does not exist. See `references/audio-caption-system.md` (Karaoke captions).
+- Leave the film finish (`finish.grain` / `finish.vignette`, default on) enabled unless the concept's art direction calls for a flat look.
 - For simple games, include at least one custom gameplay-loop animation inspired by the public screenshots or store description.
 - Keep typography readable at mobile sizes; do not rely on dense body text.
 
@@ -174,7 +179,7 @@ Minimum checks:
 - Visuals are present, not blank.
 - Hook, middle, and CTA stills show different visual states.
 - Source-backed numeric proof animates to the exact final value and is not rendered as a flat text-only proof card.
-- Advertising-aesthetic QA passes using `references/ad-aesthetic-qa.md` for commercial-quality requests.
+- Advertising-aesthetic QA passes using `references/ad-aesthetic-qa.md` for every job (a lean pass — scan the scorecard, fix anything obviously failing — is fine for fast tests; a full scored pass for commercial-quality).
 - CTA, offer, and disclaimer match approved copy.
 - Any unsupported claims are removed or rewritten.
 - Output files and commands are reported.

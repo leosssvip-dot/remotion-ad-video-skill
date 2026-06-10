@@ -29,6 +29,9 @@ type FlipMoveProps = {
   duration?: number;
   ease?: EaseName;
   fade?: boolean; // fade in over the first ~60% of the move
+  // bow the flight path sideways by this many px (positive = "up" relative to
+  // the travel direction). A straight morph is UI; an arc is animation.
+  arc?: number;
   style?: React.CSSProperties;
   children: React.ReactNode;
 };
@@ -40,6 +43,7 @@ export const FlipMove: React.FC<FlipMoveProps> = ({
   duration = 18,
   ease = "power3InOut",
   fade = false,
+  arc = 0,
   style,
   children,
 }) => {
@@ -58,7 +62,7 @@ export const FlipMove: React.FC<FlipMoveProps> = ({
         width: to.width,
         height: to.height,
         transformOrigin: "top left",
-        transform: flipTransform(from, to, p),
+        transform: flipTransform(from, to, p, arc),
         opacity,
         ...style,
       }}

@@ -37,6 +37,20 @@ export const CHOSEN_MINIMUMS = {
   claimSafety: 3
 };
 
+// The "wait, what?" beat is a checkable field, not a vibe: every concept must
+// commit to one of these spectacle mechanics (visual/emotional register only —
+// numeric claims stay honest).
+export const SPECTACLE_MOVES = [
+  "surreal-scale",
+  "impossible-physics",
+  "world-bend",
+  "hyperbolic-before-after",
+  "maximal-kinetic-burst",
+  "dramatized-stakes",
+  "ui-comes-alive",
+  "time-break"
+];
+
 // Tired ad-copy openers that signal template-filler instead of an idea.
 export const CLICHE_PATTERNS = [
   /\bmeet your\b/i,
@@ -134,6 +148,15 @@ export function validateConcepts(data, opts = {}) {
       if (!concept[field] || !String(concept[field]).trim()) {
         errors.push(`${where} missing ${field}`);
       }
+    }
+
+    // signatureMoment: the one frame only this product could own. A missing or
+    // throwaway sentence here is how "swap the logo and it still works" ads ship.
+    if (!concept.signatureMoment || String(concept.signatureMoment).trim().length < 10) {
+      errors.push(`${where} missing signatureMoment (one sentence describing the frame only this product could own)`);
+    }
+    if (!concept.spectacleMove || !SPECTACLE_MOVES.includes(concept.spectacleMove)) {
+      errors.push(`${where} spectacleMove must be one of: ${SPECTACLE_MOVES.join(", ")}`);
     }
 
     if (concept.hookLine) {

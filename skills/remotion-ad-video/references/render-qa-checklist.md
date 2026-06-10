@@ -54,7 +54,17 @@ Inspect hook, middle, and CTA stills:
 - Text fits and does not overlap.
 - Safe-area margins are respected.
 - Scene transitions do not hide important copy.
-- Disclaimer remains readable but does not dominate.
+- Scene boundaries use directional transitions (`transitionOut`: whip/zoom-punch/luma-wipe/cut) —
+  an all-`fade` spot fails this check, and no two consecutive boundaries should reuse the same kind.
+- Impact beats land: at least one scene has a visible landing (flash + shake via `impact`
+  or a block's built-in slam) synced to an impact-class SFX.
+- Any spot with a voiceover track has word-synced `props.captions`, and the caption
+  block does not collide with the disclaimer or platform safe areas.
+- On `colorMode: "inverted"` scenes: text stays readable against the flooded color
+  (dark-on-bright or light-on-dark resolved automatically — eyeball one still) and
+  the caption accent has swapped to the background color.
+- Disclaimer remains readable but does not dominate (the footer follows the scene's
+  background brightness on inverted scenes — verify on one inverted still).
 - For commercial-quality requests, run the creative scorecard in `ad-aesthetic-qa.md`.
 
 ## Handoff Evidence

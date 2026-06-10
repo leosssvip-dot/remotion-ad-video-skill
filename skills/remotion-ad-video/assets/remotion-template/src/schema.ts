@@ -18,14 +18,54 @@ export const SceneBlockSchema = z.enum([
   "device-frame",
   "stat-slam",
   "cta-card",
-  "hero-morph"
+  "hero-morph",
+  // fake push notification drops in, gets pressed, expands into the hero —
+  // the system-UI hook. eyebrow = app name, headline = notification title,
+  // body = notification line, visual/image = the expanded hero.
+  "ui-takeover",
+  // progress-bar psychology: rush → 99% squeeze → hold → 100% slam.
+  // body = charging label, headline = the payoff line.
+  "charge-reveal"
 ]);
+
+// How a scene hands off to the next one. "cut" is the default — scene-level
+// crossfades are the slide-deck failure mode; pick a directional move instead
+// and avoid using the same kind on two consecutive boundaries.
+export const TransitionKindSchema = z.enum([
+  "cut",
+  "fade",
+  "whip-left",
+  "whip-right",
+  "whip-up",
+  "zoom-punch",
+  "luma-wipe"
+]);
+
+// A landing beat inside the scene: screen shake + impact flash on that frame.
+// Sync an sfx-impact / sfx-sub-boom track to the same frame.
+export const SceneImpactSchema = z.object({
+  atFrame: z.number().int().min(0),
+  strength: z.enum(["light", "heavy"]).optional()
+});
+
+// A particle payoff (reward / spectacle beat) the storyboard can fire in any
+// scene without writing code.
+export const SceneCelebrateSchema = z.object({
+  preset: z.enum(["confetti", "coins", "sparks", "debris"]),
+  startFrame: z.number().int().min(0).optional()
+});
 
 export const SceneSchema = z.object({
   id: z.string(),
   startSecond: z.number().min(0),
   durationSecond: z.number().positive(),
   block: SceneBlockSchema.optional(),
+  transitionOut: TransitionKindSchema.optional(),
+  impact: SceneImpactSchema.optional(),
+  celebrate: SceneCelebrateSchema.optional(),
+  // "inverted" floods the scene with the primary color and flips text dark —
+  // free color rhythm. Use on one beat (stat-slam / cta-card), not everywhere.
+  colorMode: z.enum(["default", "inverted"]).optional(),
   eyebrow: z.string().optional(),
   headline: z.string(),
   body: z.string().optional(),
@@ -35,6 +75,44 @@ export const SceneSchema = z.object({
   imagePath: z.string().optional(),
   imageUrl: z.string().url().optional()
 });
+
+// Typography direction. "clean-sans" is the no-network default (system Inter
+// stack); every other preset loads a distinctive display face via
+// @remotion/google-fonts at render time (requires network once per render).
+export const FontPresetSchema = z.enum([
+  "clean-sans",
+  "bold-geometric",
+  "condensed-impact",
+  "editorial-serif",
+  "rounded-friendly",
+  "mono-tech"
+]);
+
+// Film-finish overlays. Both default ON; set false to opt out.
+export const FinishSchema = z.object({
+  grain: z.boolean().optional(),
+  vignette: z.boolean().optional()
+});
+
+// Karaoke captions: the visual carrier for the voiceover (most feeds play
+// muted). One entry per spoken sentence; words carry per-word timing. When
+// `words` is omitted the words are distributed evenly across the window.
+export const CaptionWordSchema = z.object({
+  w: z.string(),
+  atFrame: z.number().int().min(0),
+  emphasis: z.boolean().optional()
+});
+
+export const CaptionSchema = z
+  .object({
+    text: z.string(),
+    startFrame: z.number().int().min(0),
+    endFrame: z.number().int().min(1),
+    words: z.array(CaptionWordSchema).optional()
+  })
+  .refine((caption) => caption.endFrame > caption.startFrame, {
+    message: "Caption endFrame must be greater than startFrame"
+  });
 
 export const AudioPresetSchema = z.enum([
   "music-pulse-120",
@@ -138,12 +216,15 @@ export const AdVideoSchema = z.object({
   durationSeconds: z.number().positive(),
   primaryColor: z.string(),
   backgroundColor: z.string(),
+  fontPreset: FontPresetSchema.optional(),
+  finish: FinishSchema.optional(),
   logoPath: z.string().optional(),
   heroImagePath: z.string().optional(),
   cta: z.string(),
   offer: z.string().optional(),
   disclaimer: z.string().optional(),
   audio: AudioSpecSchema.optional(),
+  captions: z.array(CaptionSchema).optional(),
   scenes: z.array(SceneSchema).min(1)
 });
 

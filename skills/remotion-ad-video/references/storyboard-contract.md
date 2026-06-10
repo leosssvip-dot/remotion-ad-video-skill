@@ -8,7 +8,19 @@ Each scene should include:
 - `startSecond`: Number.
 - `durationSecond`: Number.
 - `goal`: Hook, pain, demo, proof, offer, or CTA.
-- `block`: Remotion layout for the scene - `cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `cta-card`, or `standard`. Map the chosen concept's `structure` onto these; vary blocks so the ad is not one repeated layout. See `concept-contract.md`.
+- `block`: Remotion layout for the scene - `cold-open-payoff`, `split-before-after`, `device-frame`, `stat-slam`, `hero-morph`, `ui-takeover`, `charge-reveal`, `cta-card`, or `standard`. Map the chosen concept's `structure` onto these; vary blocks so the ad is not one repeated layout. See `concept-contract.md`.
+  - `ui-takeover` remaps the copy fields: `eyebrow` → app name, `headline` → notification title (single line, truncated), `body` → notification body line (single line), `logoPath` → app icon, `visual`/image → the expanded hero. Give it at least 3s (4s recommended) so the notification can be read before the press; prefer vertical formats when captions are on.
+  - `charge-reveal` remaps: `body` → the charging label ("CALIBRATING…"), `headline` → the payoff line revealed at 100%. Give it at least 4s so the 88→99 ticks read as discrete events.
+- `transitionOut`: How the scene hands off to the next one - `whip-left`, `whip-right`, `whip-up`, `zoom-punch`, `luma-wipe`, `cut` (default), or `fade`. Plan it at storyboard time and pair the boundary with an SFX cue; never all-fade, never the same kind twice in a row, and leave it off the final scene. Transitions assume scenes are back-to-back (each `startSecond` equals the previous scene's end). See `motion-language.md` §9.
+- `impact`: Optional landing beat `{ atFrame, strength: light|heavy }` - flash plus camera shake on the frame something heavy locks in, synced to an impact-class SFX. `atFrame` is scene-local (0 = the scene's nominal start); `strength` defaults to `heavy`. `stat-slam`, `hero-morph`, `ui-takeover` (expand landing), and `charge-reveal` (slam — which also fires its own confetti, so skip `celebrate` there too) fire their own landing impact — do not stack a scene `impact` on the same frame there. See `motion-language.md` §10.
+- `celebrate`: Optional particle payoff `{ preset: confetti|coins|sparks|debris, startFrame }` for reward beats. `startFrame` is scene-local and defaults to 40% of the scene.
+- `colorMode`: Optional `inverted` floods the scene with the primary color and flips text dark — plan exactly one inverted beat per spot (usually the stat or CTA scene).
+
+Top-level props planned at storyboard time:
+
+- `fontPreset`: typography direction — `clean-sans` (default, no network), `bold-geometric`, `condensed-impact`, `editorial-serif`, `rounded-friendly`, or `mono-tech`. Pick by brand register; do not leave every ad on the default.
+- `captions`: word-synced karaoke captions whenever a voiceover exists — same timestamps as the voiceover track, `emphasis: true` on numbers and power words. See `audio-caption-system.md`.
+- `finish`: `{ grain, vignette }` film-finish overlays, default on.
 - `visual`: Product image, screenshot, generated visual, screen recording, icon, text-only, or placeholder.
 - `eyebrow`: Optional short context label.
 - `headline`: Main on-screen line.
@@ -67,40 +79,27 @@ If the number is inferred, blocked, or not safe to claim, do not put it in
 - Do not change storyboard copy because of the render engine. Render engine
   changes implementation shape, not the language or claim rules.
 
-## Default Structures
+## Structure: Derive From The Concept, Not From A Template
 
-### Product Link Ad
+There are deliberately no default structures here. The storyboard's scene list
+is **derived from the chosen concept's `structure` array** (see
+`concept-contract.md`) — writing a stock arc into this file is how every ad
+collapsed into the same hook→pain→demo→proof→cta shape regardless of concept.
 
-1. Hook: product visible plus problem or result.
-2. Problem: show the old friction.
-3. Demo: show product use or feature.
-4. Proof: rating, material, before/after, guarantee, or user-supplied result.
-5. Offer: price, bundle, limited deal, or reason to act.
-6. CTA: clear action and brand.
+Mapping rules:
 
-### App Store Ad
-
-1. Hook: app result or strongest screen.
-2. Pain: current workflow is slow, messy, or expensive.
-3. Demo: 2-3 screenshots with motion.
-4. Proof: rating or user-supplied proof if safe.
-5. CTA: install, try free, or start now.
-
-### Social Feed App Ad
-
-1. Hook: logo plus swipe/feed action in the first 2 seconds.
-2. Feed: phone frame swaps or scrolls through harvested screenshots.
-3. Payoff: creator, sound, live, shop, comments, or community moment.
-4. Proof: rating, reviews, downloads, badge, or approved user-supplied proof.
-5. CTA: open, install, follow, watch, shop, or start creating.
-
-### SaaS Feature Demo Ad
-
-1. Hook: job-to-be-done.
-2. Problem: manual or fragmented workflow.
-3. Demo: feature sequence.
-4. Differentiator: speed, automation, integration, or quality.
-5. CTA: trial, book demo, or join waitlist.
+1. One entry in the concept's `structure` → one scene. Map each entry onto the
+   nearest template block (`ui-takeover`, `cold-open-payoff`, `charge-reveal`,
+   `split-before-after`, `device-frame`, `stat-slam`, `hero-morph`, `cta-card`,
+   `standard`) or write a new block component when none fits.
+2. Beat budgets instead of fixed acts: the hook must land inside 2 seconds; the
+   CTA gets at least 2.5 seconds and holds (no `transitionOut`); everything in
+   between belongs to the concept.
+3. Non-linear shapes are legal and encouraged when the concept calls for them:
+   CTA-early-then-payoff, the same action escalating three times, a single
+   continuous shot, a countdown running backwards.
+4. If the storyboard you wrote would also work for the runner-up concept, it is
+   not expressing the chosen concept — re-derive it.
 
 ## Text Limits
 

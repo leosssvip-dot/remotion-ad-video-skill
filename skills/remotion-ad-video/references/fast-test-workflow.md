@@ -55,6 +55,13 @@ Blocking before full render:
 - Actual secret, token, private URL, or customer data.
 - Wrong product visual that could misrepresent the product.
 - Typecheck or Remotion render failure.
+- Font-load render timeout: non-default `fontPreset` values fetch from Google
+  Fonts at render time. On offline or network-restricted machines keep
+  `fontPreset` unset (`clean-sans`); a font fetch failure aborts the render.
+
+The template depends on `@remotion/google-fonts` — when staging new-template
+projects into an older shared lab or reusing an existing project's
+`node_modules`, install the dependency first or the bundle fails.
 
 Non-blocking for skill tests:
 

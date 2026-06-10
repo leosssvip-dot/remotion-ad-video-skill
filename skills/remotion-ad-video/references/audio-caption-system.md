@@ -153,6 +153,37 @@ Pick sounds by visual event and audio category. A 15s ad should usually use at l
 - Burn in essential CTA or offer text for silent autoplay.
 - If voiceover is present, caption claims exactly and keep source-backed proof separate.
 
+### Karaoke captions (Remotion `CaptionTrack`)
+
+Most feeds play muted — without burned-in, word-synced captions the voiceover
+effectively does not exist. Whenever the ad has a voiceover track, also fill
+`props.captions` (the template renders them via `src/CaptionTrack.tsx` as a
+global layer that survives scene cuts):
+
+```json
+"captions": [
+  { "text": "Your desk deserves better light",
+    "startFrame": 12, "endFrame": 58,
+    "words": [
+      { "w": "Your", "atFrame": 12 },
+      { "w": "desk", "atFrame": 18 },
+      { "w": "deserves", "atFrame": 26 },
+      { "w": "BETTER", "atFrame": 36, "emphasis": true },
+      { "w": "light", "atFrame": 44 }
+    ] }
+]
+```
+
+- One entry per spoken sentence; use the same timestamps as the voiceover
+  audio track so the words land on the voice.
+- Each word pops in on its beat; the word being spoken is lit in the accent
+  color; `emphasis: true` words land bigger, tilted, and stay lit in the
+  accent color — mark the numbers, pain words, and brand names.
+- Omit `words` to spread the words evenly across the window (fine for drafts;
+  per-word beats read better).
+- On `colorMode: "inverted"` scenes the caption accent automatically swaps to
+  the background color for contrast — no extra work needed.
+
 ## Platform Notes
 
 - TikTok/Reels/Shorts: punchy SFX, rhythmic cuts, captions low or mid-low.
